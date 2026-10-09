@@ -12,6 +12,7 @@ export default async function PortalPage() {
       user={{
         name: session.user.name || "SpooFX",
         email: session.user.email || "",
+        image: session.user.image || null,
       }}
     />
   );
