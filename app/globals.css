@@ -1284,3 +1284,42 @@ button:disabled {
     padding-inline: 18px;
   }
 }
+
+.empty-action { margin-top: 22px; }
+.real-product-art {
+  min-height: 145px; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 65%, #d2f46b24, transparent 52%), #152a1e;
+  color: var(--luxe-accent); border-bottom: 1px solid var(--luxe-line);
+}
+.real-product .product-copy > p {
+  min-height: 45px; color: var(--luxe-muted); font-size: 11px;
+  line-height: 1.8; margin-bottom: 15px; overflow-wrap: anywhere;
+}
+.real-product .product-copy > div { gap: 12px; }
+.real-product .product-copy > div > span { font-size: 10px; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.admin-form { padding: 26px; min-width: 0; }
+.admin-form h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+.admin-form > p { font-size: 11px; color: var(--luxe-muted); margin-bottom: 18px; }
+.admin-form form { display: grid; gap: 15px; }
+.admin-form label { display: grid; gap: 7px; font-size: 11px; }
+.admin-form input, .admin-form textarea, .admin-form select {
+  width: 100%; min-width: 0; padding: 12px 13px; border: 1px solid var(--luxe-line);
+  border-radius: 10px; background: var(--page); color: var(--luxe-ink);
+  font: inherit; font-size: 12px;
+}
+.admin-form textarea { resize: vertical; }
+.admin-form .primary-button { width: fit-content; }
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.generated-keys { margin-top: 20px; border-top: 1px solid var(--luxe-line); padding-top: 20px; }
+.generated-keys strong { display: block; font-size: 11px; margin-bottom: 10px; }
+.generated-keys pre { white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; padding: 14px; border-radius: 10px; background: var(--page); color: var(--luxe-accent); font-size: 11px; }
+.generated-keys button { margin-top: 12px; }
+.admin-list { display: grid; gap: 12px; }
+.admin-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; }
+.admin-row h3 { font-size: 14px; font-weight: 600; }
+.admin-row p { color: var(--luxe-muted); font-size: 11px; margin: 5px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-row small { color: var(--luxe-accent); font-size: 10px; }
+.spin { animation: spoo-spin 1s linear infinite; }
+@keyframes spoo-spin { to { transform: rotate(360deg); } }
+@media (max-width: 767px) { .admin-grid { grid-template-columns: 1fr; } }

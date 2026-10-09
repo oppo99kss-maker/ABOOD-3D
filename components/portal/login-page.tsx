@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
-  ArrowUpLeft,
   Globe2,
   LogIn,
   LoaderCircle,
@@ -140,25 +139,13 @@ export function LoginPage() {
             <p className="auth-error" role="alert">
               {error === "unavailable"
                 ? ar
-                  ? "تسجيل الدخول غير متاح حالياً. يمكنك استعراض البوابة من المعاينة أدناه."
-                  : "Sign-in is not available yet. You can explore the preview below."
+                  ? "تسجيل الدخول غير متاح حالياً حتى يكتمل إعداد قوقل للموقع."
+                  : "Sign-in is unavailable until Google is configured for this site."
                 : ar
                   ? "تعذر تسجيل الدخول. حاول مرة أخرى."
                   : "Unable to sign in. Please try again."}
             </p>
           )}
-          <div className={styles.divider}>
-            <span>{ar ? "اكتشف البوابة" : "EXPLORE"}</span>
-          </div>
-          <p className={styles.storePrompt}>
-            {ar
-              ? "تعرّف على الواجهة قبل تسجيل الدخول"
-              : "Take a look around before signing in"}
-          </p>
-          <Link className={styles.store} href="/preview">
-            {ar ? "معاينة البوابة" : "Preview the portal"}
-            <ArrowUpLeft size={17} />
-          </Link>
           <span className="login-note">
             <ShieldCheck size={13} />
             {ar
