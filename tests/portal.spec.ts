@@ -34,6 +34,9 @@ test("private pages and every data action require a session", async ({ request }
   }
   const status = await request.get("/api/auth-status");
   expect(await status.json()).toEqual({ configured: false });
+  const health = await request.get("/api/health");
+  expect(health.status()).toBe(503);
+  expect(await health.json()).toEqual({ status: "unavailable" });
 });
 
 test("mobile login fits the screen", async ({ page }) => {

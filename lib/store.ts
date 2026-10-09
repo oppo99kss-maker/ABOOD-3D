@@ -56,6 +56,11 @@ async function ready() {
   await globalStore.spooSchema;
 }
 
+export async function checkDatabase() {
+  await ready();
+  await pool().query("SELECT 1");
+}
+
 function hashCode(code: string) {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) throw new Error("NEXTAUTH_SECRET is missing");
