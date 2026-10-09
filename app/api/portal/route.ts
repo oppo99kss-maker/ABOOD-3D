@@ -50,6 +50,13 @@ export async function GET() {
   }
 }
 
+function optionalHttps(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^https:\/\//i.test(trimmed) && URL.canParse(trimmed) ? trimmed : undefined;
+}
+
 export async function POST(request: NextRequest) {
   const email = await currentUser();
   if (!email) return json({ error: "UNAUTHORIZED" }, 401);
@@ -69,20 +76,18 @@ export async function POST(request: NextRequest) {
       if (!/^SPFX(?:-[A-F0-9]{6}){5}$/i.test(code))
         return json({ error: "INVALID_KEY" }, 400);
       const redeemed = await redeemKey(email, code);
-      return redeemed
-        ? json({ ok: true })
-        : json({ error: "KEY_UNAVAILABLE" }, 404);
+      return redeemed ? json({ ok: true }) : json({ error: "KEY_UNAVAILABLE" }, 404);
     }
     if (!isAdmin(email)) return json({ error: "FORBIDDEN" }, 403);
     if (data.action === "createProduct" || data.action === "updateProduct") {
       const name = typeof data.name === "string" ? data.name.trim() : "";
       const description = typeof data.description === "string" ? data.description.trim() : "";
-      const accessUrl = typeof data.accessUrl === "string" ? data.accessUrl.trim() : "";
-      if (!name || name.length > 120 || description.length > 2000 || accessUrl.length > 2000)
-        return json({ error: "INVALID_PRODUCT" }, 400);
-      if (accessUrl && (!/^https:\/\//i.test(accessUrl) || !URL.canParse(accessUrl)))
-        return json({ error: "INVALID_URL" }, 400);
-      const input = { name, description, accessUrl: accessUrl || null };
+      const accessUrl = optionalHttps(data.accessUrl);
+      const imageUrl = optionalHttps(data.imageUrl);
+      const isVisible = data.isVisible !== false;
+      if (!name || name.length > 120 || description.length > 2000 || accessUrl === undefined || imageUrl === undefined)
+        return json({ error: accessUrl === undefined || imageUrl === undefined ? "INVALID_URL" : "INVALID_PRODUCT" }, 400);
+      const input = { name, description, accessUrl, imageUrl, isVisible };
       const product = data.action === "createProduct"
         ? await createProduct(input)
         : typeof data.id === "string" && /^[0-9a-f-]{36}$/i.test(data.id)
@@ -93,9 +98,10 @@ export async function POST(request: NextRequest) {
     if (data.action === "generateKeys") {
       const productId = typeof data.productId === "string" ? data.productId : "";
       const count = Number(data.count);
-      if (!/^[0-9a-f-]{36}$/i.test(productId) || !Number.isInteger(count) || count < 1 || count > 20)
+      const durationDays = Number(data.durationDays ?? 3);
+      if (!/^[0-9a-f-]{36}$/i.test(productId) || !Number.isInteger(count) || count < 1 || count > 20 || !Number.isInteger(durationDays) || durationDays < 1 || durationDays > 3650)
         return json({ error: "INVALID_REQUEST" }, 400);
-      const keys = await generateKeys(productId, count);
+      const keys = await generateKeys(productId, count, durationDays);
       return json({ keys });
     }
     return json({ error: "INVALID_REQUEST" }, 400);
