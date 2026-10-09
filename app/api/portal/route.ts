@@ -14,8 +14,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAdmin(email: string) {
-  return Boolean(process.env.ADMIN_EMAIL) &&
-    email.toLowerCase() === process.env.ADMIN_EMAIL!.trim().toLowerCase();
+  const admins = [process.env.ADMIN_EMAIL, process.env.ADMIN_EMAILS]
+    .filter(Boolean)
+    .join(",")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  return admins.includes(email.toLowerCase());
 }
 
 async function currentUser() {
