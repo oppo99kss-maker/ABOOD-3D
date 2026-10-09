@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "ABOOD 3D | بوابة المنتجات",
-  description: "بوابة ABOOD 3D للمنتجات والتراخيص والدعم",
+  title: "SpooFX | حسابك ومنتجاتك ومفاتيحك",
+  description: "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك عبر SpooFX",
   icons: { icon: "/brand.svg" },
 };
 export default function RootLayout({

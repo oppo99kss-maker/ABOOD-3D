@@ -1,6 +1,6 @@
 import { Portal } from "@/components/portal/portal";
 export const metadata = {
-  title: "ABOOD 3D | معاينة التصميم",
+  title: "SpooFX | معاينة التصميم",
   robots: { index: false, follow: false },
 };
 export default function Preview() {

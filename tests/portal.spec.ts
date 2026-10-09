@@ -8,7 +8,7 @@ test("login, safe unconfigured state, and theme/language preferences", async ({
   await expect(
     page.getByRole("heading", { name: "تسجيل الدخول" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "المتابعة باستخدام قوقل" }).click();
+  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
   await expect(page.locator(".auth-error")).toContainText("غير متاح");
   await page.getByRole("button", { name: "Switch to English" }).click();
   await expect(
@@ -67,14 +67,16 @@ test("all preview menus, product search, and activation do not submit data", asy
     .click();
   await expect(page.getByRole("status")).toContainText("لم يتم إرسال");
   expect(posts).toEqual([]);
-  await nav.getByRole("button", { name: "مركز المساعدة", exact: true }).click();
+  await nav.getByRole("button", { name: "المساعدة", exact: true }).click();
   await page.locator("summary").filter({ hasText: "كيف أسجّل دخولي؟" }).click();
-  await expect(page.locator("details[open]")).toContainText("اختر المتابعة");
-  await nav.getByRole("button", { name: "الملف الشخصي", exact: true }).click();
+  await expect(page.locator("details[open]")).toContainText(
+    "اختر تسجيل الدخول",
+  );
+  await nav.getByRole("button", { name: "حسابي", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "تفضيلات الواجهة" }),
   ).toBeVisible();
-  await nav.getByRole("button", { name: "لوحة الإدارة", exact: true }).click();
+  await nav.getByRole("button", { name: "الإدارة", exact: true }).click();
   for (const name of [
     "المنتجات والمخزون",
     "العملاء",
@@ -89,8 +91,6 @@ test("all preview menus, product search, and activation do not submit data", asy
     await tab.click();
     await expect(tab).toHaveAttribute("aria-pressed", "true");
   }
-  await page.getByRole("button", { name: "طي القائمة" }).click();
-  await page.getByRole("button", { name: "إظهار القائمة" }).click();
   expect(errors).toEqual([]);
 });
 test("mobile navigation closes with Escape and remains in the viewport", async ({
@@ -117,7 +117,7 @@ test("mobile navigation closes with Escape and remains in the viewport", async (
   ).toBe(true);
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "المتابعة باستخدام قوقل" }),
+    page.getByRole("button", { name: "تسجيل الدخول" }),
   ).toBeVisible();
   expect(
     await page.evaluate(

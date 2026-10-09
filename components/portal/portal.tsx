@@ -93,8 +93,8 @@ export function Portal({
     {
       q: t("كيف أسجّل دخولي؟", "How do I sign in?"),
       a: t(
-        "اختر المتابعة باستخدام قوقل من الصفحة الرئيسية، ثم اختر حسابك. ستعود إلى بوابتك بعد اكتمال تسجيل الدخول.",
-        "Choose Continue with Google on the home page and select your account. You will return to your portal after signing in.",
+        "اختر تسجيل الدخول من الصفحة الرئيسية، ثم اختر حساب قوقل. ستعود إلى بوابتك بعد اكتمال تسجيل الدخول.",
+        "Choose Sign in on the home page, then select your Google account. You will return to your portal after signing in.",
       ),
     },
     {
@@ -107,8 +107,8 @@ export function Portal({
     {
       q: t("كيف أفعّل مفتاح الترخيص؟", "How do I activate a license?"),
       a: t(
-        "من القائمة الجانبية اختر تفعيل مفتاح. خدمة التفعيل غير متصلة بعد، ولا يتم إرسال أو حفظ المفاتيح المدخلة حالياً.",
-        "Choose Activate a key from the sidebar. Activation is not connected yet, and keys entered here are not sent or saved.",
+        "من شريط التنقل اختر تفعيل مفتاح. خدمة التفعيل غير متصلة بعد، ولا يتم إرسال أو حفظ المفاتيح المدخلة حالياً.",
+        "Choose Activate key from the navigation. Activation is not connected yet, and keys entered here are not sent or saved.",
       ),
     },
     {
@@ -144,35 +144,6 @@ export function Portal({
         }}
       />
       <div className="portal-body">
-        <header className="portal-header">
-          <div className="breadcrumb">
-            <span>ABOOD 3D</span>
-            <ChevronLeft size={14} />
-            <strong>{title[activeTab]}</strong>
-          </div>
-          <div className="header-tools">
-            <span className="status-pill">
-              <i />
-              {preview
-                ? t("معاينة", "PREVIEW")
-                : t("حساب قوقل", "GOOGLE ACCOUNT")}
-            </span>
-            <button
-              className="icon-button"
-              onClick={() => setLang(ar ? "en" : "ar")}
-              aria-label={ar ? "Switch to English" : "التبديل إلى العربية"}
-            >
-              <Globe2 size={18} />
-            </button>
-            <button
-              className="icon-button"
-              onClick={toggleTheme}
-              aria-label={t("تبديل المظهر", "Toggle theme")}
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </header>
         <main className="portal-main">
           {preview && (
             <div className="preview-banner">
@@ -192,7 +163,7 @@ export function Portal({
           <div className="page-heading">
             <div>
               <span className="eyebrow">
-                ABOOD 3D / {activeTab.replace("-", " ").toUpperCase()}
+                SpooFX / {activeTab.replace("-", " ").toUpperCase()}
               </span>
               <h1>{title[activeTab]}</h1>
               <p>
@@ -214,7 +185,7 @@ export function Portal({
                     <div className="welcome-content">
                       <span className="eyebrow">
                         <i className="dot" />
-                        {t("أهلاً بك في ABOOD 3D", "WELCOME TO ABOOD 3D")}
+                        {t("أهلاً بك في SpooFX", "WELCOME TO SpooFX")}
                       </span>
                       <h2>
                         {t("مرحباً بعودتك،", "Welcome back,")}{" "}
@@ -665,7 +636,7 @@ export function Portal({
           )}
         </main>
         <footer className="portal-footer">
-          <span>© {new Date().getFullYear()} ABOOD 3D</span>
+          <span>© {new Date().getFullYear()} SpooFX</span>
           <span>
             {t("صُممت لتكون أقرب إليك", "Designed around you")}{" "}
             <span className="gold">✦</span>

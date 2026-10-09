@@ -10,7 +10,7 @@ export default async function PortalPage() {
   return (
     <Portal
       user={{
-        name: session.user.name || "ABOOD 3D",
+        name: session.user.name || "SpooFX",
         email: session.user.email || "",
       }}
     />
