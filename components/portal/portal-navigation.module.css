@@ -228,3 +228,13 @@
     padding-inline: 12px;
   }
 }
+
+.avatarImage {
+  display: block;
+  width: 29px;
+  height: 29px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--luxe-accent-line);
+}

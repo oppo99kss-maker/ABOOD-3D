@@ -187,9 +187,7 @@ export function PortalNavigation({
               type="button"
               onClick={() => navigate("profile")}
             >
-              <span className={css.avatar}>
-                <UserRound size={16} />
-              </span>
+              {user.image ? <img className={css.avatarImage} src={user.image} width={29} height={29} alt={user.name} referrerPolicy="no-referrer" /> : <span className={css.avatar}><UserRound size={16} /></span>}
               <span>{user.name}</span>
             </button>
             <button
