@@ -1896,6 +1896,13 @@ a.button:active,
   color: #34D399;
 }
 
+.luxe-card-icon-box.google {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+}
+
 .luxe-card-title {
   font-size: 15px;
   font-weight: 700;
