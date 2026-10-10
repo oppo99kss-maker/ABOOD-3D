@@ -6746,3 +6746,581 @@ svg {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ==========================================================================
+   SALLA-STYLE CODES CARD & LUXURIOUS KEYS LIST (MATCHING SCREENSHOT)
+   ========================================================================== */
+
+.ref-stock-counter-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34D399;
+}
+
+/* 1. Salla Codes Box (Exact Match to media_1791638322700_294b52b2.png) */
+.ref-salla-codes-card {
+  background: #141720;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.ref-salla-codes-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: #0D1017;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: #F1F5F9;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ref-salla-codes-textarea::placeholder {
+  color: #71717A;
+  font-size: 13px;
+}
+
+.ref-salla-codes-textarea:focus {
+  border-color: #00BCD4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.18);
+}
+
+.ref-salla-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ref-salla-duration-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.ref-salla-duration-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ref-salla-duration-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #1A202C;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ref-salla-duration-chip:hover {
+  background: #222B3D;
+  color: #FFF;
+}
+
+.ref-salla-duration-chip.active {
+  background: rgba(0, 188, 212, 0.16);
+  border-color: #00BCD4;
+  color: #00BCD4;
+}
+
+/* Salla Cyan Insert Button */
+.ref-salla-btn-insert {
+  background: #00BCD4;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 28px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 12px rgba(0, 188, 212, 0.35);
+  transition: all 0.15s ease;
+}
+
+.ref-salla-btn-insert:hover:not(:disabled) {
+  background: #00ACC1;
+  box-shadow: 0 4px 16px rgba(0, 188, 212, 0.5);
+  transform: translateY(-1px);
+}
+
+.ref-salla-btn-insert:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 2. Wide Centered Plus Button (Exact Match to media_1791638322700_294b52b2.png) */
+.ref-salla-wide-add-btn {
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  background: #141720;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ref-salla-wide-add-btn:hover {
+  background: #1B212E;
+  border-color: rgba(0, 188, 212, 0.4);
+  color: #00BCD4;
+}
+
+.ref-salla-wide-add-btn.open {
+  background: #1C2433;
+  border-color: #00BCD4;
+  color: #00BCD4;
+}
+
+/* Inline single key addition panel */
+.ref-inline-single-key-panel {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #10141D;
+  border: 1px solid rgba(0, 188, 212, 0.3);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ref-inline-key-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ref-inline-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #E2E8F0;
+}
+
+.ref-inline-key-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .ref-inline-key-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ref-inline-key-field {
+  background: #0A0D14;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #00BCD4;
+  font-family: monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  outline: none;
+}
+
+.ref-inline-key-field:focus {
+  border-color: #00BCD4;
+}
+
+.ref-inline-duration-select {
+  background: #0A0D14;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: #CBD5E1;
+  font-size: 12.5px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ref-btn-inline-submit {
+  background: #00BCD4;
+  color: #FFF;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ref-btn-inline-submit:hover:not(:disabled) {
+  background: #00ACC1;
+}
+
+/* ==========================================================================
+   3. LUXURIOUS ORGANIZED KEYS LIST ("قوائم مرتبة وفخمة جداً")
+   ========================================================================== */
+
+.ref-lux-keys-container {
+  margin-top: 24px;
+  background: #0B0E14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ref-lux-keys-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ref-lux-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 240px;
+  flex: 1;
+  max-width: 380px;
+}
+
+.ref-lux-search-wrap svg {
+  position: absolute;
+  right: 12px;
+  color: #64748B;
+  pointer-events: none;
+}
+
+.ref-lux-search-input {
+  width: 100%;
+  background: #11151F;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 8px 36px 8px 12px;
+  color: #F1F5F9;
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ref-lux-search-input:focus {
+  border-color: #00BCD4;
+}
+
+.ref-lux-search-clear {
+  position: absolute;
+  left: 10px;
+  background: transparent;
+  border: none;
+  color: #64748B;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.ref-lux-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ref-lux-tab-chip {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #11151F;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #94A3B8;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ref-lux-tab-chip:hover {
+  background: #171E2D;
+  color: #FFF;
+}
+
+.ref-lux-tab-chip.active {
+  background: #1E283A;
+  color: #F1F5F9;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ref-lux-tab-chip.active-green {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: #10B981;
+  color: #34D399;
+}
+
+.ref-lux-tab-chip.active-blue {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: #3B82F6;
+  color: #60A5FA;
+}
+
+/* Scrollable Cards List */
+.ref-lux-keys-scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ref-lux-keys-scroll-list::-webkit-scrollbar {
+  width: 5px;
+}
+.ref-lux-keys-scroll-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+.ref-lux-key-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #10141D;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: all 0.15s ease;
+}
+
+.ref-lux-key-card:hover {
+  background: #141A26;
+  border-color: rgba(0, 188, 212, 0.22);
+  transform: translateY(-1px);
+}
+
+.ref-lux-key-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.ref-lux-key-index {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  min-width: 26px;
+}
+
+.ref-lux-key-code-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #080B10;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.ref-lux-key-code {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #38BDF8;
+  letter-spacing: 0.6px;
+}
+
+.ref-lux-copy-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.ref-lux-copy-btn:hover {
+  color: #00BCD4;
+  background: rgba(0, 188, 212, 0.12);
+}
+
+.ref-lux-key-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ref-lux-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.ref-lux-status-pill .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ref-lux-status-pill.status-green {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34D399;
+}
+.ref-lux-status-pill.status-green .status-dot {
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.ref-lux-status-pill.status-blue {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60A5FA;
+}
+.ref-lux-status-pill.status-blue .status-dot {
+  background: #3B82F6;
+}
+
+.ref-lux-duration-pill,
+.ref-lux-date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 3px 7px;
+  border-radius: 5px;
+}
+
+.ref-lux-key-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-lux-btn-delete {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748B;
+  border-radius: 6px;
+  padding: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.ref-lux-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+
+/* Loading & Empty States */
+.ref-lux-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 16px;
+  color: #94A3B8;
+  font-size: 13px;
+}
+
+.ref-lux-empty-keys {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 16px;
+  gap: 8px;
+}
+
+.ref-lux-empty-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  place-items: center;
+  color: #64748B;
+  margin-bottom: 4px;
+}
+
+.ref-lux-empty-keys h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #E2E8F0;
+}
+
+.ref-lux-empty-keys p {
+  margin: 0;
+  font-size: 12px;
+  color: #94A3B8;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+/* Cyan button in stock modal */
+.ref-btn-cyan-insert {
+  background: #00BCD4 !important;
+  color: #FFF !important;
+  box-shadow: 0 4px 14px rgba(0, 188, 212, 0.4) !important;
+}
+
+.ref-btn-cyan-insert:hover:not(:disabled) {
+  background: #00ACC1 !important;
+  box-shadow: 0 6px 18px rgba(0, 188, 212, 0.5) !important;
+}
+
+

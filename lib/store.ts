@@ -913,6 +913,30 @@ export async function importCustomKeys(
   }
 }
 
+export async function deleteLicenseKey(id: string, actorEmail = "SYSTEM") {
+  await ready();
+  const { rows, rowCount } = await pool().query(
+    "DELETE FROM licenses WHERE id = $1 RETURNING product_id, masked_code",
+    [id]
+  );
+  if (!rowCount || !rows[0]) return { success: false, notFound: true };
+
+  await logAudit({
+    category: "INVENTORY",
+    action: "KEY_DELETED",
+    actor_email: actorEmail,
+    target_type: "license",
+    target_id: id,
+    details: {
+      productId: rows[0].product_id,
+      maskedCode: rows[0].masked_code,
+    },
+  });
+
+  return { success: true, deletedKey: rows[0] };
+}
+
+
 // ==========================================
 // REDEMPTION & ACTIVATION ENGINE
 // ==========================================

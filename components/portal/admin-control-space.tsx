@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, type FormEvent } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, type FormEvent } from "react";
 import {
   AlertTriangle,
   ArrowDown,
@@ -870,6 +870,141 @@ export function AdminControlSpace({
     setCopiedKeys(true);
     setTimeout(() => setCopiedKeys(false), 2000);
     notify(t("تم نسخ جميع المفاتيح!", "All keys copied!"));
+  }
+
+  // ====================================================
+  // 4b. TAB 3 LUXURY KEYS & INVENTORY (MATCHING SCREENSHOT)
+  // ====================================================
+  const [productInventoryKeys, setProductInventoryKeys] = useState<any[]>([]);
+  const [loadingProductKeys, setLoadingProductKeys] = useState(false);
+  const [productKeysSearch, setProductKeysSearch] = useState("");
+  const [productKeysFilter, setProductKeysFilter] = useState<"ALL" | "AVAILABLE" | "ISSUED">("ALL");
+  const [sallaKeysInput, setSallaKeysInput] = useState("");
+  const [sallaDuration, setSallaDuration] = useState(30);
+  const [showSingleKeyInline, setShowSingleKeyInline] = useState(false);
+  const [singleInlineKey, setSingleInlineKey] = useState("");
+  const [singleInlineDuration, setSingleInlineDuration] = useState(30);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  const fetchProductKeys = useCallback(async (productId: string) => {
+    if (!productId) return;
+    setLoadingProductKeys(true);
+    try {
+      const res = await fetch(`/api/portal?view=inventory&productId=${productId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setProductInventoryKeys(Array.isArray(data.keys) ? data.keys : []);
+      }
+    } catch (e) {
+      console.error("Failed to load inventory keys:", e);
+    } finally {
+      setLoadingProductKeys(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showProductModal && productModalTab === "keys" && editingProduct?.id) {
+      fetchProductKeys(editingProduct.id);
+    }
+  }, [showProductModal, productModalTab, editingProduct?.id, fetchProductKeys]);
+
+  const filteredProductKeys = useMemo(() => {
+    return productInventoryKeys.filter((k) => {
+      if (productKeysFilter !== "ALL" && k.status !== productKeysFilter) return false;
+      if (productKeysSearch.trim()) {
+        const q = productKeysSearch.toLowerCase();
+        const code = (k.masked_code || k.code_suffix || "").toLowerCase();
+        const batch = (k.batch_id || "").toLowerCase();
+        return code.includes(q) || batch.includes(q);
+      }
+      return true;
+    });
+  }, [productInventoryKeys, productKeysFilter, productKeysSearch]);
+
+  async function handleInsertSallaKeys() {
+    if (!editingProduct?.id) return;
+    const rawList = sallaKeysInput
+      .split("\n")
+      .map((k) => k.trim())
+      .filter((k) => k.length >= 3);
+    if (!rawList.length) {
+      notify(t("يرجى لصق كود واحد على الأقل", "Please enter at least one key code"), "error");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await apiAction({
+        action: "importKeys",
+        productId: editingProduct.id,
+        rawKeys: rawList,
+        durationDays: sallaDuration,
+      });
+      notify(t(`تم إدراج ${res?.importedCount ?? rawList.length} مفتاحاً بنجاح في المخزون!`, `Imported ${res?.importedCount ?? rawList.length} keys successfully!`));
+      setSallaKeysInput("");
+      await fetchProductKeys(editingProduct.id);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل إدراج الأكواد", "Failed to insert keys"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleInsertSingleInlineKey() {
+    if (!editingProduct?.id) return;
+    const keyToAdd = singleInlineKey.trim() || generateRandomKeyCode();
+    setBusy(true);
+    try {
+      await apiAction({
+        action: "importKeys",
+        productId: editingProduct.id,
+        rawKeys: [keyToAdd],
+        durationDays: singleInlineDuration,
+      });
+      notify(t(`تمت إضافة المفتاح (${keyToAdd}) بنجاح للمخزون!`, "Key added successfully!"));
+      setSingleInlineKey("");
+      setShowSingleKeyInline(false);
+      await fetchProductKeys(editingProduct.id);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل إضافة المفتاح", "Failed to add key"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleDeleteProductKey(keyId: string, maskedCode: string) {
+    setConfirmState({
+      isOpen: true,
+      title: t("حذف الكود نهائياً", "Delete Code Permanently"),
+      message: t(
+        `هل أنت متأكد من حذف الكود (${maskedCode}) نهائياً من مخزون هذا المنتج؟`,
+        `Are you sure you want to permanently delete code ${maskedCode}?`
+      ),
+      confirmText: t("نعم، احذف الكود", "Yes, Delete Code"),
+      cancelText: t("إلغاء", "Cancel"),
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await apiAction({ action: "deleteKey", keyId });
+          notify(t("تم حذف الكود من المخزون بنجاح", "Code deleted successfully"));
+          if (editingProduct?.id) {
+            await fetchProductKeys(editingProduct.id);
+          }
+          await onRefresh();
+        } catch (err: any) {
+          notify(err.message || t("فشل حذف الكود", "Failed to delete code"), "error");
+        }
+      },
+    });
+  }
+
+  function handleCopyKeyItem(code: string, id: string) {
+    navigator.clipboard.writeText(code);
+    setCopiedKeyId(id);
+    notify(t("تم نسخ الكود للحافظة", "Code copied to clipboard"));
+    setTimeout(() => setCopiedKeyId(null), 2000);
   }
 
   // ====================================================
@@ -2070,64 +2205,286 @@ export function AdminControlSpace({
               </div>
             )}
 
-            {/* TAB 3: الأكواد المتاحة */}
+            {/* TAB 3: الأكواد والمفاتيح (Matching Screenshot media_1791638322700_294b52b2.png) */}
             {productModalTab === "keys" && (
               <div className="ref-edit-tab-content">
+                {/* 1. Header with Stats & Fast Actions */}
                 <div className="ref-custom-fields-top-bar">
                   <div className="ref-tab-section-heading">
                     <KeyRound size={18} />
                     <span>
-                      {t("الأكواد والمفاتيح المتاحة لهذا المنتج", "Available Codes & Keys for this Product")} ({editingProduct?.available_keys ?? 372})
+                      {t("الأكواد والمفاتيح المتاحة لهذا المنتج", "Available Codes & Keys for this Product")}
+                    </span>
+                    <span className="ref-stock-counter-pill">
+                      {productInventoryKeys.filter((k) => k.status === "AVAILABLE").length || editingProduct?.available_keys || 0} {t("متاح للبيع", "Available")}
                     </span>
                   </div>
 
                   <div className="ref-stock-modal-triggers-row">
                     <button
                       type="button"
-                      className="ref-btn-add-field-blue"
-                      onClick={() => openStockModal(editingProduct?.id, "single")}
-                    >
-                      <Plus size={14} />
-                      <span>{t("إضافة مفتاح واحد", "Single Key")}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="ref-btn-stock-trigger-secondary"
-                      onClick={() => openStockModal(editingProduct?.id, "bulk")}
-                    >
-                      <Package size={14} />
-                      <span>{t("إضافة دفعة مفاتيح", "Bulk Keys")}</span>
-                    </button>
-                    <button
-                      type="button"
                       className="ref-btn-stock-trigger-secondary"
                       onClick={() => openStockModal(editingProduct?.id, "generate")}
+                      title={t("توليد عشوائي تلقائي بكميات كبيرة", "Auto Generate Keys")}
                     >
                       <Flame size={14} />
                       <span>{t("توليد تلقائي", "Auto Generate")}</span>
                     </button>
+                    <button
+                      type="button"
+                      className="ref-btn-stock-trigger-secondary"
+                      onClick={() => editingProduct?.id && fetchProductKeys(editingProduct.id)}
+                      title={t("تحديث قائمة الأكواد", "Refresh keys")}
+                    >
+                      <RefreshCw size={14} className={loadingProductKeys ? "spin" : ""} />
+                      <span>{t("تحديث", "Refresh")}</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="ref-product-keys-info-card">
-                  <div className="ref-keys-stats-mini-bar">
-                    <div className="stat-item">
-                      <small>{t("المخزون المتوفر الآن", "Available Stock")}</small>
-                      <strong>{editingProduct?.available_keys ?? 372} {t("مفتاح", "Keys")}</strong>
+                {/* 2. Salla-Style Codes Box (Exact Match to media_1791638322700_294b52b2.png) */}
+                <div className="ref-salla-codes-card">
+                  <textarea
+                    rows={5}
+                    dir="ltr"
+                    value={sallaKeysInput}
+                    onChange={(e) => setSallaKeysInput(e.target.value)}
+                    placeholder="قم بنسخ الأكواد ولصقها هنا، علماً أن كل سطر يجب أن يحتوي على كود واحد فقط"
+                    className="ref-salla-codes-textarea"
+                  />
+
+                  <div className="ref-salla-card-footer">
+                    <div className="ref-salla-duration-group">
+                      <Clock size={14} />
+                      <span>{t("مدة الصلاحية:", "Duration:")}</span>
+                      <div className="ref-salla-duration-chips">
+                        {[
+                          { days: 1, label: t("1 يوم", "1 Day") },
+                          { days: 7, label: t("7 أيام", "7 Days") },
+                          { days: 30, label: t("30 يوماً", "30 Days") },
+                          { days: 90, label: t("90 يوماً", "90 Days") },
+                          { days: 3650, label: t("مدى الحياة", "Lifetime") },
+                        ].map((d) => (
+                          <button
+                            type="button"
+                            key={d.days}
+                            className={`ref-salla-duration-chip ${sallaDuration === d.days ? "active" : ""}`}
+                            onClick={() => setSallaDuration(d.days)}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="stat-item">
-                      <small>{t("صيغة المفاتيح المعتمدة", "Standard Key Format")}</small>
-                      <code dir="ltr" className="ref-key-preview">KEY-gZcMty-H9whoQ</code>
+
+                    <button
+                      type="button"
+                      className="ref-salla-btn-insert"
+                      disabled={busy || !sallaKeysInput.trim()}
+                      onClick={handleInsertSallaKeys}
+                    >
+                      {busy ? <LoaderCircle className="spin" size={15} /> : null}
+                      <span>{t("إدراج", "Insert")}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Wide Centered Plus Button (Exact Match to media_1791638322700_294b52b2.png) */}
+                <button
+                  type="button"
+                  className={`ref-salla-wide-add-btn ${showSingleKeyInline ? "open" : ""}`}
+                  onClick={() => {
+                    setShowSingleKeyInline(!showSingleKeyInline);
+                    if (!showSingleKeyInline && !singleInlineKey) {
+                      setSingleInlineKey(generateRandomKeyCode());
+                    }
+                  }}
+                  title={t("إضافة مفتاح مفرد أو توليد كود سريع", "Add Single Key")}
+                >
+                  <Plus size={18} />
+                </button>
+
+                {/* 4. Inline Single Key Addition Row (Revealed when clicking +) */}
+                {showSingleKeyInline && (
+                  <div className="ref-inline-single-key-panel">
+                    <div className="ref-inline-key-top">
+                      <div className="ref-inline-title">
+                        <KeyRound size={15} />
+                        <span>{t("إضافة كود مفرد للمخزون", "Add Single Code to Stock")}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ref-btn-dice-random"
+                        onClick={() => setSingleInlineKey(generateRandomKeyCode())}
+                      >
+                        <span>🎲</span>
+                        <span>{t("كود عشوائي جديد", "New Random Code")}</span>
+                      </button>
                     </div>
-                    <div className="stat-item">
-                      <small>{t("صيغة التفعيل المخفية", "Masked Display")}</small>
-                      <code dir="ltr" className="ref-key-preview">KEY-******-*****</code>
+
+                    <div className="ref-inline-key-inputs">
+                      <input
+                        type="text"
+                        dir="ltr"
+                        value={singleInlineKey}
+                        onChange={(e) => setSingleInlineKey(e.target.value)}
+                        placeholder="KEY-gZcMty-H9whoQ"
+                        className="ref-inline-key-field"
+                      />
+
+                      <select
+                        value={singleInlineDuration}
+                        onChange={(e) => setSingleInlineDuration(Number(e.target.value))}
+                        className="ref-inline-duration-select"
+                      >
+                        <option value={1}>{t("يوم واحد", "1 Day")}</option>
+                        <option value={7}>{t("7 أيام", "7 Days")}</option>
+                        <option value={30}>{t("30 يوماً (شهر)", "30 Days")}</option>
+                        <option value={90}>{t("90 يوماً (3 أشهر)", "90 Days")}</option>
+                        <option value={3650}>{t("مدى الحياة", "Lifetime")}</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        className="ref-btn-inline-submit"
+                        disabled={busy || !singleInlineKey.trim()}
+                        onClick={handleInsertSingleInlineKey}
+                      >
+                        {busy ? <LoaderCircle className="spin" size={14} /> : <Check size={14} />}
+                        <span>{t("حفظ الكود", "Save Key")}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. LUXURIOUS ORGANIZED KEYS LIST ("قوائم مرتبة وفخمة جداً") */}
+                <div className="ref-lux-keys-container">
+                  {/* Search and Filter Tabs */}
+                  <div className="ref-lux-keys-controls-bar">
+                    <div className="ref-lux-search-wrap">
+                      <Search size={14} />
+                      <input
+                        type="text"
+                        value={productKeysSearch}
+                        onChange={(e) => setProductKeysSearch(e.target.value)}
+                        placeholder={t("بحث في الأكواد أو رقم الدفعة...", "Search keys or batch...")}
+                        className="ref-lux-search-input"
+                      />
+                      {productKeysSearch && (
+                        <button
+                          type="button"
+                          className="ref-lux-search-clear"
+                          onClick={() => setProductKeysSearch("")}
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="ref-lux-filter-tabs">
+                      <button
+                        type="button"
+                        className={`ref-lux-tab-chip ${productKeysFilter === "ALL" ? "active" : ""}`}
+                        onClick={() => setProductKeysFilter("ALL")}
+                      >
+                        {t("الكل", "All")} ({productInventoryKeys.length})
+                      </button>
+                      <button
+                        type="button"
+                        className={`ref-lux-tab-chip ${productKeysFilter === "AVAILABLE" ? "active-green" : ""}`}
+                        onClick={() => setProductKeysFilter("AVAILABLE")}
+                      >
+                        {t("متاح للبيع", "Available")} ({productInventoryKeys.filter((k) => k.status === "AVAILABLE").length})
+                      </button>
+                      <button
+                        type="button"
+                        className={`ref-lux-tab-chip ${productKeysFilter === "ISSUED" ? "active-blue" : ""}`}
+                        onClick={() => setProductKeysFilter("ISSUED")}
+                      >
+                        {t("مستخدم / تم بيعه", "Sold / Issued")} ({productInventoryKeys.filter((k) => k.status === "ISSUED").length})
+                      </button>
                     </div>
                   </div>
 
-                  <p className="ref-keys-hint">
-                    {t("يمكنك تعبئة مخزون هذا المنتج تلقائياً بأي عدد من المفاتيح أو استيرادها دفعة واحدة من زر تعبئة المفاتيح أعلاه.", "You can generate or import keys at any time using the fill stock button.")}
-                  </p>
+                  {/* Keys Cards List */}
+                  {loadingProductKeys ? (
+                    <div className="ref-lux-loading-state">
+                      <LoaderCircle className="spin" size={24} />
+                      <span>{t("جارٍ تحميل قائمة الأكواد...", "Loading codes list...")}</span>
+                    </div>
+                  ) : filteredProductKeys.length > 0 ? (
+                    <div className="ref-lux-keys-scroll-list">
+                      {filteredProductKeys.map((k, index) => {
+                        const isAvailable = k.status === "AVAILABLE";
+                        const displayCode = k.masked_code || `KEY-******-${k.code_suffix || "XXXX"}`;
+                        const isCopied = copiedKeyId === k.id;
+                        return (
+                          <div className={`ref-lux-key-card ${isAvailable ? "available" : "issued"}`} key={k.id || index}>
+                            {/* Right: Index & Code */}
+                            <div className="ref-lux-key-main">
+                              <span className="ref-lux-key-index">#{index + 1}</span>
+                              <div className="ref-lux-key-code-block">
+                                <code dir="ltr" className="ref-lux-key-code">{displayCode}</code>
+                                <button
+                                  type="button"
+                                  className="ref-lux-copy-btn"
+                                  onClick={() => handleCopyKeyItem(displayCode, k.id)}
+                                  title={t("نسخ الكود", "Copy code")}
+                                >
+                                  {isCopied ? <Check size={13} className="text-emerald" /> : <Copy size={13} />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Center: Status & Duration Badges */}
+                            <div className="ref-lux-key-badges">
+                              <span className={`ref-lux-status-pill ${isAvailable ? "status-green" : "status-blue"}`}>
+                                <span className="status-dot" />
+                                <span>{isAvailable ? t("متاح للبيع", "Available") : t("تم بيعه / نشط", "Sold / Active")}</span>
+                              </span>
+
+                              <span className="ref-lux-duration-pill">
+                                <Clock size={12} />
+                                <span>{k.duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${k.duration_days} ${t("يوم", "Days")}`}</span>
+                              </span>
+
+                              {k.created_at && (
+                                <span className="ref-lux-date-pill">
+                                  <Calendar size={12} />
+                                  <span>{new Date(k.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Left: Actions */}
+                            <div className="ref-lux-key-actions">
+                              <button
+                                type="button"
+                                className="ref-lux-btn-delete"
+                                onClick={() => handleDeleteProductKey(k.id, displayCode)}
+                                title={t("حذف الكود نهائياً من المخزون", "Delete code permanently")}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="ref-lux-empty-keys">
+                      <div className="ref-lux-empty-icon-box">
+                        <KeyRound size={28} />
+                      </div>
+                      <h4>{t("لا توجد أكواد مطابقة", "No Matching Codes")}</h4>
+                      <p>
+                        {t(
+                          "قم بلصق قائمة المفاتيح في الصندوق أعلاه واضغط على زر «إدراج»، أو انقر على الزر (+) لإضافة كود جديد بسرعة.",
+                          "Paste key codes in the box above and click Insert, or click (+) to add a single code."
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2333,7 +2690,7 @@ export function AdminControlSpace({
                     dir="ltr"
                     value={bulkKeysText}
                     onChange={(e) => setBulkKeysText(e.target.value)}
-                    placeholder="KEY-gZcMty-H9whoQ&#10;KEY-7bK9aZ-M3pQ8w&#10;KEY-xY129p-Lk449a&#10;KEY-Qw881m-Zp002k"
+                    placeholder={t("قم بنسخ الأكواد ولصقها هنا، علماً أن كل سطر يجب أن يحتوي على كود واحد فقط", "Paste keys here, one code per line")}
                     className="ref-bulk-keys-textarea"
                     required
                   />
@@ -2365,9 +2722,9 @@ export function AdminControlSpace({
                   <button type="button" className="ref-btn-cancel-modal" onClick={() => setShowStockModal(false)}>
                     {t("إلغاء", "Cancel")}
                   </button>
-                  <button type="submit" className="ref-btn-primary-stock" disabled={busy || bulkKeysDetectedCount === 0}>
+                  <button type="submit" className="ref-btn-primary-stock ref-btn-cyan-insert" disabled={busy || bulkKeysDetectedCount === 0}>
                     {busy ? <LoaderCircle className="spin" size={16} /> : <Package size={16} />}
-                    <span>{t(`إضافة ${bulkKeysDetectedCount > 0 ? bulkKeysDetectedCount : ""} مفاتيح دفعة واحدة`, "Import Keys in Bulk")}</span>
+                    <span>{t(`إدراج (${bulkKeysDetectedCount > 0 ? bulkKeysDetectedCount : ""}) مفاتيح للمخزون`, "Insert Keys")}</span>
                   </button>
                 </div>
               </form>

@@ -9,6 +9,7 @@ import {
   createOrder,
   createProduct,
   deleteGuide,
+  deleteLicenseKey,
   deleteProduct,
   extendLicense,
   generateKeys,
@@ -342,6 +343,15 @@ export async function POST(request: NextRequest) {
 
       const result = await suspendLicense(licenseId, email);
       return json({ ok: true, license: result });
+    }
+
+    // 9b. Admin: Delete license key
+    if (data.action === "deleteKey") {
+      const keyId = typeof data.keyId === "string" ? data.keyId : "";
+      if (!keyId) return json({ error: "INVALID_KEY_ID" }, 400);
+
+      const result = await deleteLicenseKey(keyId, email);
+      return json({ ok: true, ...result });
     }
 
     // 10. Admin: Create order
