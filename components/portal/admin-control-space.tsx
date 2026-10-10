@@ -750,68 +750,117 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 4. INVENTORY & STOCK FILLING MODAL
+  // 4. INVENTORY & STOCK FILLING MODAL (SINGLE KEY & BULK KEYS)
   // ====================================================
   const [showStockModal, setShowStockModal] = useState(false);
   const [stockModalProductId, setStockModalProductId] = useState<string>(products[0]?.id || "");
-  const [stockMode, setStockMode] = useState<"generate" | "import">("generate");
+  const [stockMode, setStockMode] = useState<"single" | "bulk" | "generate">("single");
+  const [singleKeyText, setSingleKeyText] = useState("");
+  const [singleKeyDuration, setSingleKeyDuration] = useState(30);
+  const [bulkKeysText, setBulkKeysText] = useState("");
+  const [bulkDuration, setBulkDuration] = useState(30);
   const [generateCount, setGenerateCount] = useState(10);
   const [generateDuration, setGenerateDuration] = useState(30);
-  const [importKeysText, setImportKeysText] = useState("");
   const [newlyGenerated, setNewlyGenerated] = useState<string[]>([]);
   const [copiedKeys, setCopiedKeys] = useState(false);
 
-  function openStockModal(productId?: string) {
+  function generateRandomKeyCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    const part1 = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    const part2 = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    return `KEY-${part1}-${part2}`;
+  }
+
+  const bulkKeysDetectedCount = useMemo(() => {
+    return bulkKeysText
+      .split("\n")
+      .map((k) => k.trim())
+      .filter((k) => k.length >= 5).length;
+  }, [bulkKeysText]);
+
+  const selectedStockProduct = useMemo(() => {
+    return products.find((p) => p.id === stockModalProductId) || products[0];
+  }, [products, stockModalProductId]);
+
+  function openStockModal(productId?: string, initialMode: "single" | "bulk" | "generate" = "single") {
     if (productId) setStockModalProductId(productId);
     else if (!stockModalProductId && products[0]) setStockModalProductId(products[0].id);
     setNewlyGenerated([]);
-    setImportKeysText("");
+    setSingleKeyText(generateRandomKeyCode());
+    setBulkKeysText("");
+    setStockMode(initialMode);
     setShowStockModal(true);
   }
 
-  async function handleFillStock(e: FormEvent) {
+  async function handleAddSingleKey(e: FormEvent) {
     e.preventDefault();
     if (!stockModalProductId) return;
+    const keyToAdd = singleKeyText.trim();
+    if (!keyToAdd || keyToAdd.length < 5) {
+      notify(t("يرجى إدخال رمز مفتاح صالح", "Please enter a valid key code"), "error");
+      return;
+    }
 
-    if (stockMode === "generate") {
-      try {
-        const res = await apiAction({
-          action: "generateKeys",
-          productId: stockModalProductId,
-          count: generateCount,
-          durationDays: generateDuration,
-        });
-        setNewlyGenerated(res.keys || []);
-        notify(t(`تم توليد ${res.count} مفتاح بنجاح!`, `Generated ${res.count} keys successfully!`));
-        await onRefresh();
-      } catch (err: any) {
-        notify(err.message, "error");
-      }
-    } else {
-      const keyList = importKeysText
-        .split("\n")
-        .map((k) => k.trim())
-        .filter((k) => k.length >= 6);
+    try {
+      await apiAction({
+        action: "importKeys",
+        rawKeys: [keyToAdd],
+        productId: stockModalProductId,
+        durationDays: singleKeyDuration,
+      });
+      notify(t(`تمت إضافة المفتاح (${keyToAdd}) إلى المخزون بنجاح!`, `Key added to stock successfully!`));
+      setSingleKeyText(generateRandomKeyCode());
+      setShowStockModal(false);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشلت إضافة المفتاح", "Failed to add key"), "error");
+    }
+  }
 
-      if (!keyList.length) {
-        notify(t("يرجى إدخال مفتاح واحد على الأقل", "Please enter at least one key"), "error");
-        return;
-      }
+  async function handleAddBulkKeys(e: FormEvent) {
+    e.preventDefault();
+    if (!stockModalProductId) return;
+    const keyList = bulkKeysText
+      .split("\n")
+      .map((k) => k.trim())
+      .filter((k) => k.length >= 5);
 
-      try {
-        const res = await apiAction({
-          action: "importKeys",
-          rawKeys: keyList,
-          productId: stockModalProductId,
-          durationDays: generateDuration,
-        });
-        notify(t(`تم استيراد ${res.importedCount} مفتاح جديد بنجاح!`, `Imported ${res.importedCount} keys successfully!`));
-        setImportKeysText("");
-        setShowStockModal(false);
-        await onRefresh();
-      } catch (err: any) {
-        notify(err.message, "error");
-      }
+    if (!keyList.length) {
+      notify(t("يرجى إدخال أو لصق مفتاح واحد على الأقل", "Please enter at least one key"), "error");
+      return;
+    }
+
+    try {
+      const res = await apiAction({
+        action: "importKeys",
+        rawKeys: keyList,
+        productId: stockModalProductId,
+        durationDays: bulkDuration,
+      });
+      notify(t(`تمت إضافة ${res.importedCount ?? keyList.length} مفاتيح دفعة واحدة إلى المخزون بنجاح!`, `Imported ${res.importedCount ?? keyList.length} keys in bulk!`));
+      setBulkKeysText("");
+      setShowStockModal(false);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشلت إضافة المفاتيح", "Failed to import keys"), "error");
+    }
+  }
+
+  async function handleGenerateBatchKeys(e: FormEvent) {
+    e.preventDefault();
+    if (!stockModalProductId) return;
+    try {
+      const res = await apiAction({
+        action: "generateKeys",
+        productId: stockModalProductId,
+        count: generateCount,
+        durationDays: generateDuration,
+      });
+      setNewlyGenerated(res.keys || []);
+      notify(t(`تم توليد ${res.count} مفتاح وإضافتها للمخزون بنجاح!`, `Generated ${res.count} keys to stock successfully!`));
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل توليد المفاتيح", "Failed to generate keys"), "error");
     }
   }
 
@@ -2032,14 +2081,32 @@ export function AdminControlSpace({
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    className="ref-btn-add-field-blue"
-                    onClick={() => openStockModal(editingProduct?.id)}
-                  >
-                    <Plus size={15} />
-                    <span>{t("تعبئة مفاتيح جديدة للمخزون", "Fill Stock Keys")}</span>
-                  </button>
+                  <div className="ref-stock-modal-triggers-row">
+                    <button
+                      type="button"
+                      className="ref-btn-add-field-blue"
+                      onClick={() => openStockModal(editingProduct?.id, "single")}
+                    >
+                      <Plus size={14} />
+                      <span>{t("إضافة مفتاح واحد", "Single Key")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="ref-btn-stock-trigger-secondary"
+                      onClick={() => openStockModal(editingProduct?.id, "bulk")}
+                    >
+                      <Package size={14} />
+                      <span>{t("إضافة دفعة مفاتيح", "Bulk Keys")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="ref-btn-stock-trigger-secondary"
+                      onClick={() => openStockModal(editingProduct?.id, "generate")}
+                    >
+                      <Flame size={14} />
+                      <span>{t("توليد تلقائي", "Auto Generate")}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="ref-product-keys-info-card">
@@ -2089,117 +2156,306 @@ export function AdminControlSpace({
         </div>
       )}
 
-      {/* STOCK FILLING MODAL */}
+      {/* STOCK FILLING MODAL (SINGLE KEY & BULK KEYS - LARGER & BETTER ORGANIZED) */}
       {showStockModal && (
         <div className="modal-backdrop" onClick={() => setShowStockModal(false)}>
-          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                <KeyRound size={20} />
-                <span>{t("تعبئة وتوليد مفاتيح المخزون", "Fill & Generate Stock Keys")}</span>
-              </h2>
-              <button className="modal-close" onClick={() => setShowStockModal(false)}>
-                <X size={19} />
+          <div className="modal-card ref-stock-modal-card" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="ref-stock-modal-header">
+              <div className="ref-stock-header-title-wrap">
+                <div className="ref-stock-icon-cube">
+                  <KeyRound size={22} />
+                </div>
+                <div>
+                  <h2 className="ref-stock-modal-title">{t("إدارة وتعبئة مخزون المفاتيح", "Stock Keys Management")}</h2>
+                  <p className="ref-stock-modal-subdesc">
+                    {t("إضافة مفتاح واحد، أو لصق قائمة مفاتيح دفعة واحدة، أو توليد كميات عشوائية تلقائياً.", "Add a single key, import multiple keys at once, or auto-generate bulk batches.")}
+                  </p>
+                </div>
+              </div>
+
+              <button className="ref-modal-close-icon" onClick={() => setShowStockModal(false)}>
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleFillStock} className="modal-form">
-              <div className="form-field">
-                <label>{t("المنتج المراد تعبئة مخزونه", "Target Product")} *</label>
+            {/* Target Product Selector Card */}
+            <div className="ref-stock-target-product-card">
+              <div className="ref-stock-target-info">
+                {selectedStockProduct?.image_url ? (
+                  <img src={selectedStockProduct.image_url} alt="" className="ref-stock-prod-thumb" />
+                ) : (
+                  <div className="ref-stock-prod-thumb-fallback"><Package size={20} /></div>
+                )}
+                <div className="ref-stock-prod-meta">
+                  <div className="ref-stock-prod-name-row">
+                    <strong>{selectedStockProduct?.name}</strong>
+                    <span className="ref-stock-cat-pill">{selectedStockProduct?.category || "General"}</span>
+                  </div>
+                  <div className="ref-stock-live-badge">
+                    <span className="hero-pulse-dot" />
+                    <span>{t("المخزون المتوفر الآن:", "Current Available Stock:")} <strong>{selectedStockProduct?.available_keys ?? 0} {t("مفتاح", "Keys")}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ref-stock-change-prod-select">
+                <label>{t("تغيير المنتج المستهدف:", "Target Product:")}</label>
                 <select
                   value={stockModalProductId}
                   onChange={(e) => setStockModalProductId(e.target.value)}
-                  required
                 >
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (المخزون الحالي: {p.available_keys ?? 0})
+                      {p.name} ({t("المخزون:", "Stock:")} {p.available_keys ?? 0})
                     </option>
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div className="mode-toggle-tabs">
-                <button
-                  type="button"
-                  className={`mode-tab ${stockMode === "generate" ? "active" : ""}`}
-                  onClick={() => setStockMode("generate")}
-                >
-                  {t("توليد مفاتيح عشوائية تلقائياً", "Auto Generate Keys")}
-                </button>
-                <button
-                  type="button"
-                  className={`mode-tab ${stockMode === "import" ? "active" : ""}`}
-                  onClick={() => setStockMode("import")}
-                >
-                  {t("استيراد ولصق مفاتيح يدوياً", "Import & Paste Keys")}
-                </button>
-              </div>
+            {/* 3 Clear Segmented Mode Tabs */}
+            <div className="ref-stock-mode-tabs-bar">
+              <button
+                type="button"
+                className={`ref-stock-tab-btn ${stockMode === "single" ? "active" : ""}`}
+                onClick={() => setStockMode("single")}
+              >
+                <KeyRound size={16} />
+                <span>{t("إضافة مفتاح واحد", "Single Key")}</span>
+              </button>
 
-              {stockMode === "generate" ? (
-                <div className="form-row-2">
-                  <div className="form-field">
-                    <label>{t("عدد المفاتيح المراد توليدها", "Key Count")}</label>
+              <button
+                type="button"
+                className={`ref-stock-tab-btn ${stockMode === "bulk" ? "active" : ""}`}
+                onClick={() => setStockMode("bulk")}
+              >
+                <Package size={16} />
+                <span>{t("إضافة مفاتيح دفعة واحدة", "Bulk Keys")}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`ref-stock-tab-btn ${stockMode === "generate" ? "active" : ""}`}
+                onClick={() => setStockMode("generate")}
+              >
+                <Flame size={16} />
+                <span>{t("توليد مفاتيح تلقائياً", "Auto Generate")}</span>
+              </button>
+            </div>
+
+            {/* TAB 1: SINGLE KEY (إضافة مفتاح واحد) */}
+            {stockMode === "single" && (
+              <form onSubmit={handleAddSingleKey} className="ref-stock-tab-body">
+                <div className="ref-stock-input-group">
+                  <div className="ref-label-row">
+                    <label>{t("كود المفتاح المراد إضافته للمخزون", "Key Code to Add")} *</label>
+                    <button
+                      type="button"
+                      className="ref-btn-dice-random"
+                      onClick={() => setSingleKeyText(generateRandomKeyCode())}
+                      title={t("توليد كود عشوائي جديد", "Generate new random code")}
+                    >
+                      <span>🎲</span>
+                      <span>{t("كود عشوائي جديد", "New Random Code")}</span>
+                    </button>
+                  </div>
+                  <div className="ref-single-key-input-wrap">
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={singleKeyText}
+                      onChange={(e) => setSingleKeyText(e.target.value)}
+                      placeholder="KEY-gZcMty-H9whoQ"
+                      className="ref-key-code-input"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="ref-stock-duration-group">
+                  <label>{t("مدة صلاحية هذا المفتاح", "Key Duration")}</label>
+                  <div className="ref-duration-pills-row">
+                    {[
+                      { days: 1, label: t("يوم واحد", "1 Day") },
+                      { days: 7, label: t("أسبوع (7 أيام)", "7 Days") },
+                      { days: 30, label: t("شهر (30 يوماً)", "30 Days") },
+                      { days: 90, label: t("3 أشهر (90 يوماً)", "90 Days") },
+                      { days: 3650, label: t("مدى الحياة", "Lifetime") },
+                    ].map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.days}
+                        className={`ref-duration-pill ${singleKeyDuration === opt.days ? "active" : ""}`}
+                        onClick={() => setSingleKeyDuration(opt.days)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ref-key-preview-card">
+                  <div className="ref-preview-row">
+                    <small>{t("المفتاح الأصلي المخزن في القاعدة:", "Original Key Stored:")}</small>
+                    <code dir="ltr">{singleKeyText || "KEY-XXXXXX-XXXXXX"}</code>
+                  </div>
+                  <div className="ref-preview-row">
+                    <small>{t("طريقة الظهور للعميل عند الاستعراض:", "Masked View:")}</small>
+                    <code dir="ltr">KEY-******-{singleKeyText.split("-").pop() || "XXXXXX"}</code>
+                  </div>
+                </div>
+
+                <div className="ref-stock-footer-actions">
+                  <button type="button" className="ref-btn-cancel-modal" onClick={() => setShowStockModal(false)}>
+                    {t("إلغاء", "Cancel")}
+                  </button>
+                  <button type="submit" className="ref-btn-primary-stock" disabled={busy || !singleKeyText.trim()}>
+                    {busy ? <LoaderCircle className="spin" size={16} /> : <Plus size={16} />}
+                    <span>{t("إضافة هذا المفتاح للمخزون الآن", "Add Key to Stock Now")}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 2: BULK KEYS (إضافة مفاتيح دفعة واحدة) */}
+            {stockMode === "bulk" && (
+              <form onSubmit={handleAddBulkKeys} className="ref-stock-tab-body">
+                <div className="ref-stock-input-group">
+                  <div className="ref-label-row">
+                    <label>{t("الصق قائمة المفاتيح (مفتاح في كل سطر)", "Paste Keys List (One per line)")} *</label>
+                    <span className={`ref-detected-counter ${bulkKeysDetectedCount > 0 ? "active" : ""}`}>
+                      {t(`تم اكتشاف ${bulkKeysDetectedCount} مفاتيح جاهزة للإضافة`, `${bulkKeysDetectedCount} keys detected`)}
+                    </span>
+                  </div>
+                  <textarea
+                    rows={7}
+                    dir="ltr"
+                    value={bulkKeysText}
+                    onChange={(e) => setBulkKeysText(e.target.value)}
+                    placeholder="KEY-gZcMty-H9whoQ&#10;KEY-7bK9aZ-M3pQ8w&#10;KEY-xY129p-Lk449a&#10;KEY-Qw881m-Zp002k"
+                    className="ref-bulk-keys-textarea"
+                    required
+                  />
+                </div>
+
+                <div className="ref-stock-duration-group">
+                  <label>{t("مدة صلاحية جميع هذه المفاتيح", "Duration for all pasted keys")}</label>
+                  <div className="ref-duration-pills-row">
+                    {[
+                      { days: 1, label: t("يوم واحد", "1 Day") },
+                      { days: 7, label: t("أسبوع (7 أيام)", "7 Days") },
+                      { days: 30, label: t("شهر (30 يوماً)", "30 Days") },
+                      { days: 90, label: t("3 أشهر (90 يوماً)", "90 Days") },
+                      { days: 3650, label: t("مدى الحياة", "Lifetime") },
+                    ].map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.days}
+                        className={`ref-duration-pill ${bulkDuration === opt.days ? "active" : ""}`}
+                        onClick={() => setBulkDuration(opt.days)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ref-stock-footer-actions">
+                  <button type="button" className="ref-btn-cancel-modal" onClick={() => setShowStockModal(false)}>
+                    {t("إلغاء", "Cancel")}
+                  </button>
+                  <button type="submit" className="ref-btn-primary-stock" disabled={busy || bulkKeysDetectedCount === 0}>
+                    {busy ? <LoaderCircle className="spin" size={16} /> : <Package size={16} />}
+                    <span>{t(`إضافة ${bulkKeysDetectedCount > 0 ? bulkKeysDetectedCount : ""} مفاتيح دفعة واحدة`, "Import Keys in Bulk")}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 3: AUTO GENERATE (توليد كميات عشوائية) */}
+            {stockMode === "generate" && (
+              <form onSubmit={handleGenerateBatchKeys} className="ref-stock-tab-body">
+                <div className="ref-generate-controls-row">
+                  <div className="ref-field-box">
+                    <label>{t("العدد المراد توليده تلقائياً", "Number of Keys to Generate")}</label>
+                    <div className="ref-quick-count-chips">
+                      {[10, 25, 50, 100, 200].map((num) => (
+                        <button
+                          type="button"
+                          key={num}
+                          className={`ref-count-chip ${generateCount === num ? "active" : ""}`}
+                          onClick={() => setGenerateCount(num)}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
                     <input
                       type="number"
                       min={1}
                       max={500}
                       value={generateCount}
                       onChange={(e) => setGenerateCount(Number(e.target.value))}
+                      className="ref-count-manual-input"
                     />
                   </div>
-                  <div className="form-field">
-                    <label>{t("صلاحية المفتاح (بالأيام)", "Duration (Days)")}</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={generateDuration}
-                      onChange={(e) => setGenerateDuration(Number(e.target.value))}
+
+                  <div className="ref-field-box">
+                    <label>{t("مدة صلاحية المفاتيح المولدّة", "Duration (Days)")}</label>
+                    <div className="ref-duration-pills-row">
+                      {[
+                        { days: 30, label: t("30 يوماً", "30 Days") },
+                        { days: 90, label: t("90 يوماً", "90 Days") },
+                        { days: 3650, label: t("مدى الحياة", "Lifetime") },
+                      ].map((opt) => (
+                        <button
+                          type="button"
+                          key={opt.days}
+                          className={`ref-duration-pill ${generateDuration === opt.days ? "active" : ""}`}
+                          onClick={() => setGenerateDuration(opt.days)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {newlyGenerated.length > 0 && (
+                  <div className="ref-newly-generated-box">
+                    <div className="ref-box-header">
+                      <span className="ref-green-text">
+                        <CheckCircle2 size={16} />
+                        <span>{t(`تم توليد ${newlyGenerated.length} مفتاحاً جديداً وإضافتها بنجاح:`, `Generated ${newlyGenerated.length} keys:`)}</span>
+                      </span>
+                      <button type="button" className="ref-btn-copy-all" onClick={handleCopyGeneratedKeys}>
+                        {copiedKeys ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{copiedKeys ? t("تم النسخ", "Copied") : t("نسخ جميع المفاتيح", "Copy All")}</span>
+                      </button>
+                    </div>
+                    <textarea
+                      rows={4}
+                      readOnly
+                      dir="ltr"
+                      value={newlyGenerated.join("\n")}
+                      className="ref-generated-textarea"
                     />
                   </div>
-                </div>
-              ) : (
-                <div className="form-field">
-                  <label>{t("الصق المفاتيح (مفتاح في كل سطر)", "Paste Keys (One per line)")} *</label>
-                  <textarea
-                    rows={6}
-                    dir="ltr"
-                    value={importKeysText}
-                    onChange={(e) => setImportKeysText(e.target.value)}
-                    placeholder="KEY-gZcMty-H9whoQ&#10;KEY-Abc123-XyZ999&#10;KEY-X77q9P-Lk889a"
-                  />
-                </div>
-              )}
+                )}
 
-              {newlyGenerated.length > 0 && (
-                <div className="generated-keys-preview-box">
-                  <div className="preview-top">
-                    <span>{t(`تم توليد ${newlyGenerated.length} مفتاح:`, `Generated ${newlyGenerated.length} keys:`)}</span>
-                    <button type="button" className="btn-copy-preview" onClick={handleCopyGeneratedKeys}>
-                      {copiedKeys ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedKeys ? t("تم النسخ", "Copied") : t("نسخ الكل", "Copy All")}</span>
-                    </button>
-                  </div>
-                  <textarea
-                    rows={4}
-                    readOnly
-                    dir="ltr"
-                    value={newlyGenerated.join("\n")}
-                    className="generated-keys-textarea"
-                  />
+                <div className="ref-stock-footer-actions">
+                  <button type="button" className="ref-btn-cancel-modal" onClick={() => setShowStockModal(false)}>
+                    {t("إغلاق", "Close")}
+                  </button>
+                  <button type="submit" className="ref-btn-primary-stock" disabled={busy || generateCount < 1}>
+                    {busy ? <LoaderCircle className="spin" size={16} /> : <Flame size={16} />}
+                    <span>{t(`توليد ${generateCount} مفاتيح وإضافتها للمخزون`, `Generate ${generateCount} Keys Now`)}</span>
+                  </button>
                 </div>
-              )}
+              </form>
+            )}
 
-              <div className="modal-actions">
-                <button type="button" className="secondary-button" onClick={() => setShowStockModal(false)}>
-                  {t("إغلاق", "Close")}
-                </button>
-                <button type="submit" className="primary-button" disabled={busy || !stockModalProductId}>
-                  {busy ? <LoaderCircle className="spin" size={16} /> : <KeyRound size={16} />}
-                  <span>{stockMode === "generate" ? t("توليد وإضافة للمخزون", "Generate & Add") : t("استيراد المفاتيح", "Import Keys")}</span>
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
