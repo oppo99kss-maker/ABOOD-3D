@@ -106,7 +106,7 @@ export function Portal({ user }: { user: PortalUser }) {
     allProducts: [],
     guides: [],
     settings: {
-      site_name: "SpooFX Control Space",
+      site_name: "SpooFX",
       description: "",
       maintenance_mode: false,
       maintenance_message: "",
@@ -132,7 +132,7 @@ export function Portal({ user }: { user: PortalUser }) {
         allProducts: json.allProducts || json.inventory || [],
         guides: json.guides || [],
         settings: json.settings || {
-          site_name: "SpooFX Control Space",
+          site_name: "SpooFX",
           description: "",
           maintenance_mode: false,
           maintenance_message: "",
@@ -469,8 +469,8 @@ export function Portal({ user }: { user: PortalUser }) {
                       return (
                         <>
                           <div className="alert-headline">
-                            <strong>{t("مرحباً بك في منصة SpooFX الرقمية", "Welcome to SpooFX Control Space")}</strong>
-                            <span className="alert-chip system">{t("إشعار العميل", "Member Alert")}</span>
+                            <strong>{t("مرحباً بك في منصة SpooFX", "Welcome to SpooFX")}</strong>
+                            <span className="alert-chip system">{t("إشعار النظام", "System Alert")}</span>
                           </div>
                           <p>
                             {t(
@@ -1205,7 +1205,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
         <footer className="portal-footer">
           <div className="footer-left">
-            <span>© {new Date().getFullYear()} SpooFX Control Space. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} SpooFX. All rights reserved.</span>
           </div>
           <div className="footer-right">
             <span>{t("بوابة التراخيص الرقمية وإدارة العملاء", "Digital Licensing & Customer Portal")}</span>

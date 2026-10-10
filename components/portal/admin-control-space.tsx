@@ -915,7 +915,7 @@ export function AdminControlSpace({
 
   // Platform & Store Settings State & Handlers (ضبط لوحة الإدارة والمتجر)
   const [settingsForm, setSettingsForm] = useState<SystemSettings>(initialSettings || {
-    site_name: "SpooFX Control Space",
+    site_name: "SpooFX",
     description: "بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص",
     maintenance_mode: false,
     maintenance_message: "الموقع تحت الصيانة الدورية حالياً وسيعود للعمل قريباً.",
@@ -2401,7 +2401,7 @@ export function AdminControlSpace({
               <div className="ref-toolbar-text-wrap">
                 <h3 className="ref-section-title">
                   <Settings size={20} />
-                  <span>{t("ضبط لوحة الإدارة وإعدادات المتجر", "Admin Space & Store Settings")}</span>
+                  <span>{t("ضبط لوحة التحكم وإعدادات المتجر", "Control Panel & Store Settings")}</span>
                 </h3>
                 <p className="ref-section-subtitle">
                   {t(

@@ -390,7 +390,7 @@ export async function ready() {
       );
       INSERT INTO system_settings (key, value)
       VALUES
-        ('site_name', '"SpooFX Control Space"'::jsonb),
+        ('site_name', '"SpooFX"'::jsonb),
         ('description', '"بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص"'::jsonb),
         ('maintenance_mode', 'false'::jsonb),
         ('maintenance_message', '""'::jsonb),
@@ -2222,7 +2222,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
   const settings: Record<string, unknown> = {};
   for (const r of rows) settings[r.key] = r.value;
   return {
-    site_name: (settings.site_name as string) || "SpooFX Control Space",
+    site_name: (settings.site_name as string) || "SpooFX",
     description: (settings.description as string) || "بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص",
     maintenance_mode: Boolean(settings.maintenance_mode),
     maintenance_message: (settings.maintenance_message as string) || "",
