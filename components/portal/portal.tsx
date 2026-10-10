@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ClipboardPaste,
+  Clock,
   Download,
   ExternalLink,
   FileText,
@@ -74,7 +75,6 @@ export function Portal({ user }: { user: PortalUser }) {
   const [activeTab, setTab] = useState<PortalTab>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [productStatusFilter, setProductStatusFilter] = useState<"all" | "active" | "expired">("all");
   const [key, setKey] = useState("");
   const [notice, setNotice] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -216,15 +216,23 @@ export function Portal({ user }: { user: PortalUser }) {
     admin: { title: t("الإدارة", "Admin Space"), desc: t("مركز إدارة النظام.", "System control space.") },
   };
 
-  const filteredProducts = useMemo(() => {
+  const activeProducts = useMemo(() => {
     return data.products.filter((p) => {
-      const matchesQuery = (p.name + (p.description || "") + (p.category || "")).toLowerCase().includes(query.toLowerCase());
       const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
-      if (productStatusFilter === "active") return matchesQuery && !isExpired;
-      if (productStatusFilter === "expired") return matchesQuery && isExpired;
-      return matchesQuery;
+      if (isExpired) return false;
+      if (!query.trim()) return true;
+      return (p.name + (p.description || "") + (p.category || "")).toLowerCase().includes(query.toLowerCase());
     });
-  }, [data.products, query, productStatusFilter]);
+  }, [data.products, query]);
+
+  const expiredProducts = useMemo(() => {
+    return data.products.filter((p) => {
+      const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
+      if (!isExpired) return false;
+      if (!query.trim()) return true;
+      return (p.name + (p.description || "") + (p.category || "")).toLowerCase().includes(query.toLowerCase());
+    });
+  }, [data.products, query]);
 
   const activeProductsCount = useMemo(() => {
     return data.products.filter((p) => !p.expires_at || new Date(p.expires_at) > new Date()).length;
@@ -430,59 +438,91 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* TAB 2: MY PRODUCTS */}
               {/* ==================================================== */}
               {activeTab === "my-products" && (
-                <section>
-                  <div className="panel section-toolbar">
-                    <div className="toolbar-left-side">
-                      <h2>
-                        {t("مكتبة المنتجات", "Product Library")}
-                        <span className="section-count">{data.products.length}</span>
-                      </h2>
-                    </div>
-
-                    <div className="toolbar-controls">
-                      {/* Filter Status Buttons */}
-                      <div className="filter-pill-group">
-                        <button
-                          className={`filter-pill ${productStatusFilter === "all" ? "active" : ""}`}
-                          onClick={() => setProductStatusFilter("all")}
-                        >
-                          {t("الكل", "All")} ({data.products.length})
-                        </button>
-                        <button
-                          className={`filter-pill ${productStatusFilter === "active" ? "active" : ""}`}
-                          onClick={() => setProductStatusFilter("active")}
-                        >
-                          {t("النشطة", "Active")} ({activeProductsCount})
-                        </button>
-                        <button
-                          className={`filter-pill ${productStatusFilter === "expired" ? "active" : ""}`}
-                          onClick={() => setProductStatusFilter("expired")}
-                        >
-                          {t("المنتهية", "Expired")} ({data.products.length - activeProductsCount})
-                        </button>
-                      </div>
-
-                      {/* Search */}
-                      <label className="search">
-                        <Search size={17} />
+                <div className="products-view-container">
+                  {/* Search Toolbar */}
+                  {data.products.length > 0 && (
+                    <div className="panel products-search-bar">
+                      <label className="search full-search">
+                        <Search size={16} />
                         <input
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
                           aria-label={t("ابحث في منتجاتك", "Search products")}
-                          placeholder={t("ابحث بالاسم أو الفئة…", "Search by name or category…")}
+                          placeholder={t("ابحث في منتجاتك بالاسم أو الفئة…", "Search products by name or category…")}
                         />
                       </label>
+                      {query && (
+                        <button className="text-button" onClick={() => setQuery("")}>
+                          {t("مسح", "Clear")}
+                        </button>
+                      )}
                     </div>
-                  </div>
+                  )}
 
-                  <ProductGrid
-                    products={filteredProducts}
-                    ar={ar}
-                    onRedeem={() => navigate("redeem")}
-                    onOpenDetails={(p) => setSelectedProductModal(p)}
-                    emptySearch={Boolean(query)}
-                  />
-                </section>
+                  {/* SECTION 1: منتجاتي النشطة */}
+                  <section className="product-category-section">
+                    <div className="category-section-header">
+                      <div className="category-header-title">
+                        <span className="category-badge active">
+                          <CheckCircle2 size={16} />
+                        </span>
+                        <h2>
+                          {t("منتجاتي النشطة", "My Active Products")}
+                          <span className="section-count active-count">{activeProducts.length}</span>
+                        </h2>
+                      </div>
+                      <p className="category-subtitle">
+                        {t("التراخيص الفعالة المتاحة للاستخدام المباشر.", "Active licenses available for immediate access.")}
+                      </p>
+                    </div>
+
+                    <ProductGrid
+                      products={activeProducts}
+                      ar={ar}
+                      onRedeem={() => navigate("redeem")}
+                      onOpenDetails={(p) => setSelectedProductModal(p)}
+                      emptySearch={Boolean(query)}
+                      customEmptyTitle={t("لا توجد منتجات نشطة حالياً", "No active products currently")}
+                      customEmptyDesc={t("أدخل مفتاح الترخيص لإضافة منتج نشط إلى حسابك.", "Enter a license key to activate a product.")}
+                    />
+                  </section>
+
+                  {/* SPACING & DIVIDER */}
+                  <div className="products-section-divider" />
+
+                  {/* SECTION 2: منتجاتي المنتهية (أسفل الصفحة) */}
+                  <section className="product-category-section expired-section">
+                    <div className="category-section-header">
+                      <div className="category-header-title">
+                        <span className="category-badge expired">
+                          <Clock size={16} />
+                        </span>
+                        <h2>
+                          {t("منتجاتي المنتهية", "My Expired Products")}
+                          <span className="section-count expired-count">{expiredProducts.length}</span>
+                        </h2>
+                      </div>
+                      <p className="category-subtitle">
+                        {t("تراخيص سابقة انتهت مدة صلاحيتها.", "Previous licenses that have expired.")}
+                      </p>
+                    </div>
+
+                    {expiredProducts.length > 0 ? (
+                      <ProductGrid
+                        products={expiredProducts}
+                        ar={ar}
+                        onRedeem={() => navigate("redeem")}
+                        onOpenDetails={(p) => setSelectedProductModal(p)}
+                        emptySearch={Boolean(query)}
+                      />
+                    ) : (
+                      <div className="panel empty-subtle-box">
+                        <Clock size={18} />
+                        <span>{t("لا توجد لديك تراخيص منتهية الصلاحية.", "You have no expired licenses.")}</span>
+                      </div>
+                    )}
+                  </section>
+                </div>
               )}
 
               {/* ==================================================== */}
@@ -841,12 +881,16 @@ function ProductGrid({
   onRedeem,
   onOpenDetails,
   emptySearch = false,
+  customEmptyTitle,
+  customEmptyDesc,
 }: {
   products: Product[];
   ar: boolean;
   onRedeem: () => void;
   onOpenDetails: (product: Product) => void;
   emptySearch?: boolean;
+  customEmptyTitle?: string;
+  customEmptyDesc?: string;
 }) {
   const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
 
@@ -859,12 +903,12 @@ function ProductGrid({
         <h3>
           {emptySearch
             ? t("لا توجد نتائج مطابقة", "No matching products found")
-            : t("مكتبتك فارغة", "Your library is empty")}
+            : customEmptyTitle || t("مكتبتك فارغة", "Your library is empty")}
         </h3>
         <p>
           {emptySearch
             ? t("جرّب البحث باسم آخر أو إزالة التصفية.", "Try searching for another name or clearing filters.")
-            : t("أدخل مفتاح الترخيص لإضافة المنتج إلى مكتبتك فوراً.", "Enter your license key to unlock your product right away.")}
+            : customEmptyDesc || t("أدخل مفتاح الترخيص لإضافة المنتج إلى مكتبتك فوراً.", "Enter your license key to unlock your product right away.")}
         </p>
         {!emptySearch && (
           <button className="primary-button empty-action" onClick={onRedeem}>

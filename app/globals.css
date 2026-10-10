@@ -1014,6 +1014,110 @@ svg {
   color: var(--text-muted);
 }
 
+/* Products View Category Sections */
+.products-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.products-search-bar {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search.full-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-category-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.category-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-header-title h2 {
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.category-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.category-badge.active {
+  background: rgba(52, 199, 138, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(52, 199, 138, 0.2);
+}
+
+.category-badge.expired {
+  background: rgba(244, 187, 102, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(244, 187, 102, 0.2);
+}
+
+.section-count.active-count {
+  background: rgba(52, 199, 138, 0.15);
+  color: var(--success);
+}
+
+.section-count.expired-count {
+  background: rgba(244, 187, 102, 0.15);
+  color: var(--warning);
+}
+
+.category-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  margin-inline-start: 42px;
+}
+
+.products-section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-primary), transparent);
+  margin: 14px 0;
+}
+
+.empty-subtle-box {
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-primary);
+  background: rgba(21, 27, 37, 0.35);
+}
+
 /* ==========================================================================
    REDEEM KEY VIEW
    ========================================================================== */
