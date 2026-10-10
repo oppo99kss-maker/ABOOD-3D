@@ -3,12 +3,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
+  AlertCircle,
   Globe2,
-  LogIn,
   LoaderCircle,
+  Lock,
+  LogIn,
   Moon,
   ShieldCheck,
   Sun,
+  Zap,
 } from "lucide-react";
 import { usePreferences } from "./use-preferences";
 import styles from "./login-page.module.css";
@@ -18,10 +21,12 @@ export function LoginPage() {
   const ar = lang === "ar";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("error"))
       setError("failed");
   }, []);
+
   async function connect() {
     if (busy) return;
     setBusy(true);
@@ -41,6 +46,7 @@ export function LoginPage() {
       setBusy(false);
     }
   }
+
   return (
     <div
       className={styles.page}
@@ -49,118 +55,169 @@ export function LoginPage() {
       lang={lang}
     >
       <div className={styles.ambient} aria-hidden="true" />
+
+      {/* Header Bar */}
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand} aria-label="SpooFX">
-            <img src="/brand.svg" width="42" height="42" alt="" />
-            <span dir="ltr">
-              Spoo<b className="gold">FX</b>
-              <small>{ar ? "بوابتك إلى حسابك" : "Your account portal"}</small>
-            </span>
+            <div className={styles.brandLogoWrap}>
+              <img src="/brand.svg" width={38} height={38} alt="SpooFX" />
+            </div>
+            <div className={styles.brandTextWrap}>
+              <strong className={styles.brandName} dir="ltr">
+                Spoo<span className={styles.brandAccent}>FX</span>
+              </strong>
+              <span className={styles.brandTagline}>
+                {ar ? "بوابتك إلى حسابك" : "Your Account Portal"}
+              </span>
+            </div>
           </Link>
+
           <div className={styles.tools}>
             <button
+              type="button"
               className={styles.control}
               onClick={() => setLang(ar ? "en" : "ar")}
               aria-label={ar ? "Switch to English" : "التبديل إلى العربية"}
             >
-              <Globe2 size={17} />
+              <Globe2 size={15} />
               <span>{ar ? "English" : "العربية"}</span>
             </button>
             <button
+              type="button"
               className={`${styles.control} ${styles.theme}`}
               onClick={toggleTheme}
               aria-label={ar ? "تبديل المظهر" : "Toggle theme"}
             >
-              {isDark ? <Sun size={19} /> : <Moon size={19} />}
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
           </div>
         </div>
       </header>
+
+      {/* Main Showcase & Login Card */}
       <main className={styles.content}>
+        {/* Hero Column */}
         <section className={styles.hero} aria-labelledby="login-title">
-          <span className={styles.badge}>
-            <i />
-            {ar ? "بوابة SpooFX" : "WELCOME TO SPOOFX"}
-          </span>
-          <h1 id="login-title">
+          <div className={styles.badge}>
+            <span className={styles.badgeDot} />
+            <span>{ar ? "بوابة SpooFX" : "WELCOME TO SPOOFX"}</span>
+          </div>
+
+          <h1 id="login-title" className={styles.heroTitle}>
             {ar ? (
               <>
-                حسابك <span>ومنتجاتك</span>
+                حسابك <span className={styles.cyanGlowText}>ومنتجاتك</span>
                 <br />
                 في مكان واحد
               </>
             ) : (
               <>
-                Your account. <span>Your products.</span>
+                Your Account. <span className={styles.cyanGlowText}>Your Products.</span>
                 <br />
-                All in one place.
+                All In One Place.
               </>
             )}
           </h1>
+
           <p className={styles.description}>
             {ar
-              ? "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك بسهولة من مكان واحد."
-              : "Sign in to access your account, products, and license keys in one place."}
+              ? "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك بسهولة وسرعة من مكان واحد."
+              : "Sign in to access your account, products, and digital license keys in one place."}
           </p>
+
+          <div className={styles.heroFeatures}>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIconWrap}>
+                <ShieldCheck size={16} />
+              </span>
+              <span>{ar ? "تسجيل دخول رسمي وآمن عبر Google" : "Official secure Google OAuth"}</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIconWrap}>
+                <Zap size={16} />
+              </span>
+              <span>{ar ? "وصول فوري لكافة التراخيص والمفاتيح" : "Instant license keys access"}</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.featureIconWrap}>
+                <Lock size={16} />
+              </span>
+              <span>{ar ? "حماية وتشفير متكامل للبيانات" : "Encrypted account security"}</span>
+            </div>
+          </div>
         </section>
+
+        {/* Login Card Column */}
         <section className={styles.card} aria-labelledby="sign-in-title">
           <div className={styles.cardLogo}>
-            <img src="/brand.svg" width="54" height="54" alt="" />
+            <img src="/brand.svg" width={48} height={48} alt="SpooFX" />
           </div>
-          <h2 id="sign-in-title">{ar ? "تسجيل الدخول" : "Welcome back"}</h2>
-          <p>
+
+          <h2 id="sign-in-title" className={styles.cardTitle}>
+            {ar ? "تسجيل الدخول" : "Welcome back"}
+          </h2>
+
+          <p className={styles.cardDesc}>
             {ar
               ? "سجّل دخولك للوصول إلى حسابك ومنتجاتك ومفاتيحك."
               : "Sign in to access your account, products, and license keys."}
           </p>
+
           <button
+            type="button"
             className={styles.primary}
             disabled={busy}
             aria-busy={busy}
             onClick={connect}
           >
             {busy ? (
-              <LoaderCircle size={20} className={styles.spinner} />
+              <LoaderCircle size={18} className={styles.spinner} />
             ) : (
-              <LogIn size={21} aria-hidden="true" />
+              <LogIn size={18} className={styles.loginBtnIcon} aria-hidden="true" />
             )}
             <span>
               {busy
-                ? ar
-                  ? "جارٍ تسجيل الدخول…"
-                  : "Signing in…"
-                : ar
-                  ? "تسجيل الدخول"
-                  : "Sign in"}
+                ? (ar ? "جارٍ تسجيل الدخول…" : "Signing in…")
+                : (ar ? "تسجيل الدخول" : "Sign in")}
             </span>
           </button>
+
           {error && (
-            <p className="auth-error" role="alert">
-              {error === "unavailable"
-                ? ar
-                  ? "تسجيل الدخول غير متاح حالياً حتى يكتمل إعداد قوقل للموقع."
-                  : "Sign-in is unavailable until Google is configured for this site."
-                : ar
-                  ? "تعذر تسجيل الدخول. حاول مرة أخرى."
-                  : "Unable to sign in. Please try again."}
-            </p>
+            <div className={`${styles.errorAlert} auth-error`} role="alert">
+              <AlertCircle size={15} className={styles.errorIcon} />
+              <span>
+                {error === "unavailable"
+                  ? (ar
+                      ? "تسجيل الدخول غير متاح حالياً حتى يكتمل إعداد Google للموقع."
+                      : "Sign-in is unavailable until Google is configured for this site.")
+                  : (ar
+                      ? "تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى."
+                      : "Unable to sign in. Please try again.")}
+              </span>
+            </div>
           )}
-          <span className="login-note">
-            <ShieldCheck size={13} />
-            {ar
-              ? "لا نطلب كلمة مرور حسابك"
-              : "We never ask for your Google password"}
-          </span>
+
+          {/* Neatly Spaced Security Note Without Overlapping */}
+          <div className={styles.securityNote}>
+            <ShieldCheck size={14} className={styles.securityIcon} />
+            <span>
+              {ar
+                ? "لا نطلب كلمة مرور حسابك"
+                : "We never ask for your Google password"}
+            </span>
+          </div>
         </section>
       </main>
+
+      {/* Footer Bar */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <p>
+          <p className={styles.copyrightText}>
             {ar ? "جميع الحقوق محفوظة" : "All rights reserved"}{" "}
             <span dir="ltr">© {new Date().getFullYear()} SpooFX</span>
           </p>
-          <span>
+          <span className={styles.taglineText}>
             {ar
               ? "حسابك ومنتجاتك ومفاتيحك، في مكان واحد."
               : "Your account, products, and keys in one place."}
