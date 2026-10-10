@@ -249,12 +249,11 @@ export async function ready() {
 
       -- Unmask any existing keys that have asterisks so they are completely clear and unmasked
       UPDATE licenses
-      SET masked_code = regexp_replace(masked_code, '\*+', substring(replace(id::text, '-', ''), 1, 6), 'g')
+      SET masked_code = 'KEY-' || upper(substring(replace(id::text, '-', ''), 1, 6)) || '-' || code_suffix
       WHERE masked_code LIKE '%*%';
       UPDATE licenses
-      SET raw_code = regexp_replace(raw_code, '\*+', substring(replace(id::text, '-', ''), 1, 6), 'g')
-      WHERE raw_code LIKE '%*%';
-      UPDATE licenses SET raw_code = masked_code WHERE raw_code IS NULL;
+      SET raw_code = 'KEY-' || upper(substring(replace(id::text, '-', ''), 1, 6)) || '-' || code_suffix
+      WHERE raw_code LIKE '%*%' OR raw_code IS NULL;
       UPDATE licenses SET masked_code = raw_code WHERE masked_code IS NULL;
 
       CREATE INDEX IF NOT EXISTS licenses_owner_idx ON licenses (redeemed_by);
@@ -1021,7 +1020,7 @@ export async function getProductInventory(productId: string) {
   await ready();
   const { rows } = await pool().query(
     `SELECT l.id, l.product_id, l.code_suffix,
-            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as masked_code,
             COALESCE(l.raw_code, l.masked_code) as raw_code,
             l.status, l.duration_days,
             l.batch_id, l.order_id, l.issued_to, l.redeemed_by, l.redeemed_at, l.expires_at,
@@ -1528,7 +1527,7 @@ export async function getCustomerDetails(identifier: string) {
   const licensesRes = await pool().query(
     `SELECT l.id, l.product_id, p.name AS product_name, p.image_url,
             l.code_suffix,
-            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as masked_code,
             COALESCE(l.raw_code, l.masked_code) as raw_code,
             l.status, l.duration_days,
             l.redeemed_at, l.expires_at,
@@ -1958,7 +1957,7 @@ export async function getKeyActivationLogs(limit = 100) {
   await ready();
   const { rows } = await pool().query(
     `SELECT l.id, l.code_suffix,
-            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as masked_code,
             COALESCE(l.raw_code, l.masked_code) as raw_code,
             l.status, l.duration_days, l.redeemed_by, l.redeemed_at, l.expires_at,
             p.name as product_name, p.name_en as product_name_en, p.category
