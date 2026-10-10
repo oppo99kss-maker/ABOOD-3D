@@ -14,7 +14,6 @@ import {
   Download,
   ExternalLink,
   FileText,
-  Globe2,
   HardDrive,
   HelpCircle,
   History,
@@ -517,27 +516,6 @@ export function Portal({ user }: { user: PortalUser }) {
               {activeTab !== "overview" && titles[activeTab].desc && (
                 <p>{titles[activeTab].desc}</p>
               )}
-            </div>
-
-            <div className="portal-top-controls">
-              <button
-                type="button"
-                className="top-ctrl-pill-btn"
-                onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-                title={t("تغيير اللغة", "Toggle Language")}
-              >
-                <Globe2 size={14} />
-                <span>{lang === "ar" ? "EN" : "عربي"}</span>
-              </button>
-
-              <button
-                type="button"
-                className="top-ctrl-pill-btn"
-                onClick={toggleTheme}
-                title={t("تغيير المظهر", "Toggle Theme")}
-              >
-                {isDark ? <Sun size={15} /> : <Moon size={15} />}
-              </button>
             </div>
           </div>
 
