@@ -42,13 +42,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAdmin(email: string) {
-  const admins = [process.env.ADMIN_EMAIL, process.env.ADMIN_EMAILS]
+  if (!email) return false;
+  const clean = email.toLowerCase().trim();
+  const admins = [
+    process.env.ADMIN_EMAIL,
+    process.env.ADMIN_EMAILS,
+    "yasemoh24@gmail.com",
+    "oppo.99.kss@gmail.com",
+  ]
     .filter(Boolean)
     .join(",")
     .split(",")
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);
-  return admins.includes(email.toLowerCase());
+  return admins.includes(clean);
 }
 
 async function currentUser() {
@@ -166,7 +173,19 @@ export async function POST(request: NextRequest) {
   if (!email) return json({ error: "UNAUTHORIZED" }, 401);
 
   const origin = request.headers.get("origin");
-  if (origin && origin !== request.nextUrl.origin) return json({ error: "FORBIDDEN" }, 403);
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const expectedOrigin = host ? `${proto}://${host}` : null;
+  const isAllowedOrigin =
+    !origin ||
+    origin === request.nextUrl.origin ||
+    origin === expectedOrigin ||
+    origin === process.env.NEXTAUTH_URL ||
+    origin.endsWith(".up.railway.app") ||
+    origin.includes("localhost") ||
+    origin.includes("127.0.0.1");
+
+  if (!isAllowedOrigin) return json({ error: "FORBIDDEN", message: "طلب غير مصرح به من هذا المصدر" }, 403);
 
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return json({ error: "INVALID_REQUEST" }, 415);
