@@ -207,11 +207,6 @@ export function LoginPage() {
               ? "سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل"
               : "SpooFX — Your premier destination with guaranteed & best products"}
           </p>
-          <span className={styles.taglineText}>
-            {ar
-              ? "تسليم ذاتي فوري وتراخيص رقمية معتمدة"
-              : "Instant self-delivery & verified digital licensing"}
-          </span>
         </div>
       </footer>
     </div>

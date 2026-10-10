@@ -1207,9 +1207,6 @@ export function Portal({ user }: { user: PortalUser }) {
           <div className="footer-left">
             <span>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</span>
           </div>
-          <div className="footer-right">
-            <span>{t("تسليم ذاتي فوري وتراخيص رقمية معتمدة", "Instant self-delivery & verified digital licensing")}</span>
-          </div>
         </footer>
       </>
     )}
