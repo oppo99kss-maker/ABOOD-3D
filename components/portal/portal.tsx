@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import {
+  ArrowLeft,
   ArrowUpLeft,
   Box,
   CheckCircle2,
@@ -548,39 +549,41 @@ export function Portal({ user }: { user: PortalUser }) {
                     <div className="ref-overview-primary-col">
                       {/* Hero Welcome Card */}
                       <section className="ref-hero-card">
-                        <div className="ref-hero-info">
-                          <div className="ref-hero-status-tag">
-                            <span className="ref-hero-pulse-dot" />
-                            <span>{t("حسابك متصل", "Account Connected")}</span>
+                        <div className="ref-hero-content-cluster">
+                          <div className="ref-hero-avatar-wrap">
+                            {user.image ? (
+                              <img
+                                src={user.image}
+                                alt={user.name}
+                                className="ref-hero-avatar-img"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <div className="ref-hero-avatar-fallback">
+                                {user.name ? user.name[0].toUpperCase() : "U"}
+                              </div>
+                            )}
                           </div>
-                          <h2>
-                            {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
-                          </h2>
-                          <p>
-                            {data.products.length > 0
-                              ? t(
-                                  `لديك ${data.products.length} منتجات مفعلة بحسابك.`,
-                                  `You have ${data.products.length} active products in your account.`
-                                )
-                              : t(
-                                  "مكتبتك الرقمية جاهزة. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
-                                  "Your digital library is ready. Enter your key to activate."
-                                )}
-                          </p>
-                        </div>
-                        <div className="ref-hero-avatar-wrap">
-                          {user.image ? (
-                            <img
-                              src={user.image}
-                              alt={user.name}
-                              className="ref-hero-avatar-img"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="ref-hero-avatar-fallback">
-                              {user.name ? user.name[0].toUpperCase() : "U"}
+                          <div className="ref-hero-info">
+                            <div className="ref-hero-status-tag">
+                              <span>{t("حسابك متصل", "Account Connected")}</span>
+                              <span className="ref-hero-pulse-dot" />
                             </div>
-                          )}
+                            <h2>
+                              {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
+                            </h2>
+                            <p>
+                              {data.products.length > 0
+                                ? t(
+                                    `لديك ${data.products.length} منتجات مفعلة بحسابك.`,
+                                    `You have ${data.products.length} active products in your account.`
+                                  )
+                                : t(
+                                    "مكتبتك الرقمية جاهزة. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
+                                    "Your digital library is ready. Enter your key to activate."
+                                  )}
+                            </p>
+                          </div>
                         </div>
                       </section>
 
@@ -596,16 +599,16 @@ export function Portal({ user }: { user: PortalUser }) {
                         </div>
 
                         {/* Card 2: Account Status */}
-                        <div className="ref-metric-card">
+                        <div className="ref-metric-card centered">
                           <div className="ref-metric-icon-wrap">
-                            <Clock size={18} />
+                            <CheckCircle2 size={18} />
                           </div>
                           <strong className="ref-metric-value">{t("فعال", "Active")}</strong>
                           <span className="ref-metric-label">{t("حالة الحساب", "Account Status")}</span>
                         </div>
 
                         {/* Card 3: Member Since */}
-                        <div className="ref-metric-card">
+                        <div className="ref-metric-card centered">
                           <div className="ref-metric-icon-wrap">
                             <Clock size={18} />
                           </div>
@@ -630,11 +633,11 @@ export function Portal({ user }: { user: PortalUser }) {
                           >
                             <div className="ref-action-lead">
                               <span className="ref-action-icon-pill">
-                                <Box size={16} />
+                                <Box size={18} />
                               </span>
                               <span className="ref-action-text">{t("منتجاتي", "My Products")}</span>
                             </div>
-                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
                           </button>
 
                           {/* 2. Activate Key */}
@@ -645,11 +648,11 @@ export function Portal({ user }: { user: PortalUser }) {
                           >
                             <div className="ref-action-lead">
                               <span className="ref-action-icon-pill">
-                                <KeyRound size={16} />
+                                <KeyRound size={18} />
                               </span>
                               <span className="ref-action-text">{t("تفعيل مفتاح", "Activate Key")}</span>
                             </div>
-                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
                           </button>
 
                           {/* 3. Store */}
@@ -661,11 +664,11 @@ export function Portal({ user }: { user: PortalUser }) {
                           >
                             <div className="ref-action-lead">
                               <span className="ref-action-icon-pill">
-                                <ShoppingBag size={16} />
+                                <ShoppingBag size={18} />
                               </span>
                               <span className="ref-action-text">{t("المتجر", "Store")}</span>
                             </div>
-                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
                           </a>
 
                           {/* 4. Help Center */}
@@ -676,11 +679,11 @@ export function Portal({ user }: { user: PortalUser }) {
                           >
                             <div className="ref-action-lead">
                               <span className="ref-action-icon-pill">
-                                <LifeBuoy size={16} />
+                                <HelpCircle size={18} />
                               </span>
                               <span className="ref-action-text">{t("مركز المساعدة", "Help Center")}</span>
                             </div>
-                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
                           </button>
                         </div>
                       </section>
