@@ -349,7 +349,7 @@ export function PortalNavigation({
               <div className={css.brandTitlesWrap}>
                 <strong className={css.brandMainTitle}>SpooFX</strong>
                 <span className={css.brandSubtitle}>
-                  {ar ? "بوابة المنتجات والدعم" : "Products & Support Portal"}
+                  {ar ? "تسليم ذاتي" : "Instant Delivery"}
                 </span>
               </div>
             )}
@@ -589,7 +589,7 @@ export function PortalNavigation({
           <div className={css.brandTitlesWrap}>
             <strong className={css.brandMainTitle}>SpooFX</strong>
             <span className={css.brandSubtitle}>
-              {ar ? "بوابة المنتجات والدعم" : "Products & Support"}
+              {ar ? "تسليم ذاتي" : "Instant Delivery"}
             </span>
           </div>
         </button>
@@ -641,7 +641,7 @@ export function PortalNavigation({
               <div className={css.brandTitlesWrap}>
                 <strong className={css.brandMainTitle}>SpooFX</strong>
                 <span className={css.brandSubtitle}>
-                  {ar ? "بوابة المنتجات والدعم" : "Products & Support Portal"}
+                  {ar ? "تسليم ذاتي" : "Instant Delivery"}
                 </span>
               </div>
               <button
