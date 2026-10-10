@@ -138,22 +138,18 @@ export function Portal({ user }: { user: PortalUser }) {
     void refresh();
   }, [refresh]);
 
+  // Keep navigation clean at the browser URL root without appending hashes or section names
   useEffect(() => {
-    const update = () => {
-      const tab = location.hash.slice(1) as PortalTab;
-      setTab(tabs.includes(tab) && (tab !== "admin" || data.isAdmin) ? tab : "overview");
-    };
-    update();
-    window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
-  }, [data.isAdmin]);
+    if (typeof window !== "undefined" && window.location.hash) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
 
   function navigate(tab: PortalTab) {
     if (tab === "admin" && !data.isAdmin) return;
     setTab(tab);
     setNotice(null);
     setQuery("");
-    location.hash = tab;
   }
 
   async function action(payload: Record<string, unknown>) {
@@ -247,29 +243,6 @@ export function Portal({ user }: { user: PortalUser }) {
     );
   }, [data.guides, guideSearch]);
 
-  // If Admin tab is selected and user is admin, render the full Control Space
-  if (activeTab === "admin" && data.isAdmin) {
-    return (
-      <div className="portal-shell admin-immersive-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
-        <AdminControlSpace
-          products={data.products}
-          inventory={data.inventory}
-          dashboardStats={data.dashboardStats}
-          orders={data.orders}
-          allGuides={data.allGuides}
-          settings={data.settings}
-          currentUser={data.currentUser || user.email}
-          lang={lang}
-          isDark={isDark}
-          onRefresh={refresh}
-          onExitAdmin={() => navigate("my-products")}
-          onToggleTheme={toggleTheme}
-          onToggleLanguage={() => setLang(ar ? "en" : "ar")}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
       <PortalNavigation
@@ -296,7 +269,25 @@ export function Portal({ user }: { user: PortalUser }) {
           </div>
         )}
 
-        <main className="portal-main">
+        {activeTab === "admin" && data.isAdmin ? (
+          <AdminControlSpace
+            products={data.products}
+            inventory={data.inventory}
+            dashboardStats={data.dashboardStats}
+            orders={data.orders}
+            allGuides={data.allGuides}
+            settings={data.settings}
+            currentUser={data.currentUser || user.email}
+            lang={lang}
+            isDark={isDark}
+            onRefresh={refresh}
+            onExitAdmin={() => navigate("overview")}
+            onToggleTheme={toggleTheme}
+            onToggleLanguage={() => setLang(ar ? "en" : "ar")}
+          />
+        ) : (
+          <>
+            <main className="portal-main">
           {/* Header */}
           <div className="page-heading">
             <div>
@@ -850,6 +841,8 @@ export function Portal({ user }: { user: PortalUser }) {
             <span>{t("بوابة التراخيص الرقمية وإدارة العملاء", "Digital Licensing & Customer Portal")}</span>
           </div>
         </footer>
+      </>
+    )}
       </div>
 
       {/* ==================================================== */}

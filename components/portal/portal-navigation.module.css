@@ -1,5 +1,8 @@
 /* ==========================================================================
-   SIDEBAR NAVIGATION - MATCHING EXACT REFERENCE IMAGE
+   SPOOFX LUXURY DARK PREMIUM SIDEBAR NAVIGATION
+   Tokens:
+   Background: #080B12 | Sidebar: #0C101A | Cards: #101623 | Borders: #243247
+   Text White: #EEF4FF | Text Muted: #A5B4C9 | Cyan: #5FD5FF | Blue: #7695FF
    ========================================================================== */
 
 .sidebar {
@@ -12,29 +15,32 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: #0A0F17;
-  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0C101A;
+  border-inline-end: 1px solid #243247;
   box-sizing: border-box;
   padding: 16px 12px 14px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   scrollbar-width: none;
-  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              max-width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar::-webkit-scrollbar {
   display: none;
 }
 
+/* Collapsed Width: 76px */
 .sidebar.collapsed {
-  width: 74px;
-  min-width: 74px;
-  max-width: 74px;
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
   padding: 16px 8px 14px;
 }
 
 /* ==========================================================================
-   TOP HEADER (BRAND & COLLAPSE BUTTON)
+   TOP HEADER (BRAND & SMOOTH COLLAPSE BUTTON)
    ========================================================================== */
 
 .sidebarTopHeader {
@@ -43,8 +49,9 @@
   justify-content: space-between;
   gap: 8px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(36, 50, 71, 0.7);
+  margin-bottom: 12px;
+  position: relative;
 }
 
 .sidebarBrandBtn {
@@ -58,6 +65,17 @@
   text-align: start;
   flex: 1;
   min-width: 0;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.sidebar.collapsed .sidebarBrandBtn {
+  justify-content: center;
+}
+
+.sidebarBrandBtn:hover .brandLogoFrame {
+  border-color: rgba(95, 213, 255, 0.4);
+  box-shadow: 0 0 14px rgba(95, 213, 255, 0.2);
 }
 
 .brandLogoFrame {
@@ -65,13 +83,14 @@
   width: 38px;
   height: 38px;
   flex: none;
-  border-radius: 9px;
-  background: #111A26;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: #101623;
+  border: 1px solid #243247;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .brandTitlesWrap {
@@ -84,14 +103,14 @@
 .brandMainTitle {
   font-size: 15px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #EEF4FF;
   line-height: 1.1;
   letter-spacing: -0.2px;
 }
 
 .brandSubtitle {
   font-size: 10.5px;
-  color: #64748B;
+  color: #A5B4C9;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -106,41 +125,47 @@
   flex: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
+  border: 1px solid #243247;
+  color: #A5B4C9;
   cursor: pointer;
+  position: relative;
   transition: all 0.15s ease;
 }
 
 .collapseSidebarToggle:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(95, 213, 255, 0.08);
+  color: #5FD5FF;
+  border-color: rgba(95, 213, 255, 0.35);
+}
+
+.collapseSidebarToggle:active {
+  transform: scale(0.94);
 }
 
 /* ==========================================================================
-   NAVIGATION SECTIONS (MATCHING IMAGE)
+   NAVIGATION SECTIONS
    ========================================================================== */
 
 .navSectionsContainer {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   flex: 1;
 }
 
 .navSectionGroup {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .sectionHeaderTitle {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748B;
-  padding: 12px 10px 5px;
-  letter-spacing: 0.2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6C7D93;
+  padding: 8px 10px 4px;
+  letter-spacing: 0.5px;
 }
 
 .sectionItemsList {
@@ -160,12 +185,12 @@
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #94A3B8;
+  color: #A5B4C9;
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
   box-sizing: border-box;
   text-align: start;
 }
@@ -177,19 +202,37 @@
 
 .navItemBtn:hover {
   background: rgba(255, 255, 255, 0.035);
-  color: #F1F5F9;
+  color: #EEF4FF;
+  border-color: rgba(36, 50, 71, 0.5);
 }
 
-/* Active State: Teal/Cyan Rounded Outline matching reference screenshot */
+.navItemBtn:active {
+  transform: scale(0.98);
+}
+
+/* Active State: Dark cyan background, luminous border, glowing side bar */
 .navItemBtn[data-active="true"] {
-  border: 1px solid rgba(13, 148, 136, 0.55);
-  background: rgba(13, 148, 136, 0.1);
-  color: #F8FAFC;
+  border: 1px solid rgba(95, 213, 255, 0.35);
+  background: rgba(95, 213, 255, 0.08);
+  color: #EEF4FF;
   font-weight: 600;
+  box-shadow: 0 0 16px rgba(95, 213, 255, 0.08);
+}
+
+.navItemBtn[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 4px;
+  background: #5FD5FF;
+  box-shadow: 0 0 10px rgba(95, 213, 255, 0.7);
 }
 
 .navItemBtn[data-active="true"] .itemIconWrap {
-  color: #2DD4BF;
+  color: #5FD5FF;
 }
 
 .itemIconWrap {
@@ -214,47 +257,95 @@
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 5px;
-  background: #111A24;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
+  background: #101623;
+  border: 1px solid #243247;
+  color: #A5B4C9;
   margin-inline-start: auto;
 }
 
 .navItemBtn[data-active="true"] .countBadgePill {
-  background: rgba(13, 148, 136, 0.22);
-  border-color: rgba(13, 148, 136, 0.45);
-  color: #2DD4BF;
+  background: rgba(95, 213, 255, 0.15);
+  border-color: rgba(95, 213, 255, 0.4);
+  color: #5FD5FF;
 }
 
 .activeChevron {
   margin-inline-start: auto;
-  color: #2DD4BF;
+  color: #5FD5FF;
   flex: none;
 }
 
 .externalArrow {
   margin-inline-start: auto;
-  color: #64748B;
+  color: #6C7D93;
   flex: none;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .navItemBtn:hover .externalArrow {
-  color: #38BDF8;
+  color: #5FD5FF;
   transform: translate(-1px, -1px);
 }
 
 /* ==========================================================================
-   FOOTER SECTION (USER PROFILE CARD & LOGOUT)
+   FLOATING TOOLTIPS WHEN SIDEBAR IS COLLAPSED (76px)
+   ========================================================================== */
+
+.collapsedTooltip {
+  position: absolute;
+  inset-inline-start: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.94);
+  background: #101623;
+  color: #EEF4FF;
+  border: 1px solid #243247;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+  z-index: 120;
+}
+
+.collapsedTooltip::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: -5px;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #101623;
+  border-inline-start: 1px solid #243247;
+  border-bottom: 1px solid #243247;
+}
+
+.sidebar.collapsed .navItemBtn:hover .collapsedTooltip,
+.sidebar.collapsed .sidebarBrandBtn:hover .collapsedTooltip,
+.sidebar.collapsed .collapseSidebarToggle:hover .collapsedTooltip,
+.sidebar.collapsed .userProfileRow:hover .collapsedTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1);
+}
+
+/* ==========================================================================
+   FOOTER AREA (USER PROFILE CARD & ACCOUNT POPOVER)
    ========================================================================== */
 
 .sidebarFooterBlock {
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(36, 50, 71, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  position: relative;
 }
 
 .userProfileRow {
@@ -264,12 +355,13 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #101623;
+  border: 1px solid #243247;
   cursor: pointer;
   text-align: start;
   transition: all 0.15s ease;
   box-sizing: border-box;
+  position: relative;
 }
 
 .sidebar.collapsed .userProfileRow {
@@ -277,9 +369,11 @@
   padding: 6px;
 }
 
-.userProfileRow:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+.userProfileRow:hover,
+.userProfileRowActive {
+  background: #151E30;
+  border-color: rgba(95, 213, 255, 0.35);
+  box-shadow: 0 0 16px rgba(95, 213, 255, 0.08);
 }
 
 .userAvatarImgWrap {
@@ -306,9 +400,9 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #38BDF8;
+  background: linear-gradient(135deg, #1A2436, #101623);
+  border: 1px solid #243247;
+  color: #5FD5FF;
   font-weight: 700;
   font-size: 13px;
 }
@@ -324,7 +418,7 @@
 .userDisplayName {
   font-size: 13px;
   font-weight: 600;
-  color: #F8FAFC;
+  color: #EEF4FF;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -335,26 +429,169 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: #64748B;
+  color: #A5B4C9;
 }
 
 .greenPulseDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10B981;
-  box-shadow: 0 0 6px #10B981;
+  background: #34D399;
+  box-shadow: 0 0 6px #34D399;
   display: inline-block;
   flex: none;
 }
 
 .userChevron {
   margin-inline-start: auto;
-  color: #64748B;
+  color: #A5B4C9;
   flex: none;
 }
 
-/* Logout Button */
+/* ==========================================================================
+   LUXURY ACCOUNT POPOVER MENU (CLICK TO OPEN)
+   ========================================================================== */
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.accountPopover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  inset-inline-start: 0;
+  width: 100%;
+  background: #101623;
+  border: 1px solid #243247;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+  z-index: 120;
+  animation: popoverIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.sidebar.collapsed .accountPopover {
+  bottom: 8px;
+  inset-inline-start: calc(100% + 12px);
+  width: 230px;
+}
+
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 10px;
+}
+
+.popoverAvatarWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: none;
+}
+
+.popoverAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.popoverAvatarFallback {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #1A2436;
+  border: 1px solid #243247;
+  color: #5FD5FF;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.popoverUserMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.popoverUserName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #EEF4FF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popoverUserEmail {
+  font-size: 11px;
+  color: #A5B4C9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popoverDivider {
+  height: 1px;
+  background: #243247;
+  margin: 6px 0;
+}
+
+.popoverActionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popoverItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #EEF4FF;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: start;
+}
+
+.popoverItemBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #5FD5FF;
+}
+
+.popoverLogoutBtn {
+  color: #F87171;
+}
+
+.popoverLogoutBtn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: #F87171;
+}
+
+/* ==========================================================================
+   QUICK LOGOUT & TOOL CONTROLS
+   ========================================================================== */
+
 .logoutButtonRow {
   display: flex;
   align-items: center;
@@ -363,7 +600,7 @@
   width: 100%;
   height: 36px;
   border-radius: 8px;
-  color: #94A3B8;
+  color: #A5B4C9;
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
@@ -373,41 +610,45 @@
 }
 
 .logoutButtonRow:hover {
-  color: #EF4444;
-  background: rgba(239, 68, 68, 0.08);
+  color: #F87171;
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
-/* Language and Theme Pill Controls */
+.logoutButtonRow:active {
+  transform: scale(0.97);
+}
+
 .compactToolsRow {
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .toolPillBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   flex: 1;
   height: 30px;
   padding: 0 8px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: #64748B;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #A5B4C9;
+  background: #101623;
+  border: 1px solid #243247;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toolPillBtn:hover {
-  color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: #EEF4FF;
+  background: #151E30;
+  border-color: rgba(95, 213, 255, 0.35);
 }
 
 .toolIconBtn {
@@ -417,21 +658,21 @@
   height: 30px;
   flex: none;
   border-radius: 6px;
-  color: #64748B;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #A5B4C9;
+  background: #101623;
+  border: 1px solid #243247;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toolIconBtn:hover {
-  color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: #EEF4FF;
+  background: #151E30;
+  border-color: rgba(95, 213, 255, 0.35);
 }
 
 /* ==========================================================================
-   MOBILE BAR (< 900px) & DRAWER
+   MOBILE BAR (< 900px) & SLIDEOUT DRAWER
    ========================================================================== */
 
 @media (min-width: 900px) {
@@ -451,8 +692,8 @@
     justify-content: space-between;
     height: 56px;
     padding: 0 16px;
-    background: #0A0F17;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: #0C101A;
+    border-bottom: 1px solid #243247;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -470,10 +711,16 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #F8FAFC;
+    background: #101623;
+    border: 1px solid #243247;
+    color: #EEF4FF;
     cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .mobileMenuToggle:hover {
+    background: #151E30;
+    border-color: rgba(95, 213, 255, 0.35);
   }
 }
 
@@ -481,8 +728,14 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(2, 6, 12, 0.75);
+  background: rgba(8, 11, 18, 0.8);
   backdrop-filter: blur(8px);
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .drawer {
@@ -491,17 +744,40 @@
   display: flex;
   flex-direction: column;
   padding: 18px 14px;
-  background: #0A0F17;
-  box-shadow: 0 0 45px rgba(0, 0, 0, 0.8);
-  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0C101A;
+  box-shadow: 0 0 45px rgba(0, 0, 0, 0.85);
+  border-inline-end: 1px solid #243247;
   box-sizing: border-box;
+  animation: drawerSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerSlide {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+:global([dir="ltr"]) .drawer {
+  animation-name: drawerSlideLtr;
+}
+
+@keyframes drawerSlideLtr {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .drawerTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #243247;
   padding-bottom: 14px;
 }
 
@@ -511,15 +787,17 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
+  background: #101623;
+  border: 1px solid #243247;
+  color: #A5B4C9;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .drawerCloseBtn:hover {
-  color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.07);
+  color: #EEF4FF;
+  background: #151E30;
+  border-color: rgba(95, 213, 255, 0.35);
 }
 
 .drawerBody {
@@ -533,7 +811,7 @@
 .drawerFooter {
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid #243247;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -547,9 +825,9 @@
   width: 100%;
   height: 38px;
   border-radius: 8px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #EF4444;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #F87171;
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -557,6 +835,23 @@
 }
 
 .drawerLogoutBtn:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(248, 113, 113, 0.16);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .navItemBtn,
+  .userProfileRow,
+  .accountPopover,
+  .overlay,
+  .drawer,
+  .collapsedTooltip {
+    transition: none !important;
+    animation: none !important;
+  }
 }

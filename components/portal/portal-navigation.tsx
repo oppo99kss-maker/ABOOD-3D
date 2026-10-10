@@ -63,10 +63,15 @@ export function PortalNavigation({
 }: Props) {
   const ar = lang === "ar";
   const [collapsed, setCollapsed] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const userCardRef = useRef<HTMLButtonElement>(null);
 
+  // Four clean groups specified by user: عام, الدعم, الحساب, الإدارة
   const sections: {
     title: { ar: string; en: string };
     items: {
@@ -100,7 +105,7 @@ export function PortalNavigation({
       ],
     },
     {
-      title: { ar: "المساعدة", en: "Help" },
+      title: { ar: "الدعم", en: "Support" },
       items: [
         {
           tab: "tickets",
@@ -141,6 +146,7 @@ export function PortalNavigation({
       : []),
   ];
 
+  // Mobile drawer keyboard & scroll lock
   useEffect(() => {
     if (!mobileOpen) return;
     const previousOverflow = document.body.style.overflow;
@@ -184,9 +190,36 @@ export function PortalNavigation({
     };
   }, [mobileOpen, onMobileChange]);
 
+  // Click-outside and Escape listener for the Account Popover
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(e.target as Node) &&
+        userCardRef.current &&
+        !userCardRef.current.contains(e.target as Node)
+      ) {
+        setAccountMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountMenuOpen]);
+
   const navigate = (tab: PortalTab) => {
     onNavigate(tab);
     onMobileChange(false);
+    setAccountMenuOpen(false);
   };
 
   const ArrowIcon = ar ? ChevronLeft : ChevronRight;
@@ -214,7 +247,7 @@ export function PortalNavigation({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={css.navItemBtn}
-                    title={label}
+                    aria-label={label}
                   >
                     <div className={css.itemIconWrap}>
                       <Icon size={18} strokeWidth={1.8} />
@@ -222,6 +255,11 @@ export function PortalNavigation({
                     {!collapsed && <span className={css.itemLabel}>{label}</span>}
                     {!collapsed && (
                       <ArrowUpRight size={14} className={css.externalArrow} />
+                    )}
+                    {collapsed && (
+                      <span className={css.collapsedTooltip}>
+                        {label} ↗
+                      </span>
                     )}
                   </a>
                 );
@@ -236,7 +274,6 @@ export function PortalNavigation({
                   aria-current={isActive ? "page" : undefined}
                   className={css.navItemBtn}
                   data-active={isActive}
-                  title={label}
                   onClick={() => item.tab && navigate(item.tab)}
                 >
                   <div className={css.itemIconWrap}>
@@ -248,6 +285,12 @@ export function PortalNavigation({
                   )}
                   {!collapsed && isActive && (
                     <ArrowIcon size={14} className={css.activeChevron} />
+                  )}
+                  {collapsed && (
+                    <span className={css.collapsedTooltip}>
+                      {label}
+                      {item.count !== undefined ? ` (${item.count})` : ""}
+                    </span>
                   )}
                 </button>
               );
@@ -261,13 +304,13 @@ export function PortalNavigation({
   return (
     <>
       {/* ==================================================== */}
-      {/* 1. DESKTOP SIDEBAR (مطابق تماماً للصورة المرفقة) */}
+      {/* 1. DESKTOP SIDEBAR (Dark Premium: 260px / 76px) */}
       {/* ==================================================== */}
       <aside
         className={`${css.sidebar} ${collapsed ? css.collapsed : ""}`}
         aria-label={ar ? "القائمة الجانبية" : "Sidebar Navigation"}
       >
-        {/* Top Header matching reference image: Brand + Toggle button */}
+        {/* Top Header: Brand + Smooth Collapse Toggle */}
         <div className={css.sidebarTopHeader}>
           <button
             type="button"
@@ -286,29 +329,45 @@ export function PortalNavigation({
                 </span>
               </div>
             )}
+            {collapsed && (
+              <span className={css.collapsedTooltip}>
+                SpooFX {ar ? "الرئيسية" : "Home"}
+              </span>
+            )}
           </button>
 
           <button
             type="button"
             className={css.collapseSidebarToggle}
             onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? (ar ? "توسيع القائمة" : "Expand") : (ar ? "تصغير القائمة" : "Collapse")}
+            aria-label={collapsed ? (ar ? "توسيع القائمة" : "Expand") : (ar ? "تصغير القائمة" : "Collapse")}
           >
-            <PanelRightClose size={17} className={ar ? "" : "rotate-180"} />
+            <PanelRightClose
+              size={17}
+              className={ar ? (collapsed ? "rotate-180" : "") : (collapsed ? "" : "rotate-180")}
+            />
+            {collapsed && (
+              <span className={css.collapsedTooltip}>
+                {ar ? "توسيع القائمة" : "Expand"}
+              </span>
+            )}
           </button>
         </div>
 
         {/* Navigation Sections */}
         {renderNavList()}
 
-        {/* Footer Area matching reference image: User Card + Logout */}
+        {/* Footer Area: Luxury Account Card + Popover */}
         <div className={css.sidebarFooterBlock}>
-          {/* User Profile Card */}
+          {/* User Account Card Button */}
           <button
+            ref={userCardRef}
             type="button"
-            className={css.userProfileRow}
-            onClick={() => navigate("profile")}
-            title={ar ? "الملف الشخصي" : "Profile"}
+            className={`${css.userProfileRow} ${accountMenuOpen ? css.userProfileRowActive : ""}`}
+            onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={accountMenuOpen}
+            aria-label={ar ? "حساب المستخدم والإعدادات" : "User Account & Settings"}
           >
             <div className={css.userAvatarImgWrap}>
               {user.image ? (
@@ -339,20 +398,118 @@ export function PortalNavigation({
                 <ArrowIcon size={14} className={css.userChevron} />
               </>
             )}
+
+            {collapsed && (
+              <span className={css.collapsedTooltip}>
+                {user.name} ({ar ? "الإعدادات والحساب" : "Account & Settings"})
+              </span>
+            )}
           </button>
 
-          {/* Logout Row */}
-          <button
-            type="button"
-            className={css.logoutButtonRow}
-            onClick={onLogout}
-            title={ar ? "تسجيل الخروج" : "Sign out"}
-          >
-            <LogOut size={16} />
-            {!collapsed && <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>}
-          </button>
+          {/* Luxury Account Popover Menu */}
+          {accountMenuOpen && (
+            <div
+              ref={accountMenuRef}
+              className={css.accountPopover}
+              role="menu"
+              aria-label={ar ? "قائمة الحساب" : "Account Menu"}
+            >
+              <div className={css.popoverHeader}>
+                <div className={css.popoverAvatarWrap}>
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt={user.name}
+                      className={css.popoverAvatar}
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className={css.popoverAvatarFallback}>
+                      {user.name ? user.name[0].toUpperCase() : "U"}
+                    </div>
+                  )}
+                </div>
+                <div className={css.popoverUserMeta}>
+                  <strong className={css.popoverUserName}>{user.name}</strong>
+                  <span className={css.popoverUserEmail}>
+                    {user.email || (ar ? "حساب موثق" : "Verified Account")}
+                  </span>
+                </div>
+              </div>
 
-          {/* Compact Quick Language & Theme Controls */}
+              <div className={css.popoverDivider} />
+
+              <div className={css.popoverActionsList}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={css.popoverItemBtn}
+                  onClick={() => navigate("profile")}
+                >
+                  <UserRound size={16} />
+                  <span>{ar ? "الملف الشخصي" : "Profile"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={css.popoverItemBtn}
+                  onClick={onToggleTheme}
+                >
+                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                  <span>
+                    {isDark
+                      ? ar
+                        ? "الوضع المضيء"
+                        : "Light Mode"
+                      : ar
+                        ? "الوضع الداكن"
+                        : "Dark Mode"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={css.popoverItemBtn}
+                  onClick={onToggleLanguage}
+                >
+                  <Globe2 size={16} />
+                  <span>{ar ? "English" : "العربية"}</span>
+                </button>
+
+                <div className={css.popoverDivider} />
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={`${css.popoverItemBtn} ${css.popoverLogoutBtn}`}
+                  onClick={() => {
+                    setAccountMenuOpen(false);
+                    onLogout();
+                  }}
+                >
+                  <LogOut size={16} />
+                  <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Sign Out row when sidebar is expanded */}
+          {!collapsed && (
+            <button
+              type="button"
+              className={css.logoutButtonRow}
+              onClick={onLogout}
+              title={ar ? "تسجيل الخروج" : "Sign out"}
+            >
+              <LogOut size={16} />
+              <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>
+            </button>
+          )}
+
+          {/* Compact Quick Language & Theme Controls when expanded */}
           {!collapsed && (
             <div className={css.compactToolsRow}>
               <button

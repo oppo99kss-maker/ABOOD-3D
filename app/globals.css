@@ -6,34 +6,36 @@
 }
 
 :root {
-  --bg: #090B10;
-  --bg-secondary: #10141C;
-  --surface: #151B25;
-  --surface-hover: #1D2633;
+  --bg: #080B12;
+  --bg-sidebar: #0C101A;
+  --bg-secondary: #0C101A;
+  --surface: #101623;
+  --surface-hover: #151E30;
 
-  --border: #293344;
-  --border-hover: #40516A;
+  --border: #243247;
+  --border-hover: #354968;
 
-  --text: #F8FAFC;
-  --text-secondary: #A2ADBF;
-  --text-muted: #758297;
+  --text: #EEF4FF;
+  --text-secondary: #A5B4C9;
+  --text-muted: #6C7D93;
 
-  --accent: #6BA9FF;
-  --accent-hover: #4B91F5;
-  --accent-soft: rgba(107, 169, 255, 0.10);
+  --accent: #5FD5FF;
+  --accent-secondary: #7695FF;
+  --accent-hover: #38C7FA;
+  --accent-soft: rgba(95, 213, 255, 0.08);
 
-  --success: #34C78A;
-  --error: #F26B75;
-  --warning: #F4BB66;
-  --info: #6BA9FF;
+  --success: #34D399;
+  --error: #F87171;
+  --warning: #FBBF24;
+  --info: #5FD5FF;
 
-  /* Aliases for maximum compatibility */
+  /* Aliases for maximum compatibility across all components */
   --background-primary: var(--bg);
   --background-secondary: var(--bg-secondary);
-  --background-tertiary: #161C26;
+  --background-tertiary: #101623;
 
   --surface-primary: var(--surface);
-  --surface-secondary: var(--bg-secondary);
+  --surface-secondary: #101623;
 
   --text-primary: var(--text);
 
@@ -51,7 +53,7 @@
   --luxe-muted: var(--text-secondary);
   --luxe-line: var(--border);
   --luxe-accent: var(--accent);
-  --luxe-accent-line: rgba(107, 169, 255, 0.35);
+  --luxe-accent-line: rgba(95, 213, 255, 0.35);
   --luxe-hover: var(--accent-soft);
   --luxe-soft: var(--bg-secondary);
   --gold: var(--accent);
@@ -162,6 +164,125 @@ svg {
 @keyframes spoo-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   SPOOFX LUXURY MOTION & MICRO-INTERACTIONS
+   ========================================================================== */
+
+/* 1. Fade & Slide in for tabs and dynamic views */
+@keyframes spooFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-main,
+.admin-reference-container,
+.overview-grid,
+.products-grid,
+.redeem-grid,
+.tickets-grid,
+.profile-grid,
+.admin-ref-section {
+  animation: spooFadeSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. Hover Lift on cards */
+.panel,
+.card,
+.stat,
+.ref-kpi-card,
+.ref-product-card,
+.product-card,
+.guide-card,
+.ticket-card,
+.overview-column .panel {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.panel:hover,
+.card:hover,
+.ref-kpi-card:hover,
+.ref-product-card:hover,
+.product-card:hover,
+.guide-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  border-color: rgba(95, 213, 255, 0.25);
+}
+
+/* 3. Scale & Fade on modal dialogs */
+@keyframes spooModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-card,
+.dialog-content,
+.product-modal-card {
+  animation: spooModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 4. Skeleton Shimmer Loading */
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton,
+.skeleton-box,
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #101623 25%, #192338 50%, #101623 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* 5. Button Press Feedback */
+button:active:not(:disabled),
+a.button:active,
+.btn-action:active,
+.secondary-button:active,
+.btn-secondary:active,
+.primary-button:active,
+.btn-primary:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+/* 6. Active pulse for glowing status elements */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 3px #5FD5FF);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #5FD5FF);
+  }
+}
+
+/* 7. Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
