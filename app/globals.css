@@ -6522,10 +6522,10 @@ a.button:active,
   border-color: #38BDF8;
 }
 
-/* 3 Segmented Mode Tabs */
+/* 2 Segmented Mode Tabs (Manual Stock Filling) */
 .ref-stock-mode-tabs-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 6px;
   background: #0E131E;

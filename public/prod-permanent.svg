@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240">
+  <defs>
+    <linearGradient id="bg-grad-perm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#080C14"/>
+      <stop offset="50%" stop-color="#0D1424"/>
+      <stop offset="100%" stop-color="#070A10"/>
+    </linearGradient>
+    <linearGradient id="cyan-glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5FD5FF"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <filter id="glow-p" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="400" height="240" rx="16" fill="url(#bg-grad-perm)" stroke="#243247" stroke-width="2"/>
+  <circle cx="200" cy="110" r="70" fill="#5FD5FF" fill-opacity="0.05" filter="url(#glow-p)"/>
+  
+  <!-- Shield Outline -->
+  <path d="M200 48 L248 70 V115 C248 145 228 170 200 180 C172 170 152 145 152 115 V70 Z" 
+        fill="#101623" stroke="url(#cyan-glow)" stroke-width="3.5" stroke-linejoin="round" filter="url(#glow-p)"/>
+  
+  <!-- Permanent Infinity Symbol inside Shield -->
+  <path d="M182 115 C172 105 162 105 162 115 C162 125 172 125 182 115 L218 115 C228 105 238 105 238 115 C238 125 228 125 218 115 Z" 
+        fill="none" stroke="#5FD5FF" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Subtitle -->
+  <text x="200" y="210" text-anchor="middle" fill="#EEF4FF" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="1">PERMANENT SPOOFER</text>
+</svg>

@@ -404,6 +404,109 @@ export async function ready() {
     } catch (e) {
       console.error("Auto-attach Spoofx.rar failed:", e);
     }
+
+    // 11. Seed the 3 core products if less than 3 products exist
+    try {
+      const { rows: prodCountRows } = await p.query("SELECT count(*)::int as count FROM products WHERE is_archived = false");
+      const currentCount = prodCountRows[0]?.count || 0;
+      if (currentCount < 3) {
+        const coreProducts = [
+          {
+            id: "spoo-prod-permanent-01",
+            name: "سبوفر دائم SpooFX Permanent",
+            name_en: "SpooFX Permanent Spoofer",
+            description: "سبوفر دائم لتغيير معرّفات الهاردوير (HWID) وتخطي الحظر نهائياً مع دعم كامل لجميع اللوحات الأم وتحديثات الألعاب الحديثة.",
+            category: "Spoofers",
+            access_url: "/api/download",
+            image_url: "/prod-permanent.svg",
+            default_duration_days: 3650,
+            instructions: JSON.stringify({
+              sku: "prod-perm-01",
+              version: "v4.2.0",
+              fileSize: "95.7 MB",
+              sortOrder: 1,
+              stockType: "digital_keys",
+              customFields: [
+                { id: "cf_video", name: "رابط الشرح / فيديو", key: "videoUrl", type: "TEXT", value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing" },
+                { id: "cf_guide", name: "رابط دليل الاستخدام", key: "guideUrl", type: "TEXT", value: "/portal" },
+                { id: "cf_file", name: "رابط تحميل الملف", key: "fileUrl", type: "TEXT", value: "/api/download" }
+              ]
+            })
+          },
+          {
+            id: "spoo-prod-temp-02",
+            name: "سبوفر مؤقت SpooFX Temporary",
+            name_en: "SpooFX Temp Spoofer",
+            description: "سبوفر مؤقت بنقرة واحدة لتشغيل آمن وحماية الهاردوير بدون فورمات أو تعديل في الـ BIOS، متوافق مع كافة الألعاب التنافسية.",
+            category: "Spoofers",
+            access_url: "/api/download",
+            image_url: "/prod-temp.svg",
+            default_duration_days: 30,
+            instructions: JSON.stringify({
+              sku: "prod-temp-02",
+              version: "v3.8.0",
+              fileSize: "95.7 MB",
+              sortOrder: 2,
+              stockType: "digital_keys",
+              customFields: [
+                { id: "cf_video", name: "رابط الشرح / فيديو", key: "videoUrl", type: "TEXT", value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing" },
+                { id: "cf_guide", name: "رابط دليل الاستخدام", key: "guideUrl", type: "TEXT", value: "/portal" },
+                { id: "cf_file", name: "رابط تحميل الملف", key: "fileUrl", type: "TEXT", value: "/api/download" }
+              ]
+            })
+          },
+          {
+            id: "spoo-prod-cleaner-03",
+            name: "منظف وتخطي SpooFX Cleaner & TPM",
+            name_en: "SpooFX Cleaner & TPM Bypass",
+            description: "أداة تنظيف عميقة للآثار وسجلات الألعاب مع تخطي حماية TPM 2.0 وSecure Boot لضمان عمل السبوفر دون أي تعارض أو اكتشاف.",
+            category: "Tools",
+            access_url: "/api/download",
+            image_url: "/prod-cleaner.svg",
+            default_duration_days: 30,
+            instructions: JSON.stringify({
+              sku: "prod-clean-03",
+              version: "v2.5.0",
+              fileSize: "95.7 MB",
+              sortOrder: 3,
+              stockType: "digital_keys",
+              customFields: [
+                { id: "cf_video", name: "رابط الشرح / فيديو", key: "videoUrl", type: "TEXT", value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing" },
+                { id: "cf_guide", name: "رابط دليل الاستخدام", key: "guideUrl", type: "TEXT", value: "/portal" },
+                { id: "cf_file", name: "رابط تحميل الملف", key: "fileUrl", type: "TEXT", value: "/api/download" }
+              ]
+            })
+          }
+        ];
+
+        for (const item of coreProducts) {
+          const exists = await p.query("SELECT id FROM products WHERE name = $1 OR id = $2", [item.name, item.id]);
+          if (!exists.rowCount) {
+            await p.query(
+              `INSERT INTO products (
+                 id, name, name_en, description, category, access_url, image_url,
+                 instructions, default_duration_days, is_visible, is_active, files
+               )
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, true, $10)`,
+              [
+                item.id,
+                item.name,
+                item.name_en,
+                item.description,
+                item.category,
+                item.access_url,
+                item.image_url,
+                item.instructions,
+                item.default_duration_days,
+                JSON.stringify([defaultSpoofxFile]),
+              ]
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Seeding 3 core products failed:", e);
+    }
   })().catch((error) => {
     globalStore.spooSchema = undefined;
     throw error;
@@ -594,7 +697,7 @@ export async function createProduct(input: {
       id,
       input.name.trim(),
       input.nameEn?.trim() || null,
-      input.description.trim(),
+      (input.description || "").trim(),
       input.category?.trim() || "General",
       input.accessUrl || null,
       input.imageUrl || null,
@@ -662,7 +765,7 @@ export async function updateProduct(input: {
       input.id,
       input.name.trim(),
       input.nameEn?.trim() || null,
-      input.description.trim(),
+      (input.description || "").trim(),
       input.category?.trim() || "General",
       input.accessUrl || null,
       input.imageUrl || null,
