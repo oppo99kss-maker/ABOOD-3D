@@ -1746,6 +1746,39 @@ export async function suspendLicense(licenseId: string, actorEmail: string) {
   return rows[0];
 }
 
+export async function toggleSuspendKey(licenseId: string, actorEmail = "SYSTEM") {
+  await ready();
+  const { rows } = await pool().query(
+    "SELECT id, status, order_id, product_id FROM licenses WHERE id = $1",
+    [licenseId]
+  );
+  if (!rows[0]) return { success: false, notFound: true };
+
+  const currentStatus = rows[0].status;
+  const isRevoked = currentStatus === "REVOKED" || currentStatus === "BLOCKED" || currentStatus === "DISABLED";
+  const newStatus = isRevoked ? (rows[0].order_id ? "ACTIVE" : "AVAILABLE") : "REVOKED";
+
+  await pool().query(
+    "UPDATE licenses SET status = $1 WHERE id = $2",
+    [newStatus, licenseId]
+  );
+
+  await logAudit({
+    category: "INVENTORY",
+    action: newStatus === "REVOKED" ? "KEY_SUSPENDED" : "KEY_REACTIVATED",
+    actor_email: actorEmail,
+    target_type: "license",
+    target_id: licenseId,
+    details: {
+      productId: rows[0].product_id,
+      oldStatus: currentStatus,
+      newStatus,
+    },
+  });
+
+  return { success: true, newStatus };
+}
+
 // ==========================================
 // ORDERS & FULFILLMENT
 // ==========================================

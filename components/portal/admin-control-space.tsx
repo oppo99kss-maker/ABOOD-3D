@@ -23,6 +23,7 @@ import {
   KeyRound,
   Layers,
   LoaderCircle,
+  Lock,
   Mail,
   Package,
   Plus,
@@ -37,6 +38,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sliders,
+  Sparkles,
   Square,
   Trash2,
   Upload,
@@ -1072,13 +1074,30 @@ export function AdminControlSpace({
   const [productInventoryKeys, setProductInventoryKeys] = useState<any[]>([]);
   const [loadingProductKeys, setLoadingProductKeys] = useState(false);
   const [productKeysSearch, setProductKeysSearch] = useState("");
-  const [productKeysFilter, setProductKeysFilter] = useState<"ALL" | "AVAILABLE" | "ISSUED">("ALL");
+  const [productKeysFilter, setProductKeysFilter] = useState<
+    "ALL" | "AVAILABLE" | "PENDING" | "ACTIVE" | "EXPIRED" | "BLOCKED"
+  >("ALL");
+  const [keysSort, setKeysSort] = useState<"newest" | "oldest" | "code">("newest");
+  const [keysPage, setKeysPage] = useState(1);
+  const [keysPerPage, setKeysPerPage] = useState(20);
+  const [revealedKeyIds, setRevealedKeyIds] = useState<Record<string, boolean>>({});
   const [sallaKeysInput, setSallaKeysInput] = useState("");
   const [sallaDuration, setSallaDuration] = useState(3);
   const [showSingleKeyInline, setShowSingleKeyInline] = useState(false);
   const [singleInlineKey, setSingleInlineKey] = useState("");
   const [singleInlineDuration, setSingleInlineDuration] = useState(3);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  function toggleKeyReveal(id: string) {
+    setRevealedKeyIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  const detectedKeysCount = useMemo(() => {
+    return sallaKeysInput
+      .split("\n")
+      .map((k) => k.trim())
+      .filter((k) => k.length >= 3).length;
+  }, [sallaKeysInput]);
 
   const fetchProductKeys = useCallback(async (productId: string) => {
     if (!productId) return;
@@ -1103,17 +1122,76 @@ export function AdminControlSpace({
   }, [showProductModal, productModalTab, editingProduct?.id, fetchProductKeys]);
 
   const filteredProductKeys = useMemo(() => {
-    return productInventoryKeys.filter((k) => {
-      if (productKeysFilter !== "ALL" && k.status !== productKeysFilter) return false;
-      if (productKeysSearch.trim()) {
-        const q = productKeysSearch.toLowerCase();
-        const code = (k.raw_code || k.masked_code || k.code_suffix || "").toLowerCase();
-        const batch = (k.batch_id || "").toLowerCase();
-        return code.includes(q) || batch.includes(q);
+    return productInventoryKeys
+      .filter((k) => {
+        if (productKeysFilter !== "ALL") {
+          const s = String(k.status || "").toUpperCase();
+          if (productKeysFilter === "AVAILABLE" && s !== "AVAILABLE") return false;
+          if (productKeysFilter === "PENDING" && s !== "PENDING" && s !== "WAITING") return false;
+          if (productKeysFilter === "ACTIVE" && s !== "ACTIVE" && s !== "ISSUED" && s !== "USED") return false;
+          if (productKeysFilter === "EXPIRED" && s !== "EXPIRED") return false;
+          if (
+            productKeysFilter === "BLOCKED" &&
+            s !== "BLOCKED" &&
+            s !== "SUSPENDED" &&
+            s !== "REVOKED" &&
+            s !== "DISABLED"
+          )
+            return false;
+        }
+        if (productKeysSearch.trim()) {
+          const q = productKeysSearch.toLowerCase();
+          const code = (k.raw_code || k.masked_code || k.code_suffix || k.code || "").toLowerCase();
+          const batch = (k.batch_id || "").toLowerCase();
+          const order = (k.order_id || k.order_number || "").toLowerCase();
+          const cust = (k.customer_name || k.customer_email || k.issued_to || "").toLowerCase();
+          const status = (k.status || "").toLowerCase();
+          return (
+            code.includes(q) ||
+            batch.includes(q) ||
+            order.includes(q) ||
+            cust.includes(q) ||
+            status.includes(q)
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (keysSort === "newest") {
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        }
+        if (keysSort === "oldest") {
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+        }
+        if (keysSort === "code") {
+          return (a.raw_code || a.masked_code || "").localeCompare(b.raw_code || b.masked_code || "");
+        }
+        return 0;
+      });
+  }, [productInventoryKeys, productKeysFilter, productKeysSearch, keysSort]);
+
+  const totalKeysPages = Math.max(1, Math.ceil(filteredProductKeys.length / keysPerPage));
+  const paginatedProductKeys = useMemo(() => {
+    const start = (keysPage - 1) * keysPerPage;
+    return filteredProductKeys.slice(start, start + keysPerPage);
+  }, [filteredProductKeys, keysPage, keysPerPage]);
+
+  async function handleToggleSuspendKey(keyId: string) {
+    try {
+      const res = await apiAction({ action: "toggleSuspendKey", keyId });
+      notify(
+        res?.newStatus === "REVOKED"
+          ? t("تم تعطيل المفتاح بنجاح", "Key suspended successfully")
+          : t("تم تنشيط المفتاح بنجاح", "Key reactivated successfully")
+      );
+      if (editingProduct?.id) {
+        await fetchProductKeys(editingProduct.id);
       }
-      return true;
-    });
-  }, [productInventoryKeys, productKeysFilter, productKeysSearch]);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل تحديث حالة المفتاح", "Failed to update key status"), "error");
+    }
+  }
 
   async function handleInsertSallaKeys() {
     if (!editingProduct?.id) return;
@@ -1551,22 +1629,26 @@ export function AdminControlSpace({
       <main className="admin-ref-main-view">
         {/* ==================================================== */}
         {/* ==================================================== */}
-        {/* VIEW 1: المنتجات والمخزون (Matching Image 3 & Image 1 buttons) */}
+        {/* VIEW 1: المنتجات والمخزون (Matching Image 2 Exactly) */}
         {/* ==================================================== */}
         {activeSection === "products" && (
           <div className="ref-view-section">
-            <div className="ref-section-toolbar">
+            {/* Header matching Image 2 */}
+            <div className="ref-products-header-clean">
               <div className="ref-toolbar-text-wrap">
                 <h3 className="ref-section-title">
                   <Package size={20} />
-                  <span>{t("إدارة المنتجات والمخزون المتاح", "Products & Stock Management")}</span>
+                  <span>{t("منتجات المتجر والمخزون المتاح", "Store Products & Available Stock")}</span>
                 </h3>
                 <p className="ref-section-subtitle">
-                  {t("تحكم فوري في المنتجات، تعديلها، حذفها، وتعبئة مفاتيحها.", "Instant control over products, editing, deletion, and stock keys.")}
+                  {t(
+                    "انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه",
+                    "Click on any product to open, edit, and fill its keys"
+                  )}
                 </p>
               </div>
 
-              <div className="ref-toolbar-actions">
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {selectedProductIds.length > 0 && (
                   <button
                     type="button"
@@ -1578,139 +1660,76 @@ export function AdminControlSpace({
                     <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
                   </button>
                 )}
-                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
+                <button className="ref-btn-add-prod-blue" onClick={openAddProduct}>
                   <Plus size={16} />
                   <span>{t("إضافة منتج جديد", "Add New Product")}</span>
                 </button>
               </div>
             </div>
 
-            {/* 3-Column Product Cards Grid (Matching Images 1 & 3) */}
-            <div className="ref-products-grid">
+            {/* 3-Column Product Cards Grid Matching Image 2 */}
+            <div className="ref-products-grid-3col">
               {filteredProducts.map((p) => {
                 const stockCount = Number(p.available_keys || 0);
-                const isSelected = selectedProductIds.includes(p.id);
                 return (
-                  <div className={`ref-product-card ${isSelected ? "selected" : ""}`} key={p.id}>
-                    {/* Media / 16:9 Banner */}
-                    <div className="ref-card-media-banner">
+                  <div className="ref-prod-card-exact" key={p.id}>
+                    {/* 16:9 Banner with Top-Right Stock Pill */}
+                    <div className="ref-prod-card-banner">
                       {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} className="ref-card-img" />
+                        <img src={p.image_url} alt={p.name} />
                       ) : (
                         <div className="ref-card-img-placeholder">
                           <Package size={48} />
                         </div>
                       )}
-
-                      {/* Top-Right: Selection Checkbox */}
-                      <button
-                        type="button"
-                        className={`ref-card-corner-checkbox ${isSelected ? "checked" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSelectProduct(p.id);
-                        }}
-                        title={isSelected ? t("إلغاء التحديد", "Deselect") : t("تحديد", "Select")}
-                      >
-                        {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
-                      </button>
-
-                      {/* Top-Left: Visibility Pill Button */}
-                      <button
-                        type="button"
-                        className={`ref-card-corner-visibility-badge ${p.is_visible !== false ? "visible" : "hidden"}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleToggleVisibility(p);
-                        }}
-                        title={p.is_visible !== false ? t("انقر لإخفاء المنتج عن المتجر", "Click to hide") : t("انقر لإظهار المنتج في المتجر", "Click to show")}
-                      >
-                        {p.is_visible !== false ? (
-                          <>
-                            <Eye size={12} />
-                            <span>{t("ظاهر", "Visible")}</span>
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff size={12} />
-                            <span>{t("مخفي", "Hidden")}</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Corner Stock Badge: Clickable to jump straight into keys management */}
-                      <button
-                        type="button"
-                        className="ref-card-corner-stock-badge"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditProduct(p, "keys");
-                        }}
-                        title={t("عرض وإدارة مخزون ومفاتيح هذا المنتج", "View & manage keys for this product")}
-                      >
-                        <span className="hero-pulse-dot" />
-                        <span>{t(`المخزون المتاح: ${stockCount}`, `Stock: ${stockCount}`)}</span>
-                      </button>
+                      <div className="ref-prod-card-stock-pill">
+                        {t(`المخزون المتاح: ${stockCount}`, `Available Stock: ${stockCount}`)}
+                      </div>
                     </div>
 
-                    {/* Card Body */}
-                    <div className="ref-card-body">
-                      <div className="ref-card-header-row">
-                        <div className="ref-card-icon-cube">
+                    {/* Card Content Body */}
+                    <div className="ref-prod-card-content">
+                      <div className="ref-prod-card-title-row">
+                        <div className="ref-prod-card-icon-box">
                           <Package size={18} />
                         </div>
-                        <div className="ref-card-title-group">
-                          <h4 className="ref-card-product-name">{p.name}</h4>
-                        </div>
+                        <h4>{p.name}</h4>
                       </div>
 
-                      <p className="ref-card-desc">
-                        {p.description || t("أداة متخصصة ومجهزة بأحدث الحلول البرمجية.", "Dedicated specialized product tool.")}
+                      <div className="ref-prod-card-badge-row">
+                        <span className="ref-prod-card-cat-badge">{p.category || "Utility"}</span>
+                        <span className="ref-prod-card-cat-badge">{(p as any).version || "VIP v4.1.0"}</span>
+                      </div>
+
+                      <p className="ref-prod-card-description">
+                        {p.description ||
+                          t(
+                            "أداة متخصصة ومجهزة بأحدث الحلول البرمجية الفعالة والحماية القصوى لتوفير أفضل تجربة تشغيل مستقرة وآمنة.",
+                            "Dedicated specialized tool with high security and stability."
+                          )}
                       </p>
                     </div>
 
-                    {/* Card Bottom Actions */}
-                    <div className="ref-card-footer-actions">
+                    {/* Exactly 2 Wide Action Buttons Side-by-Side (Image 2) */}
+                    <div className="ref-prod-card-actions-2btn">
                       <button
-                        className="ref-btn-primary-action"
-                        onClick={() => openStockModal(p.id)}
-                        title={t("إضافة وتعبئة مفاتيح", "Fill Stock")}
+                        type="button"
+                        className="ref-btn-card-blue"
+                        onClick={() => openEditProduct(p, "keys")}
+                        title={t("إضافة وتعبئة مفاتيح", "Add Keys")}
                       >
                         <KeyRound size={15} />
                         <span>{t("إضافة مفاتيح", "Add Keys")}</span>
                       </button>
 
                       <button
-                        className="ref-btn-secondary-action"
-                        onClick={() => openEditProduct(p)}
+                        type="button"
+                        className="ref-btn-card-dark"
+                        onClick={() => openEditProduct(p, "details")}
                         title={t("تعديل المنتج", "Edit Product")}
                       >
                         <Sliders size={15} />
                         <span>{t("تعديل المنتج", "Edit Product")}</span>
-                      </button>
-
-                      <button
-                        className="ref-btn-icon-action"
-                        onClick={() => void handleDuplicateProduct(p)}
-                        title={t("استنساخ هذا المنتج", "Duplicate product")}
-                      >
-                        <CopyPlus size={15} />
-                      </button>
-
-                      <button
-                        className="ref-btn-icon-action"
-                        onClick={() => void handleToggleVisibility(p)}
-                        title={p.is_visible !== false ? t("إخفاء عن العملاء", "Hide from customers") : t("إظهار للعملاء", "Show to customers")}
-                      >
-                        {p.is_visible !== false ? <EyeOff size={15} /> : <Eye size={15} />}
-                      </button>
-
-                      <button
-                        className="ref-btn-danger-icon-action"
-                        onClick={() => handleDeleteProduct(p)}
-                        title={t("حذف المنتج نهائياً", "Delete permanently")}
-                      >
-                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -2818,23 +2837,26 @@ export function AdminControlSpace({
       {showProductModal && (
         <div className="modal-backdrop" onClick={() => setShowProductModal(false)}>
           <div className="modal-card ref-product-edit-modal-card" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header with 3 Tabs (Images 2 & 3) */}
+            {/* Modal Header with 3 Tabs (Images 1 & 3: Keys tab first) */}
             <div className="ref-edit-modal-tabs-header">
               <div className="ref-modal-tabs-cluster">
-                {/* Tab 1: بيانات المنتج */}
+                {/* Tab 1: الأكواد المتاحة */}
                 <button
                   type="button"
-                  className={`ref-modal-tab-pill ${productModalTab === "details" ? "active-blue" : ""}`}
-                  onClick={() => setProductModalTab("details")}
+                  className={`ref-modal-tab-pill ${productModalTab === "keys" ? "active-blue" : ""}`}
+                  onClick={() => setProductModalTab("keys")}
                 >
-                  <FileText size={15} />
-                  <span>{t("بيانات المنتج", "Product Data")}</span>
+                  <KeyRound size={15} />
+                  <span>{t("الأكواد المتاحة", "Available Codes")}</span>
+                  <span className="ref-tab-counter-badge">
+                    {productInventoryKeys.length || editingProduct?.available_keys || 0}
+                  </span>
                 </button>
 
                 {/* Tab 2: الحقول المخصصة */}
                 <button
                   type="button"
-                  className={`ref-modal-tab-pill ${productModalTab === "custom_fields" ? "active-cyan" : ""}`}
+                  className={`ref-modal-tab-pill ${productModalTab === "custom_fields" ? "active-blue" : ""}`}
                   onClick={() => setProductModalTab("custom_fields")}
                 >
                   <Layers size={15} />
@@ -2842,15 +2864,14 @@ export function AdminControlSpace({
                   <span className="ref-tab-counter-badge">{productForm.customFields.length}</span>
                 </button>
 
-                {/* Tab 3: الأكواد المتاحة */}
+                {/* Tab 3: بيانات المنتج */}
                 <button
                   type="button"
-                  className={`ref-modal-tab-pill ${productModalTab === "keys" ? "active-cyan" : ""}`}
-                  onClick={() => setProductModalTab("keys")}
+                  className={`ref-modal-tab-pill ${productModalTab === "details" ? "active-blue" : ""}`}
+                  onClick={() => setProductModalTab("details")}
                 >
-                  <KeyRound size={15} />
-                  <span>{t("الأكواد المتاحة", "Available Codes")}</span>
-                  <span className="ref-tab-counter-badge">{editingProduct?.available_keys ?? 372}</span>
+                  <FileText size={15} />
+                  <span>{t("بيانات المنتج", "Product Data")}</span>
                 </button>
               </div>
 
@@ -3078,384 +3099,372 @@ export function AdminControlSpace({
               </div>
             )}
 
-            {/* TAB 3: الأكواد والمفاتيح (Matching Screenshot media_1791638322700_294b52b2.png) */}
+            {/* TAB 1 (or Keys Tab): الأكواد المتاحة (Matching Image 1 Exactly) */}
             {productModalTab === "keys" && (
-              <div className="ref-edit-tab-content">
-                {/* 1. Header with Stats & Fast Actions */}
-                <div className="ref-custom-fields-top-bar">
-                  <div className="ref-tab-section-heading">
-                    <KeyRound size={18} />
-                    <span>
-                      {t("الأكواد والمفاتيح المتاحة لهذا المنتج", "Available Codes & Keys for this Product")}
-                    </span>
-                    <span className="ref-stock-counter-pill">
-                      {productInventoryKeys.filter((k) => k.status === "AVAILABLE").length || editingProduct?.available_keys || 0} {t("متاح للبيع", "Available")}
-                    </span>
-                  </div>
-
-                  <div className="ref-stock-modal-triggers-row">
-                    <button
-                      type="button"
-                      className="ref-btn-stock-trigger-secondary"
-                      onClick={() => openStockModal(editingProduct?.id, "bulk")}
-                      title={t("تعبئة وإضافة مفاتيح للمخزون", "Add Keys to Stock")}
-                    >
-                      <Plus size={14} />
-                      <span>{t("تعبئة المخزون", "Add Stock")}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="ref-btn-stock-trigger-secondary"
-                      onClick={() => editingProduct?.id && fetchProductKeys(editingProduct.id)}
-                      title={t("تحديث قائمة الأكواد", "Refresh keys")}
-                    >
-                      <RefreshCw size={14} className={loadingProductKeys ? "spin" : ""} />
-                      <span>{t("تحديث", "Refresh")}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2. Salla-Style Codes Box (Exact Match to media_1791638322700_294b52b2.png) */}
-                <div className="ref-salla-codes-card">
-                  <div className="ref-salla-header-row">
-                    <span className="ref-salla-title-label">
-                      {t("لصق الأكواد دفعة واحدة (مفتاح في كل سطر):", "Paste Codes in Bulk (One per line):")}
-                    </span>
-                    <div className="ref-salla-quick-tools">
-                      <button
-                        type="button"
-                        className="ref-btn-paste-clipboard"
-                        onClick={() => handlePasteFromClipboard((txt) => {
-                          setSallaKeysInput((prev) => (prev ? `${prev}\n${txt}` : txt));
-                        }, t("قائمة المفاتيح", "Keys List"))}
-                        title={t("لصق الأكواد من الحافظة مباشرة", "Paste keys from clipboard")}
-                      >
-                        <ClipboardPaste size={13} />
-                        <span>{t("لصق من الحافظة", "Paste Clipboard")}</span>
-                      </button>
-                      {sallaKeysInput && (
-                        <button
-                          type="button"
-                          className="ref-btn-clear-input"
-                          onClick={() => setSallaKeysInput("")}
-                          title={t("مسح الحقل", "Clear")}
-                        >
-                          <Trash2 size={12} />
-                          <span>{t("مسح", "Clear")}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <textarea
-                    rows={5}
-                    dir="ltr"
-                    value={sallaKeysInput}
-                    onChange={(e) => setSallaKeysInput(e.target.value)}
-                    placeholder={t("قم بنسخ الأكواد ولصقها هنا، علماً أن كل سطر يجب أن يحتوي على كود واحد فقط", "Paste keys here, one code per line")}
-                    className="ref-salla-codes-textarea"
-                  />
-
-                  <div className="ref-salla-card-footer">
-                    <div className="ref-salla-duration-group">
-                      <Clock size={14} />
-                      <span>{t("مدة الصلاحية:", "Duration:")}</span>
-                      <div className="ref-salla-duration-chips">
-                        {[
-                          { days: 1, label: t("1 يوم", "1 Day") },
-                          { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
-                          { days: 7, label: t("7 أيام", "7 Days") },
-                          { days: 30, label: t("30 يوماً", "30 Days") },
-                          { days: 90, label: t("90 يوماً", "90 Days") },
-                          { days: 3650, label: t("مدى الحياة", "Lifetime") },
-                        ].map((d) => (
-                          <button
-                            type="button"
-                            key={d.days}
-                            className={`ref-salla-duration-chip ${sallaDuration === d.days ? "active" : ""}`}
-                            onClick={() => setSallaDuration(d.days)}
-                          >
-                            {d.label}
-                          </button>
-                        ))}
-                      </div>
+              <div className="ref-edit-tab-content" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* 1. Exact Upper Box: إضافة الأكواد للمخزون (Image 1) */}
+                <div className="ref-keys-add-box">
+                  <div className="ref-keys-add-header">
+                    <div className="ref-keys-add-title">
+                      <Sparkles size={16} />
+                      <span>{t("إضافة الأكواد للمخزون", "Add Codes to Inventory")}</span>
                     </div>
 
-                    <button
-                      type="button"
-                      className="ref-salla-btn-insert"
-                      disabled={busy || !sallaKeysInput.trim()}
-                      onClick={handleInsertSallaKeys}
-                    >
-                      {busy ? <LoaderCircle className="spin" size={15} /> : null}
-                      <span>{t("إدراج للمخزون", "Insert to Stock")}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 3. Wide Centered Plus Button (Exact Match to media_1791638322700_294b52b2.png) */}
-                <button
-                  type="button"
-                  className={`ref-salla-wide-add-btn ${showSingleKeyInline ? "open" : ""}`}
-                  onClick={() => {
-                    setShowSingleKeyInline(!showSingleKeyInline);
-                    if (!showSingleKeyInline && !singleInlineKey) {
-                      setSingleInlineKey(generateRandomKeyCode());
-                    }
-                  }}
-                  title={t("إضافة مفتاح مفرد أو توليد كود سريع", "Add Single Key")}
-                >
-                  <Plus size={18} />
-                </button>
-
-                {/* 4. Inline Single Key Addition Row (Revealed when clicking +) */}
-                {showSingleKeyInline && (
-                  <div className="ref-inline-single-key-panel">
-                    <div className="ref-inline-key-top">
-                      <div className="ref-inline-title">
-                        <KeyRound size={15} />
-                        <span>{t("إضافة كود مفرد للمخزون", "Add Single Code to Stock")}</span>
-                      </div>
-                      <div className="ref-inline-tools-cluster">
-                        <button
-                          type="button"
-                          className="ref-btn-paste-clipboard"
-                          onClick={() => handlePasteFromClipboard((txt) => setSingleInlineKey(txt), t("الكود المفرد", "Single Key"))}
-                          title={t("لصق الكود من الحافظة", "Paste from clipboard")}
-                        >
-                          <ClipboardPaste size={12} />
-                          <span>{t("لصق من الحافظة", "Paste")}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="ref-btn-dice-random"
-                          onClick={() => setSingleInlineKey(generateRandomKeyCode())}
-                        >
-                          <span>🎲</span>
-                          <span>{t("كود عشوائي جديد", "New Random Code")}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="ref-inline-key-inputs">
-                      <input
-                        type="text"
-                        dir="ltr"
-                        value={singleInlineKey}
-                        onChange={(e) => setSingleInlineKey(e.target.value)}
-                        placeholder="KEY-gZcMty-H9whoQ"
-                        className="ref-inline-key-field"
-                      />
-
+                    <div className="ref-keys-duration-row">
+                      <span>{t("المدة:", "Duration:")}</span>
                       <select
-                        value={singleInlineDuration}
-                        onChange={(e) => setSingleInlineDuration(Number(e.target.value))}
-                        className="ref-inline-duration-select"
+                        value={sallaDuration}
+                        onChange={(e) => setSallaDuration(Number(e.target.value))}
+                        className="ref-keys-duration-select"
                       >
                         <option value={1}>{t("يوم واحد", "1 Day")}</option>
                         <option value={3}>{t("3 أيام (افتراضي)", "3 Days (Default)")}</option>
                         <option value={7}>{t("7 أيام", "7 Days")}</option>
-                        <option value={30}>{t("30 يوماً (شهر)", "30 Days")}</option>
-                        <option value={90}>{t("90 يوماً (3 أشهر)", "90 Days")}</option>
+                        <option value={30}>{t("30 يوماً", "30 Days")}</option>
+                        <option value={90}>{t("90 يوماً", "90 Days")}</option>
                         <option value={3650}>{t("مدى الحياة", "Lifetime")}</option>
                       </select>
-
-                      <button
-                        type="button"
-                        className="ref-btn-inline-submit"
-                        disabled={busy || !singleInlineKey.trim()}
-                        onClick={handleInsertSingleInlineKey}
-                      >
-                        {busy ? <LoaderCircle className="spin" size={14} /> : <Check size={14} />}
-                        <span>{t("حفظ الكود", "Save Key")}</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. LUXURIOUS ORGANIZED KEYS LIST ("قوائم مرتبة وفخمة جداً") */}
-                <div className="ref-lux-keys-container">
-                  {/* Search and Filter Tabs */}
-                  <div className="ref-lux-keys-controls-bar">
-                    <div className="ref-lux-search-wrap">
-                      <Search size={14} />
-                      <input
-                        type="text"
-                        value={productKeysSearch}
-                        onChange={(e) => setProductKeysSearch(e.target.value)}
-                        placeholder={t("بحث في الأكواد أو رقم الدفعة...", "Search keys or batch...")}
-                        className="ref-lux-search-input"
-                      />
-                      {productKeysSearch && (
-                        <button
-                          type="button"
-                          className="ref-lux-search-clear"
-                          onClick={() => setProductKeysSearch("")}
-                        >
-                          <X size={13} />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="ref-lux-filter-tabs">
-                      <button
-                        type="button"
-                        className={`ref-lux-tab-chip ${productKeysFilter === "ALL" ? "active" : ""}`}
-                        onClick={() => setProductKeysFilter("ALL")}
-                      >
-                        {t("الكل", "All")} ({productInventoryKeys.length})
-                      </button>
-                      <button
-                        type="button"
-                        className={`ref-lux-tab-chip ${productKeysFilter === "AVAILABLE" ? "active-green" : ""}`}
-                        onClick={() => setProductKeysFilter("AVAILABLE")}
-                      >
-                        {t("متاح للبيع", "Available")} ({productInventoryKeys.filter((k) => k.status === "AVAILABLE").length})
-                      </button>
-                      <button
-                        type="button"
-                        className={`ref-lux-tab-chip ${productKeysFilter === "ISSUED" ? "active-blue" : ""}`}
-                        onClick={() => setProductKeysFilter("ISSUED")}
-                      >
-                        {t("مستخدم / تم بيعه", "Sold / Issued")} ({productInventoryKeys.filter((k) => k.status === "ISSUED").length})
-                      </button>
                     </div>
                   </div>
 
-                  {/* Keys Cards List */}
-                  {loadingProductKeys ? (
-                    <div className="ref-lux-loading-state">
-                      <LoaderCircle className="spin" size={24} />
-                      <span>{t("جارٍ تحميل قائمة الأكواد...", "Loading codes list...")}</span>
-                    </div>
-                  ) : filteredProductKeys.length > 0 ? (
-                    <div className="ref-lux-keys-scroll-list">
-                      {filteredProductKeys.map((k, index) => {
-                        const isAvailable = k.status === "AVAILABLE";
-                        let displayCode = k.raw_code || k.masked_code || "";
-                        if (!displayCode || displayCode.includes("*")) {
-                          const repl = (k.id ? k.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
-                          displayCode = displayCode ? displayCode.replace(/\*+/g, repl) : `KEY-${repl}-${k.code_suffix || "XXXX"}`;
-                        }
-                        const isCopied = copiedKeyId === k.id;
-                        return (
-                          <div className={`ref-lux-key-card ${isAvailable ? "available" : "issued"}`} key={k.id || index}>
-                            {/* Right: Index & Code */}
-                            <div className="ref-lux-key-main">
-                              <span className="ref-lux-key-index">#{index + 1}</span>
-                              <div className="ref-lux-key-code-block">
-                                <code dir="ltr" className="ref-lux-key-code">{displayCode}</code>
-                                <button
-                                  type="button"
-                                  className="ref-lux-copy-btn"
-                                  onClick={() => handleCopyKeyItem(displayCode, k.id)}
-                                  title={t("نسخ الكود", "Copy code")}
-                                >
-                                  {isCopied ? <Check size={13} className="text-emerald" /> : <Copy size={13} />}
-                                </button>
-                              </div>
-                            </div>
+                  <textarea
+                    dir="ltr"
+                    value={sallaKeysInput}
+                    onChange={(e) => setSallaKeysInput(e.target.value)}
+                    placeholder={t(
+                      "...أدخل الأكواد هنا (كود واحد في كل سطر) ... مثال: KEY-ABC123-DEF456",
+                      "Enter codes here (one per line) ... e.g. KEY-ABC123-DEF456"
+                    )}
+                    className="ref-keys-bulk-textarea"
+                  />
 
-                            {/* Center: Status & Duration Badges */}
-                            <div className="ref-lux-key-badges">
-                              <span className={`ref-lux-status-pill ${isAvailable ? "status-green" : "status-blue"}`}>
-                                <span className="status-dot" />
-                                <span>{isAvailable ? t("متاح للبيع", "Available") : t("تم بيعه / نشط", "Sold / Active")}</span>
-                              </span>
+                  <button
+                    type="button"
+                    className="ref-btn-add-keys-submit"
+                    disabled={busy || detectedKeysCount === 0}
+                    onClick={handleInsertSallaKeys}
+                  >
+                    {busy ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
+                    <span>{t(`إضافة الأكواد للمخزون (${detectedKeysCount}) ✓`, `Add Codes to Inventory (${detectedKeysCount}) ✓`)}</span>
+                  </button>
+                </div>
 
-                              <span className="ref-lux-duration-pill">
-                                <Clock size={12} />
-                                <span>{k.duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${k.duration_days} ${t("يوم", "Days")}`}</span>
-                              </span>
+                {/* 2. Filter & Search Toolbar (Image 1) */}
+                <div className="ref-keys-table-toolbar">
+                  {/* Search Input */}
+                  <div className="ref-keys-search-wrap">
+                    <input
+                      type="text"
+                      value={productKeysSearch}
+                      onChange={(e) => {
+                        setProductKeysSearch(e.target.value);
+                        setKeysPage(1);
+                      }}
+                      placeholder={t("🔍 بحث بكود المفتاح، رقم الطلب، أو الحالة...", "Search by key, order #, or status...")}
+                    />
+                  </div>
 
-                              {k.created_at && (
-                                <span className="ref-lux-date-pill">
-                                  <Calendar size={12} />
-                                  <span>{new Date(k.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</span>
-                                </span>
+                  {/* Filter Chips */}
+                  <div className="ref-keys-filter-chips">
+                    {[
+                      { key: "ALL", label: t("الكل", "All") },
+                      { key: "AVAILABLE", label: t("متاح", "Available") },
+                      { key: "PENDING", label: t("بانتظار البدء", "Pending") },
+                      { key: "ACTIVE", label: t("نشط", "Active") },
+                      { key: "EXPIRED", label: t("منتهي", "Expired") },
+                      { key: "BLOCKED", label: t("معطل", "Blocked") },
+                    ].map((f) => (
+                      <button
+                        type="button"
+                        key={f.key}
+                        className={`ref-keys-filter-chip ${productKeysFilter === f.key ? "active" : ""}`}
+                        onClick={() => {
+                          setProductKeysFilter(f.key as any);
+                          setKeysPage(1);
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sort and Per-Page Controls */}
+                  <div className="ref-keys-controls-right">
+                    <select
+                      value={keysSort}
+                      onChange={(e) => setKeysSort(e.target.value as any)}
+                      className="ref-keys-control-select"
+                    >
+                      <option value="newest">{t("الأحدث", "Newest")}</option>
+                      <option value="oldest">{t("الأقدم", "Oldest")}</option>
+                      <option value="code">{t("الكود", "Code")}</option>
+                    </select>
+
+                    <select
+                      value={keysPerPage}
+                      onChange={(e) => {
+                        setKeysPerPage(Number(e.target.value));
+                        setKeysPage(1);
+                      }}
+                      className="ref-keys-control-select"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. Exact Keys Data Table Card (Image 1) */}
+                <div className="ref-keys-table-card">
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="ref-keys-table">
+                      <thead>
+                        <tr>
+                          <th>{t("المفتاح", "Key")}</th>
+                          <th>{t("الحالة", "Status")}</th>
+                          <th>{t("تاريخ الإضافة", "Date Added")}</th>
+                          <th>{t("تاريخ الاستخدام", "Date Used")}</th>
+                          <th>{t("الطلب / العميل", "Order / Customer")}</th>
+                          <th>{t("الإجراءات", "Actions")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedProductKeys.length > 0 ? (
+                          paginatedProductKeys.map((k, idx) => {
+                            const isRevealed = revealedKeyIds[k.id] ?? true;
+                            const isCopied = copiedKeyId === k.id;
+                            const rawCode = k.raw_code || k.code || k.masked_code || "";
+                            const displayCode = isRevealed
+                              ? rawCode
+                              : rawCode
+                              ? `${rawCode.slice(0, 4)}-****-****`
+                              : "KEY-****-****";
+
+                            const s = String(k.status || "").toUpperCase();
+                            const isAvailable = s === "AVAILABLE";
+                            const isPending = s === "PENDING" || s === "WAITING";
+                            const isActive = s === "ACTIVE" || s === "ISSUED" || s === "USED";
+                            const isExpired = s === "EXPIRED";
+                            const isBlocked = s === "BLOCKED" || s === "SUSPENDED" || s === "REVOKED" || s === "DISABLED";
+
+                            const statusClass = isAvailable
+                              ? "available"
+                              : isActive
+                              ? "active"
+                              : isPending
+                              ? "pending"
+                              : isExpired
+                              ? "expired"
+                              : isBlocked
+                              ? "blocked"
+                              : "available";
+
+                            const statusLabel = isAvailable
+                              ? t("متاح", "Available")
+                              : isActive
+                              ? t("نشط", "Active")
+                              : isPending
+                              ? t("بانتظار البدء", "Pending")
+                              : isExpired
+                              ? t("منتهي", "Expired")
+                              : isBlocked
+                              ? t("معطل", "Blocked")
+                              : t("متاح", "Available");
+
+                            return (
+                              <tr key={k.id || idx}>
+                                {/* المفتاح with Eye (reveal/mask) and Copy buttons */}
+                                <td>
+                                  <div className="ref-key-code-cell">
+                                    <code dir="ltr">{displayCode}</code>
+                                    <button
+                                      type="button"
+                                      className="ref-key-action-icon-btn"
+                                      onClick={() => toggleKeyReveal(k.id)}
+                                      title={isRevealed ? t("إخفاء المفتاح", "Mask Key") : t("إظهار المفتاح كاملاً", "Reveal Key")}
+                                    >
+                                      {isRevealed ? <Eye size={13} /> : <EyeOff size={13} />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="ref-key-action-icon-btn"
+                                      onClick={() => handleCopyKeyItem(rawCode || displayCode, k.id)}
+                                      title={t("نسخ الكود للحافظة", "Copy Key")}
+                                    >
+                                      {isCopied ? <Check size={13} style={{ color: "#10B981" }} /> : <Copy size={13} />}
+                                    </button>
+                                  </div>
+                                </td>
+
+                                {/* الحالة Pill with Dot */}
+                                <td>
+                                  <span className={`ref-key-status-pill ${statusClass}`}>
+                                    <span className="dot" />
+                                    <span>{statusLabel}</span>
+                                  </span>
+                                </td>
+
+                                {/* تاريخ الإضافة */}
+                                <td>
+                                  {k.created_at
+                                    ? new Date(k.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US", {
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                      })
+                                    : "-"}
+                                </td>
+
+                                {/* تاريخ الاستخدام */}
+                                <td>
+                                  {k.redeemed_at || k.activated_at || k.used_at
+                                    ? new Date(k.redeemed_at || k.activated_at || k.used_at).toLocaleDateString(
+                                        ar ? "ar-SA" : "en-US",
+                                        {
+                                          year: "numeric",
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                        }
+                                      )
+                                    : "-"}
+                                </td>
+
+                                {/* الطلب / العميل */}
+                                <td>
+                                  {k.order_number || k.order_id ? (
+                                    <span style={{ color: "#38BDF8", fontWeight: 700 }}>
+                                      #{String(k.order_number || k.order_id).replace(/^ord_/i, "").slice(0, 8)}
+                                    </span>
+                                  ) : k.customer_name || k.customer_email || k.issued_to ? (
+                                    <span>{k.customer_name || k.customer_email || k.issued_to}</span>
+                                  ) : (
+                                    <span style={{ color: "#64748B" }}>-</span>
+                                  )}
+                                </td>
+
+                                {/* الإجراءات: Trash & Lock Buttons */}
+                                <td>
+                                  <div className="ref-key-row-actions">
+                                    <button
+                                      type="button"
+                                      className="ref-btn-row-trash"
+                                      onClick={() => handleDeleteProductKey(k.id, displayCode)}
+                                      title={t("حذف المفتاح نهائياً", "Delete Key")}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="ref-btn-row-lock"
+                                      onClick={() => handleToggleSuspendKey(k.id)}
+                                      title={isBlocked ? t("تنشيط المفتاح", "Activate Key") : t("تعطيل المفتاح", "Suspend Key")}
+                                    >
+                                      <Lock size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: "center", padding: "40px 18px", color: "#64748B" }}>
+                              {loadingProductKeys ? (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                                  <LoaderCircle className="spin" size={16} />
+                                  <span>{t("جارٍ تحميل المفاتيح...", "Loading keys...")}</span>
+                                </div>
+                              ) : (
+                                <span>{t("لا توجد أكواد مطابقة للمعايير المحددة", "No matching keys found")}</span>
                               )}
-                            </div>
-
-                            {/* Left: Actions */}
-                            <div className="ref-lux-key-actions">
-                              <button
-                                type="button"
-                                className="ref-lux-btn-delete"
-                                onClick={() => handleDeleteProductKey(k.id, displayCode)}
-                                title={t("حذف الكود نهائياً من المخزون", "Delete code permanently")}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="ref-lux-empty-keys">
-                      <div className="ref-lux-empty-icon-box">
-                        <KeyRound size={28} />
-                      </div>
-                      <h4>{t("لا توجد أكواد مطابقة", "No Matching Codes")}</h4>
-                      <p>
-                        {t(
-                          "قم بلصق قائمة المفاتيح في الصندوق أعلاه واضغط على زر «إدراج»، أو انقر على الزر (+) لإضافة كود جديد بسرعة.",
-                          "Paste key codes in the box above and click Insert, or click (+) to add a single code."
+                            </td>
+                          </tr>
                         )}
-                      </p>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Table Footer with Total Count and Pagination Controls (Image 1) */}
+                  <div className="ref-keys-table-footer">
+                    <div>
+                      {t(`إجمالي النتائج: ${filteredProductKeys.length}`, `Total results: ${filteredProductKeys.length}`)}
                     </div>
-                  )}
+
+                    <div className="ref-keys-pagination-btns">
+                      <button
+                        type="button"
+                        className="ref-keys-page-nav-btn"
+                        disabled={keysPage <= 1}
+                        onClick={() => setKeysPage((p) => Math.max(1, p - 1))}
+                        title={t("الصفحة السابقة", "Previous page")}
+                      >
+                        ‹
+                      </button>
+                      <span>
+                        {keysPage} / {totalKeysPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="ref-keys-page-nav-btn"
+                        disabled={keysPage >= totalKeysPages}
+                        onClick={() => setKeysPage((p) => Math.min(totalKeysPages, p + 1))}
+                        title={t("الصفحة التالية", "Next page")}
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Modal Bottom Bar (Matching Images 2 & 3 with extra Admin Powers) */}
-            <div className="ref-modal-bottom-bar">
-              <div className="ref-modal-bottom-left-actions">
-                {editingProduct && (
-                  <>
-                    <button
-                      type="button"
-                      className="ref-btn-modal-danger"
-                      onClick={() => handleDeleteProduct(editingProduct)}
-                      title={t("حذف هذا المنتج نهائياً", "Delete this product permanently")}
-                    >
-                      <Trash2 size={15} />
-                      <span>{t("حذف المنتج", "Delete Product")}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="ref-btn-modal-duplicate"
-                      onClick={() => void handleDuplicateProduct(editingProduct)}
-                      title={t("استنساخ هذا المنتج كمنتج جديد", "Duplicate as new product")}
-                    >
-                      <CopyPlus size={15} />
-                      <span>{t("استنساخ المنتج", "Duplicate")}</span>
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <div className="ref-modal-bottom-right-actions">
+            {/* Modal Bottom Actions Bar Matching Image 1 Exactly */}
+            <div className="ref-modal-bottom-actions-exact">
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <button
                   type="button"
-                  className="ref-btn-cancel-modal"
+                  className="ref-btn-modal-cancel-exact"
                   onClick={() => setShowProductModal(false)}
                 >
                   {t("إلغاء", "Cancel")}
                 </button>
 
-                <button
-                  type="button"
-                  className="ref-btn-save-modal"
-                  onClick={() => void handleSaveProduct()}
-                  disabled={busy || !productForm.name.trim()}
-                >
-                  {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
-                  <span>{t("حفظ التغييرات (Ctrl+S)", "Save Changes (Ctrl+S)")}</span>
-                </button>
+                {editingProduct && (
+                  <>
+                    <button
+                      type="button"
+                      className="ref-btn-modal-cancel-exact"
+                      style={{ color: "#F87171", borderColor: "rgba(239, 68, 68, 0.3)" }}
+                      onClick={() => handleDeleteProduct(editingProduct)}
+                      title={t("حذف المنتج", "Delete Product")}
+                    >
+                      <Trash2 size={14} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 4 }} />
+                      <span>{t("حذف المنتج", "Delete")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="ref-btn-modal-cancel-exact"
+                      onClick={() => void handleDuplicateProduct(editingProduct)}
+                      title={t("استنساخ المنتج", "Duplicate Product")}
+                    >
+                      <CopyPlus size={14} style={{ display: "inline", verticalAlign: "middle", marginInlineEnd: 4 }} />
+                      <span>{t("استنساخ", "Duplicate")}</span>
+                    </button>
+                  </>
+                )}
               </div>
+
+              <button
+                type="button"
+                className={`ref-btn-modal-save-exact ${productForm.name.trim() ? "ready" : ""}`}
+                onClick={() => void handleSaveProduct()}
+                disabled={busy || !productForm.name.trim()}
+              >
+                {busy ? <LoaderCircle className="spin" size={15} /> : <Save size={15} />}
+                <span>{t("حفظ التغييرات (Ctrl+S) 💾", "Save Changes (Ctrl+S) 💾")}</span>
+              </button>
             </div>
           </div>
         </div>

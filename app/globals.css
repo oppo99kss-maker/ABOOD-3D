@@ -9478,3 +9478,697 @@ tr.selected-row {
 
 
 
+
+
+/* ========================================================================== */
+/* EXACT USER REFERENCE DESIGN - IMAGE 1 (STOCK & KEYS MODAL) & IMAGE 2 (CARDS) */
+/* ========================================================================== */
+
+/* --- Image 2: Exact Section Header --- */
+.ref-products-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ref-products-header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ref-products-cube-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #5FD5FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ref-products-header-text h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #EEF4FF;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ref-products-header-text p {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 4px 0 0;
+}
+
+.ref-btn-add-prod-blue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 12px;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  font-family: inherit;
+}
+
+.ref-btn-add-prod-blue:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+/* --- Image 2: Exact 3-Column Product Cards Grid --- */
+.ref-products-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 22px;
+}
+
+@media (min-width: 1060px) {
+  .ref-products-grid-3col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ref-prod-card-exact {
+  background: #0B111C;
+  border: 1px solid #182438;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ref-prod-card-exact:hover {
+  border-color: rgba(95, 213, 255, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.ref-prod-card-banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #070D17;
+  overflow: hidden;
+}
+
+.ref-prod-card-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ref-prod-card-stock-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: rgba(10, 15, 25, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.ref-prod-card-content {
+  padding: 18px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+}
+
+.ref-prod-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ref-prod-card-title-row h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #EEF4FF;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.ref-prod-card-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #5FD5FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ref-prod-card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-prod-card-cat-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.ref-prod-card-description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #94A3B8;
+  margin: 4px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Image 2: Exactly 2 Wide Action Buttons */
+.ref-prod-card-actions-2btn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #141E2E;
+  background: rgba(8, 12, 20, 0.6);
+}
+
+.ref-btn-card-blue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.ref-btn-card-blue:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+}
+
+.ref-btn-card-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #111A28;
+  border: 1px solid #202F44;
+  color: #E2E8F0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.ref-btn-card-dark:hover {
+  background: #172336;
+  border-color: #2D415E;
+  transform: translateY(-1px);
+}
+
+
+/* --- Image 1: Exact "إضافة الأكواد للمخزون" Upper Box --- */
+.ref-keys-add-box {
+  background: #0C121E;
+  border: 1px solid #1B273A;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ref-keys-add-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ref-keys-add-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #EEF4FF;
+}
+
+.ref-keys-add-title svg {
+  color: #5FD5FF;
+}
+
+.ref-keys-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.ref-keys-duration-select {
+  background: #070B12;
+  border: 1px solid #1E293B;
+  color: #EEF4FF;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ref-keys-bulk-textarea {
+  width: 100%;
+  height: 125px;
+  background: #070B12;
+  border: 1px solid #1E293B;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #E2E8F0;
+  font-family: Alexandria, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.ref-keys-bulk-textarea:focus {
+  border-color: #2563EB;
+}
+
+.ref-btn-add-keys-submit {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.ref-btn-add-keys-submit:hover:not(:disabled) {
+  background: #1D4ED8;
+}
+
+.ref-btn-add-keys-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --- Image 1: Exact Filter & Search Toolbar --- */
+.ref-keys-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.ref-keys-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.ref-keys-search-wrap input {
+  width: 100%;
+  background: #070B12;
+  border: 1px solid #1E293B;
+  border-radius: 10px;
+  padding: 9px 38px 9px 14px;
+  color: #EEF4FF;
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+}
+
+[dir="rtl"] .ref-keys-search-wrap input {
+  padding: 9px 14px 9px 38px;
+}
+
+.ref-keys-search-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: #64748B;
+  pointer-events: none;
+}
+
+[dir="rtl"] .ref-keys-search-icon {
+  right: auto;
+  left: 12px;
+}
+
+.ref-keys-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ref-keys-filter-chip {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.ref-keys-filter-chip:hover {
+  color: #EEF4FF;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ref-keys-filter-chip.active {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  font-weight: 700;
+}
+
+.ref-keys-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ref-keys-control-select {
+  background: #070B12;
+  border: 1px solid #1E293B;
+  color: #EEF4FF;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* --- Image 1: Exact Keys Data Table --- */
+.ref-keys-table-card {
+  background: #090E17;
+  border: 1px solid #182438;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ref-keys-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: start;
+}
+
+.ref-keys-table th {
+  padding: 12px 18px;
+  background: #0C121E;
+  color: #94A3B8;
+  font-weight: 700;
+  border-bottom: 1px solid #182438;
+  white-space: nowrap;
+}
+
+.ref-keys-table td {
+  padding: 13px 18px;
+  border-bottom: 1px solid #141E2E;
+  color: #E2E8F0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ref-keys-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ref-key-code-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ref-key-code-cell code {
+  font-family: Alexandria, monospace;
+  color: #EEF4FF;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ref-key-action-icon-btn {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  cursor: pointer;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.ref-key-action-icon-btn:hover {
+  color: #EEF4FF;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Status Badges */
+.ref-key-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ref-key-status-pill.active {
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.ref-key-status-pill.available {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.ref-key-status-pill.pending {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06B6D4;
+  border: 1px solid rgba(6, 182, 212, 0.28);
+}
+
+.ref-key-status-pill.expired {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+.ref-key-status-pill.blocked {
+  background: rgba(100, 116, 139, 0.12);
+  color: #94A3B8;
+  border: 1px solid rgba(100, 116, 139, 0.28);
+}
+
+.ref-key-status-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Row Action Buttons */
+.ref-key-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-btn-row-trash {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-btn-row-trash:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+}
+
+.ref-btn-row-lock {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-btn-row-lock:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #F59E0B;
+}
+
+/* Table Footer / Pagination */
+.ref-keys-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: #0C121E;
+  border-top: 1px solid #182438;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.ref-keys-pagination-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ref-keys-page-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #070B12;
+  border: 1px solid #1E293B;
+  color: #94A3B8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-keys-page-nav-btn:hover:not(:disabled) {
+  color: #EEF4FF;
+  border-color: #3B82F6;
+}
+
+.ref-keys-page-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Modal Bottom Bar Buttons (Image 1) */
+.ref-modal-bottom-actions-exact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(13, 17, 26, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ref-btn-modal-cancel-exact {
+  padding: 9px 20px;
+  border-radius: 10px;
+  background: #111A28;
+  border: 1px solid #202F44;
+  color: #E2E8F0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.ref-btn-modal-cancel-exact:hover {
+  background: #172336;
+  border-color: #2D415E;
+}
+
+.ref-btn-modal-save-exact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  background: #172336;
+  border: 1px solid #2D415E;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.ref-btn-modal-save-exact.ready {
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #FFFFFF;
+}
+
+.ref-btn-modal-save-exact.ready:hover {
+  background: #1D4ED8;
+}

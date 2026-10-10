@@ -43,6 +43,7 @@ import {
   sendCustomerMessage,
   suspendLicense,
   toggleProductVisibility,
+  toggleSuspendKey,
   updateCustomerStatus,
   updateProduct,
   updateSystemSettings,
@@ -405,6 +406,15 @@ export async function POST(request: NextRequest) {
       if (!keyId) return json({ error: "INVALID_KEY_ID" }, 400);
 
       const result = await deleteLicenseKey(keyId, email);
+      return json({ ok: true, ...result });
+    }
+
+    // 9c. Admin: Toggle Suspend / Reactivate license key
+    if (data.action === "toggleSuspendKey") {
+      const keyId = typeof data.keyId === "string" ? data.keyId : (typeof data.licenseId === "string" ? data.licenseId : "");
+      if (!keyId) return json({ error: "INVALID_KEY_ID" }, 400);
+
+      const result = await toggleSuspendKey(keyId, email);
       return json({ ok: true, ...result });
     }
 
