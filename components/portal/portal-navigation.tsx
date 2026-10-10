@@ -105,7 +105,7 @@ export function PortalNavigation({
       ],
     },
     {
-      title: { ar: "المساعدة", en: "Support" },
+      title: { ar: "الدعم", en: "Support" },
       items: [
         {
           tab: "tickets",
@@ -130,20 +130,6 @@ export function PortalNavigation({
         },
       ],
     },
-    ...(isAdmin
-      ? [
-          {
-            title: { ar: "الإدارة", en: "Admin" },
-            items: [
-              {
-                tab: "admin" as const,
-                icon: ShieldCheck,
-                title: { ar: "لوحة الإدارة", en: "Admin Space" },
-              },
-            ],
-          },
-        ]
-      : []),
   ];
 
   // Mobile drawer keyboard & scroll lock
@@ -301,6 +287,44 @@ export function PortalNavigation({
     </div>
   );
 
+  const renderAdminSection = (isMobile = false) => {
+    if (!isAdmin) return null;
+    const isActive = activeTab === "admin";
+    const label = ar ? "لوحة التحكم" : "Control Panel";
+    return (
+      <div className={css.adminDedicatedSection}>
+        {(!collapsed || isMobile) && (
+          <div className={css.sectionHeaderTitle}>
+            <span>{ar ? "لوحة التحكم" : "Control Panel"}</span>
+          </div>
+        )}
+        <div className={css.sectionItemsList}>
+          <button
+            type="button"
+            aria-label={label}
+            aria-current={isActive ? "page" : undefined}
+            className={`${css.navItemBtn} ${css.adminControlItemBtn}`}
+            data-active={isActive}
+            onClick={() => navigate("admin")}
+          >
+            <div className={css.itemIconWrap}>
+              <ShieldCheck size={18} strokeWidth={isActive ? 2.2 : 1.8} />
+            </div>
+            {(!collapsed || isMobile) && (
+              <span className={css.itemLabel}>{label}</span>
+            )}
+            {(!collapsed || isMobile) && isActive && (
+              <ArrowIcon size={14} className={css.activeChevron} />
+            )}
+            {collapsed && !isMobile && (
+              <span className={css.collapsedTooltip}>{label}</span>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* ==================================================== */}
@@ -356,6 +380,9 @@ export function PortalNavigation({
 
         {/* Navigation Sections */}
         {renderNavList()}
+
+        {/* Dedicated Admin Control Panel (independent at bottom with title) */}
+        {renderAdminSection(false)}
 
         {/* Footer Area: Luxury Account Card + Popover */}
         <div className={css.sidebarFooterBlock}>
@@ -632,6 +659,7 @@ export function PortalNavigation({
 
             <div className={css.drawerBody}>
               {renderNavList()}
+              {renderAdminSection(true)}
             </div>
 
             <div className={css.drawerFooter}>

@@ -158,28 +158,30 @@
 .navSectionsContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   flex: 1;
 }
 
 .navSectionGroup {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 
 .sectionHeaderTitle {
   font-size: 11px;
-  font-weight: 700;
-  color: #5A6E85;
-  padding: 12px 10px 4px;
-  letter-spacing: 0.3px;
+  font-weight: 800;
+  color: #5A708A;
+  padding: 4px 10px 4px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  user-select: none;
 }
 
 .sectionItemsList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .navItemBtn {
@@ -344,6 +346,44 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) scale(1);
+}
+
+/* ==========================================================================
+   DEDICATED ADMIN CONTROL PANEL (BOTTOM INDEPENDENT SECTION WITH HEADER)
+   ========================================================================== */
+
+.adminDedicatedSection {
+  margin-top: auto;
+  padding-top: 14px;
+  margin-bottom: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.adminDedicatedSection + .sidebarFooterBlock {
+  margin-top: 0;
+}
+
+.adminControlItemBtn {
+  background: rgba(56, 189, 248, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  color: #9DB3CD;
+}
+
+.adminControlItemBtn:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #EEF4FF;
+}
+
+.adminControlItemBtn[data-active="true"] {
+  border: 1.5px solid #38BDF8;
+  background: rgba(14, 28, 44, 0.9);
+  color: #EEF4FF;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25), inset 0 0 8px rgba(56, 189, 248, 0.06);
 }
 
 /* ==========================================================================
@@ -818,6 +858,7 @@
   flex: 1;
   overflow-y: auto;
   margin-top: 10px;
+  gap: 16px;
 }
 
 .drawerFooter {

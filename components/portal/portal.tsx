@@ -321,7 +321,7 @@ export function Portal({ user }: { user: PortalUser }) {
     redeem: { title: t("تفعيل مفتاح", "Activate Key"), desc: t("أدخل مفتاحك لإضافة المنتج إلى مكتبتك.", "Enter your key to unlock products.") },
     tickets: { title: t("المساعدة", "Help"), desc: t("أدلة الاستخدام والأسئلة الشائعة.", "Setup guides and documentation.") },
     profile: { title: t("حسابي", "My Account"), desc: t("بيانات الحساب وسجل التفعيلات.", "Profile and activation history.") },
-    admin: { title: t("الإدارة", "Admin Space"), desc: t("مركز إدارة النظام.", "System control space.") },
+    admin: { title: t("لوحة التحكم", "Control Panel"), desc: t("مركز إدارة النظام والتحكم الشامل.", "System control space.") },
   };
 
   const activeProducts = useMemo(() => {
