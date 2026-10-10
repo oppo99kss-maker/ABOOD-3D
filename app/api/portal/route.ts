@@ -14,6 +14,7 @@ import {
   getAuditLogs,
   getCustomerDetails,
   getCustomers,
+  getCompensations,
   getDashboardStats,
   getGuides,
   getOrders,
@@ -98,6 +99,11 @@ export async function GET(request: NextRequest) {
       const category = searchParams.get("category") || undefined;
       const logs = await getAuditLogs(category);
       return json({ logs });
+    }
+
+    if (view === "admin-compensations" && admin) {
+      const compensations = await getCompensations();
+      return json({ compensations });
     }
 
     // Default portal load

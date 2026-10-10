@@ -31,6 +31,7 @@ import {
 import { PortalNavigation, type PortalTab } from "./portal-navigation";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
+import { notify } from "@/lib/notify";
 import type {
   Product,
   Guide,
@@ -178,22 +179,18 @@ export function Portal({ user }: { user: PortalUser }) {
 
   async function redeem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !key.trim()) return;
     setBusy(true);
-    setNotice(null);
     try {
       const res = await action({ action: "redeem", code: key.trim().toUpperCase() });
       setKey("");
       await refresh();
-      setNotice({
-        message: t(
-          `تم تفعيل المفتاح بنجاح وإضافة المنتج (${res.product?.name || ""}) إلى مكتبتك!`,
-          `Key activated successfully! Product (${res.product?.name || ""}) is now in your library.`
-        ),
-        type: "success",
-      });
+      notify.success(
+        t("تم التفعيل", "Activated"),
+        t(`المنتج جاهز في مكتبتك (${res.product?.name || ""})`, `Product (${res.product?.name || ""}) added to library`)
+      );
     } catch (error) {
-      setNotice({ message: errorText(error), type: "error" });
+      notify.error(t("تعذر التفعيل", "Activation Failed"), errorText(error));
     } finally {
       setBusy(false);
     }
@@ -210,13 +207,13 @@ export function Portal({ user }: { user: PortalUser }) {
     }
   }
 
-  const titles: Record<PortalTab, string> = {
-    overview: t("نظرة عامة", "Overview"),
-    "my-products": t("مكتبة المنتجات", "My Products"),
-    redeem: t("تفعيل مفتاح ترخيص", "Activate Key"),
-    tickets: t("مركز المساعدة والتعليمات", "Help & Guides"),
-    profile: t("الملف الشخصي والاشتراكات", "Account Profile"),
-    admin: t("لوحة إدارة SpooFX", "SpooFX Control Space"),
+  const titles: Record<PortalTab, { title: string; desc: string }> = {
+    overview: { title: t("الرئيسية", "Overview"), desc: t("نظرة سريعة على حسابك وتراخيصك.", "Quick overview of your licenses.") },
+    "my-products": { title: t("منتجاتي", "My Products"), desc: t("تراخيصك ومفاتيحك الرقمية.", "Your digital products and keys.") },
+    redeem: { title: t("تفعيل مفتاح", "Activate Key"), desc: t("أدخل مفتاحك لإضافة المنتج إلى مكتبتك.", "Enter your key to unlock products.") },
+    tickets: { title: t("المساعدة", "Help"), desc: t("أدلة الاستخدام والأسئلة الشائعة.", "Setup guides and documentation.") },
+    profile: { title: t("حسابي", "My Account"), desc: t("بيانات الحساب وسجل التفعيلات.", "Profile and activation history.") },
+    admin: { title: t("الإدارة", "Admin Space"), desc: t("مركز إدارة النظام.", "System control space.") },
   };
 
   const filteredProducts = useMemo(() => {
@@ -308,11 +305,11 @@ export function Portal({ user }: { user: PortalUser }) {
               <span className="eyebrow">
                 <Box size={13} /> SPOOFX SPACE / {activeTab.replace("-", " ").toUpperCase()}
               </span>
-              <h1>{titles[activeTab]}</h1>
-              <p>{t("منصتك الرقمية المتكاملة لإدارة التراخيص والمنتجات والدعم الفني.", "Your digital space for managing licenses, products, and support.")}</p>
+              <h1>{titles[activeTab].title}</h1>
+              <p>{titles[activeTab].desc}</p>
             </div>
             <div className="heading-mark">
-              <Box size={26} />
+              <Box size={24} />
             </div>
           </div>
 
@@ -354,12 +351,12 @@ export function Portal({ user }: { user: PortalUser }) {
                           <p>
                             {data.products.length
                               ? t(
-                                  `لديك ${data.products.length} منتج مسجل في مكتبتك الرقمية. يمكنك الوصول لملفاتك وتراخيصك في أي وقت.`,
-                                  `You have ${data.products.length} products registered in your digital library. Access your files and licenses anytime.`
+                                  `لديك ${data.products.length} منتج مسجل في مكتبتك الرقمية.`,
+                                  `You have ${data.products.length} products in your digital library.`
                                 )
                               : t(
-                                  "مكتبتك فارغة حالياً. أدخل مفتاح الترخيص الذي حصلت عليه لتفعيل منتجك فوراً.",
-                                  "Your library is empty. Enter your license key to activate your product immediately."
+                                  "مكتبتك فارغة حالياً. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
+                                  "Your library is empty. Enter your license key to activate."
                                 )}
                           </p>
                           <div className="hero-button-row">
@@ -379,38 +376,30 @@ export function Portal({ user }: { user: PortalUser }) {
                             )}
                           </div>
                         </div>
-                        <div className="hero-cube" aria-hidden="true">
-                          <div className="cube">
-                            <span />
-                            <span />
-                            <span />
-                          </div>
-                          <div className="orbit" />
-                        </div>
                       </section>
 
                       {/* Stat Metrics */}
                       <div className="stats-grid">
                         <section className="panel stat">
                           <span className="stat-icon">
-                            <Package size={19} />
+                            <Package size={18} />
                           </span>
                           <strong>{data.products.length}</strong>
-                          <p>{t("إجمالي المنتجات بالمكتبة", "Products in library")}</p>
+                          <p>{t("المنتجات", "Products")}</p>
                         </section>
                         <section className="panel stat">
                           <span className="stat-icon">
-                            <CheckCircle2 size={19} />
+                            <CheckCircle2 size={18} />
                           </span>
                           <strong>{activeProductsCount}</strong>
-                          <p>{t("التراخيص النشطة", "Active licenses")}</p>
+                          <p>{t("تراخيص نشطة", "Active licenses")}</p>
                         </section>
                         <section className="panel stat">
                           <span className="stat-icon">
-                            <ShieldCheck size={19} />
+                            <ShieldCheck size={18} />
                           </span>
-                          <strong>{data.isAdmin ? t("مدير النظام", "Admin") : t("عميل موثق", "Verified Client")}</strong>
-                          <p>{t("رتبة الحساب", "Account role")}</p>
+                          <strong>{data.isAdmin ? t("مدير", "Admin") : t("عميل موثق", "Verified")}</strong>
+                          <p>{t("الرتبة", "Role")}</p>
                         </section>
                       </div>
                     </div>
@@ -469,10 +458,9 @@ export function Portal({ user }: { user: PortalUser }) {
                   <div className="panel section-toolbar">
                     <div className="toolbar-left-side">
                       <h2>
-                        {t("مكتبة المنتجات والتراخيص", "Product Library")}
+                        {t("مكتبة المنتجات", "Product Library")}
                         <span className="section-count">{data.products.length}</span>
                       </h2>
-                      <p>{t("جميع المنتجات الرقمية المرتبطة بحسابك مع مفاتيحها وروابط التحميل.", "All digital products tied to your account with keys and download files.")}</p>
                     </div>
 
                     <div className="toolbar-controls">
@@ -894,18 +882,18 @@ function ProductGrid({
         </span>
         <h3>
           {emptySearch
-            ? t("لا توجد نتائج مطابقة لبحثك", "No matching products found")
-            : t("لا توجد منتجات مسجلة في حسابك حتى الآن", "No products registered in your account yet")}
+            ? t("لا توجد نتائج مطابقة", "No matching products found")
+            : t("مكتبتك فارغة", "Your library is empty")}
         </h3>
         <p>
           {emptySearch
-            ? t("جرّب البحث باسم آخر أو تأكد من خيارات التصفية.", "Try searching for another name or check your filter settings.")
-            : t("أدخل مفتاح الترخيص الرقمي الخاص بك لإضافة المنتج إلى مكتبتك فوراً.", "Enter your digital license key to unlock your product right away.")}
+            ? t("جرّب البحث باسم آخر أو إزالة التصفية.", "Try searching for another name or clearing filters.")
+            : t("أدخل مفتاح الترخيص لإضافة المنتج إلى مكتبتك فوراً.", "Enter your license key to unlock your product right away.")}
         </p>
         {!emptySearch && (
           <button className="primary-button empty-action" onClick={onRedeem}>
             <KeyRound size={16} />
-            {t("تفعيل مفتاح ترخيص", "Activate a Key")}
+            {t("تفعيل مفتاح", "Activate Key")}
           </button>
         )}
       </div>
@@ -923,40 +911,39 @@ function ProductGrid({
                 <img src={p.image_url} alt={p.name} loading="lazy" />
               ) : (
                 <div className="product-placeholder-icon">
-                  <Package size={44} />
+                  <Package size={38} />
                 </div>
               )}
               <span className={`product-status-tag ${isExpired ? "tag-expired" : "tag-active"}`}>
                 <i className="status-dot" />
-                {isExpired ? t("منتهي الصلاحية", "Expired") : t("ترخيص نشط", "Active License")}
+                {isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
               </span>
             </div>
 
             <div className="product-copy">
               <div className="product-category-row">
-                <span className="sample-label">{p.category || "SPOOFX DIGITAL"}</span>
+                <span className="sample-label">{p.category || "SPOOFX"}</span>
                 {p.default_duration_days && (
                   <span className="duration-pill">
                     {p.default_duration_days >= 3650
                       ? t("دائم", "Lifetime")
-                      : `${p.default_duration_days} ${t("يوم", "days")}`}
+                      : `${p.default_duration_days} ${t("يوم", "d")}`}
                   </span>
                 )}
               </div>
 
               <h3>{p.name}</h3>
-              <p>{p.description || t("لا يوجد وصف إضافي للمنتج.", "No additional product description provided.")}</p>
 
               <div className="product-meta">
                 <div className="expiry-indicator">
                   <CheckCircle2 size={13} className={isExpired ? "text-danger" : "text-success"} />
                   {p.expires_at ? (
                     <time dateTime={p.expires_at}>
-                      {isExpired ? t("انتهى في: ", "Expired on: ") : t("ينتهي في: ", "Expires: ")}
+                      {isExpired ? t("انتهى: ", "Expired: ") : t("ينتهي: ", "Expires: ")}
                       {new Date(p.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
                     </time>
                   ) : (
-                    <span>{t("ترخيص دائم مدى الحياة", "Lifetime License")}</span>
+                    <span>{t("ترخيص دائم", "Lifetime")}</span>
                   )}
                 </div>
 
@@ -964,10 +951,10 @@ function ProductGrid({
                   <button
                     className="btn-action details-btn"
                     onClick={() => onOpenDetails(p)}
-                    title={t("عرض التعليمات والملفات", "View Instructions & Files")}
+                    title={t("عرض التفاصيل والملفات", "View Details & Files")}
                   >
-                    <FileText size={15} />
-                    <span>{t("التفاصيل والملفات", "Details & Files")}</span>
+                    <FileText size={14} />
+                    <span>{t("التفاصيل", "Details")}</span>
                   </button>
 
                   {p.access_url && !isExpired && (
@@ -976,9 +963,9 @@ function ProductGrid({
                       href={p.access_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={t("فتح رابط المنتج", "Launch Product")}
+                      title={t("فتح الرابط", "Launch")}
                     >
-                      <ExternalLink size={16} />
+                      <ExternalLink size={15} />
                     </a>
                   )}
                 </div>

@@ -71,6 +71,8 @@ import type {
   SystemSettings,
   Customer,
 } from "@/lib/store";
+import { notify as notifyMgr } from "@/lib/notify";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 export type AdminSection =
   | "dashboard"
@@ -146,9 +148,28 @@ export function AdminControlSpace({
 
   // Notification helper
   function notify(message: string, type: "success" | "error" = "success") {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    if (type === "success") {
+      notifyMgr.success(t("نجاح", "Success"), message);
+    } else {
+      notifyMgr.error(t("تنبيه", "Notice"), message);
+    }
   }
+
+  // Confirmation Modal State
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: "danger" | "warning" | "primary";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // API Call helper
   async function apiAction(payload: Record<string, unknown>) {
@@ -225,6 +246,12 @@ export function AdminControlSpace({
       return () => clearTimeout(timer);
     }
   }, [customerSearch, customerStatusFilter, customerPage, activeSection]);
+
+  useEffect(() => {
+    if (activeSection === "compensations") {
+      void loadCompensations();
+    }
+  }, [activeSection]);
 
   async function openCustomerDetails(identifier: string) {
     try {
@@ -312,14 +339,24 @@ export function AdminControlSpace({
   }
 
   async function handleArchiveProduct(id: string, name: string) {
-    if (!confirm(t(`هل أنت متأكد من أرشفة المنتج "${name}"؟`, `Are you sure you want to archive "${name}"?`))) return;
-    try {
-      await apiAction({ action: "archiveProduct", id });
-      notify(t("تمت أرشفة المنتج بنجاح", "Product archived"));
-      await onRefresh();
-    } catch (err: any) {
-      notify(err.message, "error");
-    }
+    setConfirmState({
+      isOpen: true,
+      title: t("أرشفة المنتج", "Archive Product"),
+      message: t(`هل أنت متأكد من أرشفة المنتج "${name}"؟ لن يظهر للعملاء الجدد في المتجر.`, `Are you sure you want to archive "${name}"? It will be hidden from new customers.`),
+      confirmText: t("أرشفة", "Archive"),
+      cancelText: t("إلغاء", "Cancel"),
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await apiAction({ action: "archiveProduct", id });
+          notify(t("تمت أرشفة المنتج بنجاح", "Product archived"));
+          await onRefresh();
+        } catch (err: any) {
+          notify(err.message, "error");
+        }
+      },
+    });
   }
 
   // ====================================================
@@ -528,8 +565,27 @@ export function AdminControlSpace({
         reason: "",
       });
       await onRefresh();
+      await loadCompensations();
     } catch (err: any) {
       notify(err.message, "error");
+    }
+  }
+
+  const [compensationsList, setCompensationsList] = useState<Compensation[]>([]);
+  const [loadingCompensations, setLoadingCompensations] = useState(false);
+
+  async function loadCompensations() {
+    setLoadingCompensations(true);
+    try {
+      const res = await fetch("/api/portal?view=admin-compensations");
+      if (res.ok) {
+        const data = await res.json();
+        setCompensationsList(data.compensations || []);
+      }
+    } catch {
+      notify(t("فشل تحميل سجل التعويضات", "Failed to load compensations"), "error");
+    } finally {
+      setLoadingCompensations(false);
     }
   }
 
@@ -600,7 +656,7 @@ export function AdminControlSpace({
       titleEn: "Overview",
       items: [
         { id: "dashboard", icon: LayoutDashboard, ar: "لوحة التحكم", en: "Dashboard" },
-        { id: "stats", icon: BarChart3, ar: "الإحصائيات والتحليلات", en: "Analytics" },
+        { id: "stats", icon: BarChart3, ar: "الإحصائيات", en: "Analytics" },
         { id: "recent-activity", icon: Clock, ar: "آخر الأنشطة", en: "Recent Activity" },
       ],
     },
@@ -610,9 +666,9 @@ export function AdminControlSpace({
       titleEn: "Products",
       items: [
         { id: "products", icon: Package, ar: "جميع المنتجات", en: "All Products", count: products.length },
-        { id: "add-product", icon: PlusCircle, ar: "إضافة منتج جديد", en: "Add Product" },
+        { id: "add-product", icon: PlusCircle, ar: "إضافة منتج", en: "Add Product" },
         { id: "inventory", icon: KeyRound, ar: "مخزون المفاتيح", en: "Key Inventory" },
-        { id: "licenses", icon: ShieldCheck, ar: "سجل التراخيص", en: "Licenses" },
+        { id: "licenses", icon: ShieldCheck, ar: "التراخيص", en: "Licenses" },
       ],
     },
     {
@@ -620,40 +676,40 @@ export function AdminControlSpace({
       titleAr: "إدارة العملاء",
       titleEn: "Customers",
       items: [
-        { id: "customers", icon: Users, ar: "دليل العملاء", en: "All Customers", count: customerTotalCount || undefined },
-        { id: "search-customer", icon: Search, ar: "البحث الفوري عن عميل", en: "Search Customer" },
+        { id: "customers", icon: Users, ar: "جميع العملاء", en: "All Customers", count: customerTotalCount || undefined },
+        { id: "search-customer", icon: Search, ar: "البحث عن عميل", en: "Search Customer" },
         { id: "customer-activations", icon: CheckCircle2, ar: "تفعيلات العملاء", en: "Activations" },
-        { id: "compensations", icon: Gift, ar: "التعويضات والمنح المباشر", en: "Compensations & Grants" },
+        { id: "compensations", icon: Gift, ar: "التعويضات", en: "Compensations" },
       ],
     },
     {
       id: "orders",
-      titleAr: "الطلبات والتسليم",
+      titleAr: "الطلبات",
       titleEn: "Orders",
       items: [
         { id: "orders", icon: ShoppingBag, ar: "جميع الطلبات", en: "All Orders", count: ordersList.length },
-        { id: "fulfillments", icon: Truck, ar: "عمليات التسليم الفوري", en: "Fulfillments" },
+        { id: "fulfillments", icon: Truck, ar: "عمليات التسليم", en: "Fulfillments" },
       ],
     },
     {
       id: "logs",
-      titleAr: "مركز السجلات والأمان",
+      titleAr: "السجلات",
       titleEn: "Audit & Logs",
       items: [
-        { id: "logs-all", icon: Database, ar: "سجل الموقع الشامل", en: "Full Site Log" },
-        { id: "logs-admin", icon: Shield, ar: "سجل الإدارة", en: "Admin Operations" },
-        { id: "logs-redemptions", icon: KeyRound, ar: "سجل تفعيل المفاتيح", en: "Key Redemptions" },
-        { id: "logs-security", icon: ShieldAlert, ar: "سجل الأخطاء والأمان", en: "Security & Errors" },
+        { id: "logs-all", icon: Database, ar: "سجل الموقع", en: "Full Site Log" },
+        { id: "logs-admin", icon: Shield, ar: "سجل الإدارة", en: "Admin Log" },
+        { id: "logs-redemptions", icon: KeyRound, ar: "سجل التفعيلات", en: "Redemptions Log" },
+        { id: "logs-security", icon: ShieldAlert, ar: "سجل الأمان", en: "Security Log" },
       ],
     },
     {
       id: "settings",
-      titleAr: "الإعدادات والنظام",
+      titleAr: "الإعدادات",
       titleEn: "Settings",
       items: [
-        { id: "staff", icon: UserCheck, ar: "الموظفون والصلاحيات", en: "Staff & Roles" },
-        { id: "settings", icon: Sliders, ar: "إعدادات الموقع والنظام", en: "System Settings" },
-        { id: "announcements", icon: Bell, ar: "رسائل التنبيه والصيانة", en: "Announcements" },
+        { id: "staff", icon: UserCheck, ar: "الموظفون", en: "Staff & Roles" },
+        { id: "settings", icon: Sliders, ar: "إعدادات النظام", en: "System Settings" },
+        { id: "announcements", icon: Bell, ar: "التنبيهات والصيانة", en: "Announcements" },
       ],
     },
   ];
@@ -1654,39 +1710,65 @@ export function AdminControlSpace({
             <div className="admin-view-block">
               <div className="section-toolbar-row">
                 <div className="box-header">
-                  <h2><Gift size={18} /> {t("مركز التعويضات والمنح المباشر", "Compensations & Direct Entitlements")}</h2>
-                  <p>{t("منح تراخيص استثنائية، استبدال مفاتيح تالفة، وتوثيق سجلات التعويض", "Grant replacement keys, resolve issues, and log customer compensations")}</p>
+                  <h2><Gift size={18} /> {t("التعويضات", "Compensations")}</h2>
+                  <p>{t("سجل التعويضات واستبدال التراخيص.", "Compensations log and license replacements.")}</p>
                 </div>
                 <div className="action-buttons-group">
                   <button className="primary-button" onClick={() => { setGrantCustomerEmail(""); setShowGrantModal(true); }}>
-                    <Plus size={16} /> {t("منح ترخيص مباشر", "Grant License")}
+                    <Plus size={15} /> {t("منح ترخيص", "Grant License")}
                   </button>
                   <button className="secondary-button" onClick={() => { setCompForm({ customerEmail: "", originalProductId: products[0]?.id || "", compensationType: "REPLACEMENT_KEY", details: "", reason: "" }); setShowCompensationModal(true); }}>
-                    <Gift size={16} /> {t("تسجيل تعويض", "Log Compensation")}
+                    <Gift size={15} /> {t("تسجيل تعويض", "Log Compensation")}
+                  </button>
+                  <button className="secondary-button" onClick={() => void loadCompensations()}>
+                    <RefreshCw size={14} className={loadingCompensations ? "spin" : ""} /> {t("تحديث", "Refresh")}
                   </button>
                 </div>
               </div>
 
-              <div className="admin-card-panel">
-                <div className="panel-heading-row">
-                  <h3>{t("إجراءات التعويض السريعة", "Quick Compensation Tools")}</h3>
-                </div>
-                <div className="compensations-info-grid">
-                  <div className="comp-info-card">
-                    <h4>{t("1. المنح المباشر (Direct License Grant)", "Direct License Grant")}</h4>
-                    <p>{t("إضافة منتج وترخيص فورياً إلى حساب العميل دون الحاجة لكتابة أو تفعيل مفتاح.", "Directly attach a product license to any customer account without needing a manual key.")}</p>
-                    <button className="secondary-button" onClick={() => setShowGrantModal(true)}>
-                      {t("فتح نموذج المنح المباشر", "Open Grant Modal")}
-                    </button>
-                  </div>
-                  <div className="comp-info-card">
-                    <h4>{t("2. استبدال مفتاح متعطل (Key Replacement)", "Key Replacement")}</h4>
-                    <p>{t("إصدار مفتاح بديل وتوثيق رقم مرجعي رسمي في سجلات العميل للرجوع إليه مستقبلاً.", "Issue a replacement license key with a persistent audit reference number.")}</p>
-                    <button className="secondary-button" onClick={() => setShowCompensationModal(true)}>
-                      {t("فتح نموذج التعويض", "Open Compensation Modal")}
-                    </button>
-                  </div>
-                </div>
+              <div className="admin-table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>{t("الرقم المرجعي", "Reference")}</th>
+                      <th>{t("العميل", "Customer")}</th>
+                      <th>{t("المنتج", "Product")}</th>
+                      <th>{t("النوع", "Type")}</th>
+                      <th>{t("السبب", "Reason")}</th>
+                      <th>{t("الموظف", "Issued By")}</th>
+                      <th>{t("التاريخ", "Date")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compensationsList.length ? (
+                      compensationsList.map((comp) => (
+                        <tr key={comp.id}>
+                          <td><span className="key-code-mono">{comp.reference_number}</span></td>
+                          <td><strong>{comp.customer_email}</strong></td>
+                          <td>{comp.original_product_name || comp.original_product_id}</td>
+                          <td>
+                            <span className={`status-badge ${comp.compensation_type === "DIRECT_GRANT" ? "green" : comp.compensation_type === "REPLACEMENT_KEY" ? "blue" : "purple"}`}>
+                              {comp.compensation_type === "DIRECT_GRANT"
+                                ? t("منح مباشر", "Direct Grant")
+                                : comp.compensation_type === "REPLACEMENT_KEY"
+                                ? t("استبدال مفتاح", "Key Replacement")
+                                : t("تمديد ترخيص", "License Extension")}
+                            </span>
+                          </td>
+                          <td><span className="text-secondary">{comp.reason || comp.details || "—"}</span></td>
+                          <td><small className="text-muted">{comp.issued_by}</small></td>
+                          <td><time className="text-muted">{new Date(comp.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</time></td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="table-empty-cell">
+                          {loadingCompensations ? t("جارٍ التحميل…", "Loading…") : t("لا توجد تعويضات مسجلة حتى الآن.", "No compensations recorded yet.")}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -2517,6 +2599,19 @@ export function AdminControlSpace({
           </div>
         </div>
       )}
+
+      {/* Universal Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText || t("تأكيد", "Confirm")}
+        cancelText={confirmState.cancelText || t("إلغاء", "Cancel")}
+        variant={confirmState.variant || "danger"}
+        isLoading={busy}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

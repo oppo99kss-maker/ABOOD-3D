@@ -137,11 +137,11 @@ export function PortalNavigation({
           type="button"
           aria-label={ar ? arabic : en}
           aria-current={activeTab === tab ? "page" : undefined}
-          className={css.navItem}
+          className={`${css.navItem} ${tab === "admin" ? css.adminItem : ""}`}
           data-active={activeTab === tab}
           onClick={() => navigate(tab)}
         >
-          <Icon size={17} strokeWidth={1.8} />
+          <Icon size={15} strokeWidth={1.8} />
           <span>{ar ? arabic : en}</span>
           {count !== undefined && <small>{count}</small>}
         </button>

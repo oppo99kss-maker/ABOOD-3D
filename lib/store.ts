@@ -1491,6 +1491,19 @@ export async function createCompensation(input: {
   return rows[0] as Compensation;
 }
 
+export async function getCompensations(limit = 50): Promise<Compensation[]> {
+  await ready();
+  const { rows } = await pool().query(
+    `SELECT c.*, p.name as original_product_name
+     FROM compensations c
+     LEFT JOIN products p ON p.id = c.original_product_id
+     ORDER BY c.created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return rows as Compensation[];
+}
+
 // ==========================================
 // AUDIT LOGS & ANALYTICS
 // ==========================================
