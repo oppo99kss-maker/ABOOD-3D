@@ -8,22 +8,26 @@ import {
   batchToggleVisibility,
   clearProductKeys,
   createCompensation,
+  createKeyResetRequest,
   createOrder,
   createProduct,
   deleteGuide,
   deleteLicenseKey,
   deleteProduct,
   deleteProducts,
+  dismissCustomerResetNotification,
   duplicateProduct,
   extendLicense,
   generateKeys,
   getAuditLogs,
   getCustomerDetails,
+  getCustomerResetNotifications,
   getCustomers,
   getCompensations,
   getDashboardStats,
   getGuides,
   getKeyActivationLogs,
+  getKeyResetRequests,
   getLoginLogs,
   getOrders,
   getProductInventory,
@@ -34,6 +38,7 @@ import {
   myProducts,
   recordCustomerLogin,
   redeemKey,
+  reviewKeyResetRequest,
   saveGuide,
   sendCustomerMessage,
   suspendLicense,
@@ -139,7 +144,7 @@ export async function GET(request: NextRequest) {
       await recordCustomerLogin(email, session?.user?.name, session?.user?.image);
     }
 
-    const [customerProducts, allAdminProducts, guides, settings, dashboardStats, orders, allGuides] = await Promise.all([
+    const [customerProducts, allAdminProducts, guides, settings, dashboardStats, orders, allGuides, resetRequests, customerNotifications] = await Promise.all([
       myProducts(email),
       admin ? adminProducts() : Promise.resolve([]),
       getGuides(),
@@ -147,6 +152,8 @@ export async function GET(request: NextRequest) {
       admin ? getDashboardStats() : Promise.resolve(null),
       admin ? getOrders() : Promise.resolve([]),
       admin ? adminGuides() : Promise.resolve([]),
+      admin ? getKeyResetRequests() : Promise.resolve([]),
+      email ? getCustomerResetNotifications(email) : Promise.resolve([]),
     ]);
 
     return json({
@@ -158,6 +165,8 @@ export async function GET(request: NextRequest) {
       dashboardStats,
       orders,
       allGuides,
+      resetRequests,
+      customerNotifications,
       isAdmin: admin,
       currentUser: email,
     });
@@ -215,6 +224,34 @@ export async function POST(request: NextRequest) {
 
       const result = await redeemKey(email, code, clientIp);
       return json(result, result.success ? 200 : 400);
+    }
+
+    // 1b. Customer: Request HWID / Key Reset
+    if (data.action === "requestKeyReset") {
+      const productId = typeof data.productId === "string" ? data.productId : undefined;
+      const productName = typeof data.productName === "string" ? data.productName.trim() : "SpooFX Product";
+      const licenseCode = typeof data.licenseCode === "string" ? data.licenseCode.trim() : undefined;
+      const reason = typeof data.reason === "string" ? data.reason.trim() : "";
+      if (!reason || reason.length < 3) {
+        return json({ error: "MISSING_REASON", message: "يرجى كتابة سبب طلب إعادة ضبط المفتاح (مثال: تغيير الجهاز أو فورمات)" }, 400);
+      }
+
+      const result = await createKeyResetRequest({
+        customerEmail: email,
+        productId,
+        productName,
+        licenseCode,
+        reason,
+      });
+      return json({ ok: true, request: result });
+    }
+
+    // 1c. Customer: Dismiss Reset Notification
+    if (data.action === "dismissNotification") {
+      const id = typeof data.id === "string" ? data.id : "";
+      if (!id) return json({ error: "MISSING_ID" }, 400);
+      await dismissCustomerResetNotification(id, email);
+      return json({ ok: true });
     }
 
     // All actions below require ADMIN permissions
@@ -520,6 +557,22 @@ export async function POST(request: NextRequest) {
       if (!productId) return json({ error: "MISSING_PRODUCT_ID" }, 400);
       const result = await clearProductKeys(productId, type, email);
       return json({ ok: true, ...result });
+    }
+
+    // 24. Admin: Review Key Reset Request (Approve / Reject)
+    if (data.action === "reviewKeyReset") {
+      const id = typeof data.id === "string" ? data.id : "";
+      const status = data.status === "APPROVED" ? "APPROVED" : "REJECTED";
+      const adminNotes = typeof data.adminNotes === "string" ? data.adminNotes.trim() : "";
+      if (!id) return json({ error: "MISSING_ID" }, 400);
+
+      const result = await reviewKeyResetRequest({
+        id,
+        status,
+        adminNotes,
+        actorEmail: email,
+      });
+      return json({ ok: true, request: result });
     }
 
     return json({ error: "UNKNOWN_ACTION" }, 400);

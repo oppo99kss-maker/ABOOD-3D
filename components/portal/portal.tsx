@@ -23,13 +23,16 @@ import {
   LogOut,
   Moon,
   Package,
+  RotateCcw,
   Search,
   ShieldAlert,
   ShieldCheck,
   Sliders,
+  Sparkles,
   Sun,
   UserRound,
   X,
+  BookOpen,
 } from "lucide-react";
 import { PortalNavigation, type PortalTab } from "./portal-navigation";
 import { usePreferences } from "./use-preferences";
@@ -40,6 +43,7 @@ import type {
   Guide,
   SystemSettings,
   Order,
+  KeyResetRequest,
 } from "@/lib/store";
 
 type Data = {
@@ -51,6 +55,8 @@ type Data = {
   dashboardStats: any;
   orders: Order[];
   allGuides: Guide[];
+  resetRequests?: KeyResetRequest[];
+  customerNotifications?: KeyResetRequest[];
   isAdmin: boolean;
   currentUser?: string;
 };
@@ -84,6 +90,11 @@ export function Portal({ user }: { user: PortalUser }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [selectedProductModal, setSelectedProductModal] = useState<Product | null>(null);
+  const [guideModalProduct, setGuideModalProduct] = useState<Product | null>(null);
+  const [resetModalProduct, setResetModalProduct] = useState<Product | null>(null);
+  const [submittingReset, setSubmittingReset] = useState(false);
+  const [floatingAlertSeconds, setFloatingAlertSeconds] = useState(25);
+  const [floatingAlertDismissed, setFloatingAlertDismissed] = useState(false);
   const [guideSearch, setGuideSearch] = useState("");
 
   const [data, setData] = useState<Data>({
@@ -102,6 +113,8 @@ export function Portal({ user }: { user: PortalUser }) {
     dashboardStats: null,
     orders: [],
     allGuides: [],
+    resetRequests: [],
+    customerNotifications: [],
     isAdmin: false,
   });
 
@@ -126,6 +139,8 @@ export function Portal({ user }: { user: PortalUser }) {
         dashboardStats: json.dashboardStats || null,
         orders: json.orders || [],
         allGuides: json.allGuides || [],
+        resetRequests: json.resetRequests || [],
+        customerNotifications: json.customerNotifications || [],
         isAdmin: Boolean(json.isAdmin),
         currentUser: json.currentUser || user.email,
       });
@@ -147,6 +162,86 @@ export function Portal({ user }: { user: PortalUser }) {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   }, []);
+
+  // 25-Second floating alert timer on site entry
+  useEffect(() => {
+    if (floatingAlertDismissed) return;
+    const timer = setInterval(() => {
+      setFloatingAlertSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setFloatingAlertDismissed(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [floatingAlertDismissed]);
+
+  const handleDismissFloatingAlert = useCallback(() => {
+    setFloatingAlertDismissed(true);
+    const activeNotif = data.customerNotifications?.[0];
+    if (activeNotif && !activeNotif.customer_notified) {
+      void fetch("/api/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "dismissNotification",
+          id: activeNotif.id,
+        }),
+      });
+    }
+  }, [data.customerNotifications]);
+
+  function handleDownloadProduct(p: Product) {
+    let downloadUrl = "/downloads/Spoofx.rar";
+    if (Array.isArray(p.files) && p.files.length > 0 && p.files[0]?.url) {
+      downloadUrl = p.files[0].url;
+    } else if (typeof p.files === "string") {
+      try {
+        const parsed = JSON.parse(p.files);
+        if (Array.isArray(parsed) && parsed[0]?.url) downloadUrl = parsed[0].url;
+      } catch {}
+    }
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = "Spoofx.rar";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    notify.success(t("بدء التحميل", "Download Started"), t(`جاري تحميل حزمة ${p.name}...`, `Downloading ${p.name} package...`));
+  }
+
+  async function handleSubmitResetRequest(productId: string, productName: string, reason: string) {
+    setSubmittingReset(true);
+    try {
+      const res = await fetch("/api/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "requestKeyReset",
+          productId,
+          productName,
+          reason,
+        }),
+      });
+      const resJson = await res.json();
+      if (!res.ok) throw new Error(resJson.message || resJson.error || "Failed to submit request");
+      notify.success(
+        t("تم إرسال طلب الرستات", "Request Sent"),
+        t("تم إرسال طلب رستات المفتاح للإدارة بنجاح وسيتم الرد قريباً", "Reset request sent to admin for review")
+      );
+      setResetModalProduct(null);
+      await refresh();
+      setFloatingAlertSeconds(25);
+      setFloatingAlertDismissed(false);
+    } catch (err: any) {
+      notify.error(t("خطأ", "Error"), err.message || t("فشل إرسال طلب الرستات", "Failed to submit reset request"));
+    } finally {
+      setSubmittingReset(false);
+    }
+  }
 
   function navigate(tab: PortalTab) {
     if (tab === "admin" && !data.isAdmin) return;
@@ -280,6 +375,7 @@ export function Portal({ user }: { user: PortalUser }) {
             orders={data.orders}
             allGuides={data.allGuides}
             settings={data.settings}
+            resetRequests={data.resetRequests || []}
             currentUser={data.currentUser || user.email}
             lang={lang}
             isDark={isDark}
@@ -290,6 +386,124 @@ export function Portal({ user }: { user: PortalUser }) {
           />
         ) : (
           <>
+            {/* 25-Second Floating Alert on Customer Site Entry */}
+            {!floatingAlertDismissed && (
+              <aside className="portal-floating-alert-25s" role="alert" aria-live="polite">
+                <div className="alert-content-row">
+                  <div className="alert-badge-icon">
+                    {(() => {
+                      const notif = data.customerNotifications?.[0];
+                      if (notif?.status === "APPROVED") return <CheckCircle2 size={20} className="text-success" />;
+                      if (notif?.status === "REJECTED") return <ShieldAlert size={20} className="text-danger" />;
+                      if (notif?.status === "PENDING") return <Clock size={20} className="text-warning" />;
+                      return <Sparkles size={20} className="text-cyan" />;
+                    })()}
+                  </div>
+
+                  <div className="alert-text-body">
+                    {(() => {
+                      const notif = data.customerNotifications?.[0];
+                      if (notif) {
+                        if (notif.status === "APPROVED") {
+                          return (
+                            <>
+                              <div className="alert-headline">
+                                <strong>{t("تمت الموافقة على طلب رستات المفتاح!", "Key Reset Request Approved!")}</strong>
+                                <span className="alert-chip approved">{t("معتمد", "Approved")}</span>
+                              </div>
+                              <p>
+                                {t(
+                                  `تمت الموافقة على طلب رستات المفتاح لمنتج "${notif.product_name}". يمكنك الآن إعادة استخدام المفتاح على جهازك الجديد.`,
+                                  `Your key reset request for "${notif.product_name}" was approved. You can now use the key on your new device.`
+                                )}
+                                {notif.admin_notes && (
+                                  <span className="alert-admin-note">
+                                    {" "}• {t("ملاحظة الإدارة:", "Admin note:")} {notif.admin_notes}
+                                  </span>
+                                )}
+                              </p>
+                            </>
+                          );
+                        }
+                        if (notif.status === "REJECTED") {
+                          return (
+                            <>
+                              <div className="alert-headline">
+                                <strong>{t("تم رفض طلب رستات المفتاح", "Key Reset Request Rejected")}</strong>
+                                <span className="alert-chip rejected">{t("مرفوض", "Rejected")}</span>
+                              </div>
+                              <p>
+                                {t(
+                                  `تم رفض طلب رستات المفتاح لمنتج "${notif.product_name}".`,
+                                  `Your key reset request for "${notif.product_name}" was rejected.`
+                                )}
+                                {notif.admin_notes && (
+                                  <span className="alert-admin-note">
+                                    {" "}• {t("ملاحظة الإدارة:", "Admin note:")} {notif.admin_notes}
+                                  </span>
+                                )}
+                              </p>
+                            </>
+                          );
+                        }
+                        return (
+                          <>
+                            <div className="alert-headline">
+                              <strong>{t("طلب رستات المفتاح قيد المراجعة", "Key Reset Request Pending")}</strong>
+                              <span className="alert-chip pending">{t("قيد التدقيق", "In Review")}</span>
+                            </div>
+                            <p>
+                              {t(
+                                `طلبك لإعادة تعيين مفتاح "${notif.product_name}" قيد المراجعة حالياً من قبل الإدارة وسيتم الرد قريباً.`,
+                                `Your key reset request for "${notif.product_name}" is currently under review by our admin team.`
+                              )}
+                            </p>
+                          </>
+                        );
+                      }
+                      return (
+                        <>
+                          <div className="alert-headline">
+                            <strong>{t("مرحباً بك في منصة SpooFX الرقمية", "Welcome to SpooFX Control Space")}</strong>
+                            <span className="alert-chip system">{t("إشعار العميل", "Member Alert")}</span>
+                          </div>
+                          <p>
+                            {t(
+                              "يمكنك تحميل البرنامج المحدث، تصفح دليل المنتج وشرح الفيديو، أو إرسال طلب رستات مفتاح (HWID) بسهولة من بطاقات منتجاتك.",
+                              "You can download software, browse video guides, or request a HWID key reset directly from your product cards."
+                            )}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="alert-actions-side">
+                    <div className="alert-timer-tag" title={t("يختفي تلقائياً بعد 25 ثانية", "Auto-dismisses in 25 seconds")}>
+                      <Clock size={12} />
+                      <span>{floatingAlertSeconds} {t("ثانية", "s")}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="alert-dismiss-btn"
+                      onClick={handleDismissFloatingAlert}
+                      title={t("إغلاق الإشعار (X)", "Dismiss (X)")}
+                      aria-label="Close alert"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="alert-progress-track">
+                  <div
+                    className="alert-progress-bar-fill"
+                    style={{ width: `${Math.max(0, Math.min(100, (floatingAlertSeconds / 25) * 100))}%` }}
+                  />
+                </div>
+              </aside>
+            )}
+
             <main className="portal-main">
           {/* Header */}
           <div className="page-heading">
@@ -465,6 +679,9 @@ export function Portal({ user }: { user: PortalUser }) {
                       ar={ar}
                       onRedeem={() => navigate("redeem")}
                       onOpenDetails={(p) => setSelectedProductModal(p)}
+                      onOpenGuide={(p) => setGuideModalProduct(p)}
+                      onOpenReset={(p) => setResetModalProduct(p)}
+                      onDownload={(p) => handleDownloadProduct(p)}
                       emptySearch={Boolean(query)}
                       customEmptyTitle={t("لا توجد منتجات نشطة حالياً", "No active products currently")}
                       customEmptyDesc={t("أدخل مفتاح الترخيص لإضافة منتج نشط إلى حسابك.", "Enter a license key to activate a product.")}
@@ -497,6 +714,9 @@ export function Portal({ user }: { user: PortalUser }) {
                         ar={ar}
                         onRedeem={() => navigate("redeem")}
                         onOpenDetails={(p) => setSelectedProductModal(p)}
+                        onOpenGuide={(p) => setGuideModalProduct(p)}
+                        onOpenReset={(p) => setResetModalProduct(p)}
+                        onDownload={(p) => handleDownloadProduct(p)}
                         emptySearch={Boolean(query)}
                       />
                     ) : (
@@ -858,6 +1078,42 @@ export function Portal({ user }: { user: PortalUser }) {
           onClose={() => setSelectedProductModal(null)}
         />
       )}
+
+      {/* ==================================================== */}
+      {/* PRODUCT GUIDE & VIDEO TUTORIAL MODAL */}
+      {/* ==================================================== */}
+      {guideModalProduct && (
+        <ProductGuideModal
+          product={guideModalProduct}
+          ar={ar}
+          onClose={() => setGuideModalProduct(null)}
+          onDownload={() => handleDownloadProduct(guideModalProduct)}
+          onOpenReset={() => {
+            const p = guideModalProduct;
+            setGuideModalProduct(null);
+            setResetModalProduct(p);
+          }}
+        />
+      )}
+
+      {/* ==================================================== */}
+      {/* KEY RESET / HWID RESET REQUEST MODAL */}
+      {/* ==================================================== */}
+      {resetModalProduct && (
+        <KeyResetModal
+          product={resetModalProduct}
+          ar={ar}
+          isSubmitting={submittingReset}
+          onClose={() => setResetModalProduct(null)}
+          onSubmit={async (reason) => {
+            await handleSubmitResetRequest(
+              resetModalProduct.id,
+              resetModalProduct.name,
+              reason
+            );
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -884,6 +1140,9 @@ function ProductGrid({
   ar,
   onRedeem,
   onOpenDetails,
+  onOpenGuide,
+  onOpenReset,
+  onDownload,
   emptySearch = false,
   customEmptyTitle,
   customEmptyDesc,
@@ -892,6 +1151,9 @@ function ProductGrid({
   ar: boolean;
   onRedeem: () => void;
   onOpenDetails: (product: Product) => void;
+  onOpenGuide?: (product: Product) => void;
+  onOpenReset?: (product: Product) => void;
+  onDownload?: (product: Product) => void;
   emptySearch?: boolean;
   customEmptyTitle?: string;
   customEmptyDesc?: string;
@@ -972,26 +1234,63 @@ function ProductGrid({
                 </div>
 
                 <div className="product-card-actions">
-                  <button
-                    className="btn-action details-btn"
-                    onClick={() => onOpenDetails(p)}
-                    title={t("عرض التفاصيل والملفات", "View Details & Files")}
-                  >
-                    <FileText size={14} />
-                    <span>{t("التفاصيل", "Details")}</span>
-                  </button>
-
-                  {p.access_url && !isExpired && (
-                    <a
-                      className="icon-button launch-btn"
-                      href={p.access_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={t("فتح الرابط", "Launch")}
+                  {/* Three Main Action Buttons (Download, Guide, Reset Key) */}
+                  <div className="product-actions-three-btn-row">
+                    <button
+                      type="button"
+                      className="btn-lux-action btn-lux-download"
+                      onClick={() => onDownload?.(p)}
+                      title={t("تحميل حزمة SpooFX المعتمدة", "Download SpooFX Software")}
                     >
-                      <ExternalLink size={15} />
-                    </a>
-                  )}
+                      <Download size={14} />
+                      <span>{t("تحميل", "Download")}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-lux-action btn-lux-guide"
+                      onClick={() => onOpenGuide?.(p)}
+                      title={t("دليل تشغيل وشرح المنتج بالفيديو", "Product Setup Guide & Video")}
+                    >
+                      <BookOpen size={14} />
+                      <span>{t("دليل المنتج", "Guide")}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-lux-action btn-lux-reset"
+                      onClick={() => onOpenReset?.(p)}
+                      title={t("طلب رستات المفتاح (HWID Reset)", "Reset Device Key (HWID)")}
+                    >
+                      <RotateCcw size={14} />
+                      <span>{t("رستات مفتاح", "Reset Key")}</span>
+                    </button>
+                  </div>
+
+                  {/* Secondary Details & Launch row */}
+                  <div className="product-actions-sub-row">
+                    <button
+                      type="button"
+                      className="btn-action details-btn"
+                      onClick={() => onOpenDetails(p)}
+                      title={t("عرض تفاصيل المنتج والملفات", "View Details & Files")}
+                    >
+                      <FileText size={13} />
+                      <span>{t("التفاصيل", "Details")}</span>
+                    </button>
+
+                    {p.access_url && !isExpired && (
+                      <a
+                        className="icon-button launch-btn"
+                        href={p.access_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={t("فتح الرابط المباشر", "Launch URL")}
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1148,3 +1447,279 @@ function ProductDetailModal({
     </div>
   );
 }
+
+function ProductGuideModal({
+  product,
+  ar,
+  onClose,
+  onDownload,
+  onOpenReset,
+}: {
+  product: Product;
+  ar: boolean;
+  onClose: () => void;
+  onDownload: () => void;
+  onOpenReset: () => void;
+}) {
+  const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card guide-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-header-info">
+            <span className="badge-tag cyan">{t("دليل المنتج الرسمي", "Official Product Guide")}</span>
+            <h2>{t(`دليل تشغيل: ${product.name}`, `Setup Guide: ${product.name}`)}</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            <X size={19} />
+          </button>
+        </div>
+
+        <div className="modal-body-scroll">
+          {/* Quick Direct Download Hero Box */}
+          <div className="guide-dl-hero-box">
+            <div className="guide-dl-left">
+              <Download size={22} className="text-cyan" />
+              <div>
+                <strong>{t("تحميل حزمة SpooFX المعتمدة", "Download Official SpooFX Package")}</strong>
+                <p>{t("ملف نظيف ومضغوط بصيغة RAR جاهز للتشغيل المباشر.", "Clean RAR package ready for direct execution.")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="primary-button guide-dl-btn"
+              onClick={onDownload}
+            >
+              <Download size={15} />
+              <span>{t("تحميل الملف (Spoofx.rar)", "Download (Spoofx.rar)")}</span>
+            </button>
+          </div>
+
+          {/* 4 Step Visual Walkthrough */}
+          <div className="guide-steps-grid">
+            <div className="guide-step-card">
+              <span className="guide-step-number">01</span>
+              <h4>{t("فك الضغط", "Extract Files")}</h4>
+              <p>{t("فك ضغط ملف Spoofx.rar في مجلد مستقل على سطح المكتب باستخدام WinRAR.", "Extract Spoofx.rar into a dedicated folder on Desktop using WinRAR.")}</p>
+            </div>
+
+            <div className="guide-step-card">
+              <span className="guide-step-number">02</span>
+              <h4>{t("إيقاف الحماية مؤقتاً", "Disable Antivirus")}</h4>
+              <p>{t("عطّل مضاد الفيروسات أو Windows Defender مؤقتاً لتجنب الحجب الخاطئ للملفات.", "Temporarily pause antivirus or Windows Defender to avoid false positive blocks.")}</p>
+            </div>
+
+            <div className="guide-step-card">
+              <span className="guide-step-number">03</span>
+              <h4>{t("تشغيل كمسؤول", "Run as Admin")}</h4>
+              <p>{t("انقر بالزر الأيمن على ملف البرنامج واختر 'تشغيل كمسؤول' لمنحه الصلاحيات.", "Right click the executable and select 'Run as administrator' for privileges.")}</p>
+            </div>
+
+            <div className="guide-step-card">
+              <span className="guide-step-number">04</span>
+              <h4>{t("إدخال مفتاح الترخيص", "Activate Key")}</h4>
+              <p>{t("ضع المفتاح المخصص لك داخل خانة الترخيص ثم اضغط تفعيل واستمتع بالخدمة.", "Paste your license key in the activation box, submit, and enjoy.")}</p>
+            </div>
+          </div>
+
+          {/* Detailed Instructions if set */}
+          {product.instructions && (
+            <div className="detail-section">
+              <h3>
+                <FileText size={17} />
+                {t("تعليمات وإرشادات إضافية خاصة بالمنتج", "Special Product Instructions")}
+              </h3>
+              <div className="instructions-card">
+                <pre>{product.instructions}</pre>
+              </div>
+            </div>
+          )}
+
+          {/* Video Tutorial Section */}
+          <div className="guide-video-callout">
+            <div className="guide-video-info">
+              <Sparkles size={20} className="text-cyan" />
+              <div>
+                <strong>{t("شرح الفيديو التوضيحي", "Video Walkthrough & Tutorial")}</strong>
+                <p>{t("شاهد الشرح المرئي خطوة بخطوة للتعرف على طريقة التشغيل وحل المشاكل الشائعة.", "Watch our step-by-step video tutorial covering setup and troubleshooting.")}</p>
+              </div>
+            </div>
+            <a
+              href="https://spoofx.rmz.gg/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="secondary-button video-link-btn"
+            >
+              <ExternalLink size={15} />
+              <span>{t("فتح المتجر والشروحات", "Open Store & Tutorials")}</span>
+            </a>
+          </div>
+
+          {/* Reset Key Callout */}
+          <div className="guide-reset-callout">
+            <div className="guide-reset-info">
+              <RotateCcw size={20} className="text-warning" />
+              <div>
+                <strong>{t("هل قمت بتغيير جهازك أو فورمات؟", "Changed your PC or formatted Windows?")}</strong>
+                <p>{t("يمكنك طلب رستات المفتاح (HWID Reset) لإعادة ربط ترخيصك بجهازك الجديد فوراً.", "Request a HWID key reset to link your license to your new hardware instantly.")}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="secondary-button reset-prompt-btn"
+              onClick={onOpenReset}
+            >
+              <RotateCcw size={14} />
+              <span>{t("طلب رستات مفتاح الآن", "Request Key Reset")}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button className="secondary-button" onClick={onClose}>
+            {t("إغلاق الدليل", "Close Guide")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KeyResetModal({
+  product,
+  ar,
+  onClose,
+  onSubmit,
+  isSubmitting,
+}: {
+  product: Product;
+  ar: boolean;
+  onClose: () => void;
+  onSubmit: (reason: string) => Promise<void>;
+  isSubmitting: boolean;
+}) {
+  const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const quickTags = [
+    t("تغيير الجهاز بالكامل", "Full PC Change"),
+    t("فورمات للويندوز", "Windows Format"),
+    t("تغيير اللوحة الأم والمعالج", "Motherboard / CPU Change"),
+    t("تغيير كرت الشاشة", "GPU Upgrade"),
+  ];
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!reason.trim()) {
+      setError(t("يرجى كتابة سبب طلب الرستات", "Please provide a reason for the reset request"));
+      return;
+    }
+    setError(null);
+    await onSubmit(reason.trim());
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card reset-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-header-info">
+            <span className="badge-tag amber">{t("إعادة تعيين المعرّف HWID", "HWID Device Reset")}</span>
+            <h2>{t(`طلب رستات مفتاح: ${product.name}`, `Key Reset Request: ${product.name}`)}</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            <X size={19} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body-scroll">
+            {/* Notice Callout */}
+            <div className="reset-notice-box">
+              <Info size={18} />
+              <p>
+                {t(
+                  "تتيح لك هذه الميزة إعادة ربط ترخيصك بجهاز جديد في حال قمت بتغيير مكونات جهازك أو قمت بعمل فورمات. يرجى توضيح السبب ليتم اعتماده من الإدارة.",
+                  "This allows re-binding your license to a new PC after hardware changes or OS reinstallation. Please describe your reason for admin approval."
+                )}
+              </p>
+            </div>
+
+            {/* Product Meta Pill */}
+            <div className="reset-product-pill">
+              <Package size={16} />
+              <strong>{product.name}</strong>
+              <span className="lic-status-badge">{t("ترخيص مسجل", "Registered License")}</span>
+            </div>
+
+            {/* Quick reason suggestions */}
+            <div className="reset-quick-tags-wrap">
+              <label className="reset-label-text">{t("خيارات سريعة للسبب:", "Quick reason tags:")}</label>
+              <div className="reset-tags-row">
+                {quickTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="reset-tag-chip"
+                    onClick={() => setReason(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reason Textarea */}
+            <div className="reset-textarea-wrap">
+              <label className="reset-label-text" htmlFor="reset-reason">
+                {t("سبب طلب الرستات بالتفصيل (مطلوب)", "Reason for Reset Request (Required)")}
+              </label>
+              <textarea
+                id="reset-reason"
+                className="ref-text-input reset-textarea"
+                rows={4}
+                value={reason}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder={t(
+                  "مثال: قمت بتغيير اللوحة الأم والمعالج، أو قمت بعمل فورمات للويندوز والجهاز لا يتعرف على المفتاح القديم...",
+                  "e.g. Upgraded motherboard and CPU, or formatted Windows and previous device key is not recognized..."
+                )}
+                required
+              />
+            </div>
+
+            {error && <p className="form-error-text">{error}</p>}
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="secondary-button" onClick={onClose}>
+              {t("إلغاء", "Cancel")}
+            </button>
+            <button
+              type="submit"
+              className="primary-button submit-reset-btn"
+              disabled={isSubmitting || !reason.trim()}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle size={15} className="spin" />
+                  <span>{t("جارٍ الإرسال…", "Submitting…")}</span>
+                </>
+              ) : (
+                <>
+                  <RotateCcw size={15} />
+                  <span>{t("إرسال طلب الرستات للإدارة", "Submit Reset Request")}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+

@@ -143,6 +143,23 @@ export type SystemSettings = {
   low_stock_threshold: number;
 };
 
+export type KeyResetRequest = {
+  id: string;
+  customer_email: string;
+  product_id?: string | null;
+  product_name: string;
+  license_code?: string | null;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  admin_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  customer_notified: boolean;
+  created_at: string;
+  customer_name?: string;
+  customer_image?: string | null;
+};
+
 const globalStore = globalThis as typeof globalThis & {
   spooPool?: Pool;
   spooSchema?: Promise<void>;
@@ -368,6 +385,27 @@ export async function ready() {
         ('allow_new_activations', 'true'::jsonb),
         ('low_stock_threshold', '5'::jsonb)
       ON CONFLICT (key) DO NOTHING;
+    `);
+
+    // 8.5. Key Reset Requests table
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS key_reset_requests (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        customer_email text NOT NULL,
+        product_id uuid REFERENCES products(id) ON DELETE SET NULL,
+        product_name text NOT NULL,
+        license_code text,
+        reason text NOT NULL,
+        status text NOT NULL DEFAULT 'PENDING',
+        admin_notes text DEFAULT '',
+        reviewed_by text,
+        reviewed_at timestamptz,
+        customer_notified boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_key_reset_requests_customer ON key_reset_requests (lower(customer_email));
+      CREATE INDEX IF NOT EXISTS idx_key_reset_requests_status ON key_reset_requests (status);
+      CREATE INDEX IF NOT EXISTS idx_key_reset_requests_created ON key_reset_requests (created_at DESC);
     `);
 
     // 9. Seed initial guides if none exist
@@ -2092,4 +2130,117 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>, ac
     details: settings,
   });
   return getSystemSettings();
+}
+
+// ==========================================
+// KEY RESET REQUESTS (HWID Resets)
+// ==========================================
+export async function createKeyResetRequest(input: {
+  customerEmail: string;
+  productId?: string;
+  productName: string;
+  licenseCode?: string;
+  reason: string;
+}) {
+  await ready();
+  const cleanEmail = input.customerEmail.toLowerCase().trim();
+  const id = randomUUID();
+  const { rows } = await pool().query(
+    `INSERT INTO key_reset_requests (
+       id, customer_email, product_id, product_name, license_code, reason, status, customer_notified
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', false)
+     RETURNING *`,
+    [
+      id,
+      cleanEmail,
+      input.productId || null,
+      input.productName.trim(),
+      input.licenseCode || null,
+      input.reason.trim(),
+    ]
+  );
+  await logAudit({
+    category: "INVENTORY",
+    action: "KEY_RESET_REQUESTED",
+    actor_email: cleanEmail,
+    target_type: "product",
+    target_id: input.productId,
+    details: { productName: input.productName, reason: input.reason },
+  });
+  return rows[0] as KeyResetRequest;
+}
+
+export async function getKeyResetRequests(status?: string, limit = 100) {
+  await ready();
+  const { rows } = await pool().query(
+    `SELECT r.*, c.name as customer_name, c.image as customer_image
+     FROM key_reset_requests r
+     LEFT JOIN customers c ON lower(c.email) = lower(r.customer_email)
+     WHERE ($1::text IS NULL OR r.status = $1)
+     ORDER BY r.created_at DESC
+     LIMIT $2`,
+    [status || null, limit]
+  );
+  return rows as KeyResetRequest[];
+}
+
+export async function reviewKeyResetRequest(input: {
+  id: string;
+  status: "APPROVED" | "REJECTED";
+  adminNotes?: string;
+  actorEmail: string;
+}) {
+  await ready();
+  const { rows, rowCount } = await pool().query(
+    `UPDATE key_reset_requests
+     SET status = $2,
+         admin_notes = COALESCE($3, admin_notes),
+         reviewed_by = $4,
+         reviewed_at = now(),
+         customer_notified = false
+     WHERE id = $1
+     RETURNING *`,
+    [input.id, input.status, input.adminNotes || "", input.actorEmail]
+  );
+  if (!rowCount || !rows[0]) throw new Error("REQUEST_NOT_FOUND");
+  const updated = rows[0] as KeyResetRequest;
+
+  await logAudit({
+    category: "ADMIN",
+    action: input.status === "APPROVED" ? "KEY_RESET_APPROVED" : "KEY_RESET_REJECTED",
+    actor_email: input.actorEmail,
+    target_type: "customer",
+    target_id: updated.customer_email,
+    details: { requestId: input.id, status: input.status, product: updated.product_name, notes: input.adminNotes },
+  });
+
+  return updated;
+}
+
+export async function getCustomerResetNotifications(email: string) {
+  await ready();
+  const cleanEmail = email.toLowerCase().trim();
+  const { rows } = await pool().query(
+    `SELECT * FROM key_reset_requests
+     WHERE lower(customer_email) = $1
+       AND (
+         customer_notified = false
+         OR reviewed_at >= now() - interval '2 days'
+         OR (status = 'PENDING' AND created_at >= now() - interval '1 day')
+       )
+     ORDER BY COALESCE(reviewed_at, created_at) DESC
+     LIMIT 10`,
+    [cleanEmail]
+  );
+  return rows as KeyResetRequest[];
+}
+
+export async function dismissCustomerResetNotification(id: string, email: string) {
+  await ready();
+  await pool().query(
+    `UPDATE key_reset_requests SET customer_notified = true WHERE id = $1 AND lower(customer_email) = $2`,
+    [id, email.toLowerCase().trim()]
+  );
+  return { ok: true };
 }

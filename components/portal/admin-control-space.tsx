@@ -19,6 +19,7 @@ import {
   EyeOff,
   FileText,
   Gift,
+  Info,
   KeyRound,
   Layers,
   LoaderCircle,
@@ -28,6 +29,7 @@ import {
   Power,
   Radio,
   RefreshCw,
+  RotateCcw,
   Save,
   Search,
   Send,
@@ -54,6 +56,7 @@ import type {
   SystemSettings,
   Customer,
   ProductFile,
+  KeyResetRequest,
 } from "@/lib/store";
 import { notify as notifyMgr } from "@/lib/notify";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
@@ -61,6 +64,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 export type AdminSection =
   | "products"
   | "products-current"
+  | "reset-requests"
   | "customers"
   | "search-customer"
   | "logs-activations"
@@ -82,6 +86,7 @@ type Props = {
   orders: Order[];
   allGuides: Guide[];
   settings: SystemSettings;
+  resetRequests?: KeyResetRequest[];
   currentUser: string;
   lang: "ar" | "en";
   isDark: boolean;
@@ -98,6 +103,7 @@ export function AdminControlSpace({
   orders: initialOrders,
   allGuides: initialGuides,
   settings: initialSettings,
+  resetRequests: initialResetRequests = [],
   currentUser,
   lang,
   isDark,
@@ -111,6 +117,19 @@ export function AdminControlSpace({
 
   const [activeSection, setActiveSection] = useState<AdminSection>("products");
   const [busy, setBusy] = useState(false);
+
+  // Key Reset Requests State
+  const [resetRequestsList, setResetRequestsList] = useState<KeyResetRequest[]>(initialResetRequests);
+  const [resetFilter, setResetFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
+  const [resetSearch, setResetSearch] = useState("");
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialResetRequests) {
+      setResetRequestsList(initialResetRequests);
+    }
+  }, [initialResetRequests]);
 
   // Notification helper
   function notify(message: string, type: "success" | "error" = "success") {
@@ -151,6 +170,44 @@ export function AdminControlSpace({
       return data;
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Handle Review Key Reset Request (Approve / Reject)
+  async function handleReviewReset(id: string, status: "APPROVED" | "REJECTED") {
+    setReviewingId(id);
+    try {
+      const notes = reviewNotes[id] || "";
+      await apiAction({
+        action: "reviewKeyReset",
+        id,
+        status,
+        adminNotes: notes,
+      });
+      notify(
+        status === "APPROVED"
+          ? t("تمت الموافقة على طلب رستات المفتاح بنجاح", "Key reset request approved successfully")
+          : t("تم رفض طلب رستات المفتاح", "Key reset request rejected"),
+        status === "APPROVED" ? "success" : "error"
+      );
+      setResetRequestsList((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                status,
+                admin_notes: notes || r.admin_notes,
+                reviewed_by: currentUser,
+                reviewed_at: new Date().toISOString(),
+              }
+            : r
+        )
+      );
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل تحديث حالة الطلب", "Failed to update request"), "error");
+    } finally {
+      setReviewingId(null);
     }
   }
 
@@ -1313,6 +1370,13 @@ export function AdminControlSpace({
       badge: products.filter((p) => !p.is_archived).length,
     },
     {
+      id: "reset-requests" as AdminSection,
+      icon: RotateCcw,
+      ar: "طلبات رستات المفاتيح",
+      en: "Key Reset Requests",
+      badge: resetRequestsList.filter((r) => r.status === "PENDING").length,
+    },
+    {
       id: "customers" as AdminSection,
       icon: Users,
       ar: "إدارة العملاء",
@@ -1398,6 +1462,7 @@ export function AdminControlSpace({
             <div className="hero-icon-cube">
               {activeSection === "products" && <Package size={26} />}
               {activeSection === "products-current" && <Sliders size={26} />}
+              {activeSection === "reset-requests" && <RotateCcw size={26} />}
               {activeSection === "customers" && <Users size={26} />}
               {activeSection === "search-customer" && <Search size={26} />}
               {activeSection === "logs-activations" && <KeyRound size={26} />}
@@ -1408,6 +1473,7 @@ export function AdminControlSpace({
               <h2 className="hero-main-title">
                 {activeSection === "products" && t("إدارة المنتجات والمخزون", "Products & Inventory Management")}
                 {activeSection === "products-current" && t("إدارة المنتجات الحالية", "Current Products Management")}
+                {activeSection === "reset-requests" && t("طلبات رستات المفاتيح (HWID)", "Key Reset Requests (HWID)")}
                 {activeSection === "customers" && t("إدارة العملاء", "Customer Management")}
                 {activeSection === "search-customer" && t("البحث عن عميل", "Customer Search Engine")}
                 {activeSection === "logs-activations" && t("مركز النشاط", "Activity Center")}
@@ -1417,6 +1483,7 @@ export function AdminControlSpace({
               <p className="hero-subtext">
                 {activeSection === "products" && t("تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.", "Full control over product settings and manual license keys.")}
                 {activeSection === "products-current" && t("التحكم في ظهور المنتجات وتعديل الملفات والعناوين وحذفها.", "Control product visibility, edit files, titles, and delete.")}
+                {activeSection === "reset-requests" && t("مراجعة طلبات إعادة تعيين المفاتيح للعملاء، الموافقة أو الرفض الفوري وتوثيق الملاحظات.", "Review customer key reset requests, approve or reject instantly with admin notes.")}
                 {activeSection === "customers" && t("استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.", "Review customer accounts, mute/suspend, and monitor their licenses.")}
                 {activeSection === "search-customer" && t("البحث الفوري عن بيانات أي عميل والتحقق من حساباته وتراخيصه.", "Instant lookup for customer profiles, devices, and licenses.")}
                 {activeSection === "logs-activations" && t("مراقبة حية لجميع حركات دخول وخروج وتفعيلات الموقع.", "Live monitoring of all activations and account events.")}
@@ -1966,6 +2033,245 @@ export function AdminControlSpace({
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* VIEW 2B: طلبات رستات المفاتيح (Key Reset Requests) */}
+        {/* ==================================================== */}
+        {activeSection === "reset-requests" && (
+          <div className="ref-view-section">
+            <div className="ref-table-card">
+              {/* Toolbar & Filter Bar */}
+              <div className="ref-table-card-header">
+                <div className="ref-reset-header-info">
+                  <h3 className="ref-card-main-title">
+                    <RotateCcw size={20} className="text-warning" />
+                    <span>{t("طلبات رستات المفاتيح (HWID Resets)", "Key Reset Requests (HWID Resets)")}</span>
+                  </h3>
+                  <p className="ref-section-subtitle">
+                    {t(
+                      "تظهر هنا طلبات العملاء لإعادة تعيين مفاتيحهم لأجهزة جديدة. يمكنك الموافقة أو الرفض فوراً مع إرسال ملاحظات تظهر للعميل.",
+                      "Customer requests to re-bind licenses to new hardware. Approve or reject with custom feedback visible to customer."
+                    )}
+                  </p>
+                </div>
+
+                <div className="ref-table-search-box">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    value={resetSearch}
+                    onChange={(e) => setResetSearch(e.target.value)}
+                    placeholder={t("ابحث بالعميل، اسم المنتج، أو السبب...", "Search customer, product, or reason...")}
+                  />
+                </div>
+              </div>
+
+              {/* Status Filter Chips */}
+              <div className="ref-products-filter-bar">
+                <div className="ref-filter-chips-cluster">
+                  <button
+                    type="button"
+                    className={`ref-filter-chip ${resetFilter === "ALL" ? "active" : ""}`}
+                    onClick={() => setResetFilter("ALL")}
+                  >
+                    <span>{t("الكل", "All")}</span>
+                    <span className="ref-chip-count">{resetRequestsList.length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ref-filter-chip ${resetFilter === "PENDING" ? "active-warning" : ""}`}
+                    onClick={() => setResetFilter("PENDING")}
+                  >
+                    <Clock size={13} />
+                    <span>{t("قيد الانتظار", "Pending")}</span>
+                    <span className="ref-chip-count">{resetRequestsList.filter((r) => r.status === "PENDING").length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ref-filter-chip ${resetFilter === "APPROVED" ? "active-green" : ""}`}
+                    onClick={() => setResetFilter("APPROVED")}
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>{t("تمت الموافقة", "Approved")}</span>
+                    <span className="ref-chip-count">{resetRequestsList.filter((r) => r.status === "APPROVED").length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ref-filter-chip ${resetFilter === "REJECTED" ? "active-danger" : ""}`}
+                    onClick={() => setResetFilter("REJECTED")}
+                  >
+                    <X size={13} />
+                    <span>{t("تم الرفض", "Rejected")}</span>
+                    <span className="ref-chip-count">{resetRequestsList.filter((r) => r.status === "REJECTED").length}</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="ref-btn-batch-subtle"
+                  onClick={() => void onRefresh()}
+                  title={t("تحديث القائمة", "Refresh List")}
+                >
+                  <RefreshCw size={14} className={busy ? "spin" : ""} />
+                  <span>{t("تحديث الطلبات", "Refresh Requests")}</span>
+                </button>
+              </div>
+
+              {/* Reset Requests Cards List */}
+              <div className="ref-reset-requests-list">
+                {(() => {
+                  const filtered = resetRequestsList.filter((r) => {
+                    if (resetFilter !== "ALL" && r.status !== resetFilter) return false;
+                    if (resetSearch.trim()) {
+                      const q = resetSearch.toLowerCase();
+                      const match =
+                        (r.customer_email || "").toLowerCase().includes(q) ||
+                        (r.customer_name || "").toLowerCase().includes(q) ||
+                        (r.product_name || "").toLowerCase().includes(q) ||
+                        (r.reason || "").toLowerCase().includes(q) ||
+                        (r.license_code || "").toLowerCase().includes(q);
+                      if (!match) return false;
+                    }
+                    return true;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="ref-timeline-empty">
+                        <RotateCcw size={32} className="text-muted" />
+                        <p>{t("لا توجد طلبات رستات مفاتيح مطابقة في هذا القسم.", "No matching key reset requests found.")}</p>
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((req) => {
+                    const isPending = req.status === "PENDING";
+                    const isApproved = req.status === "APPROVED";
+                    const isRejected = req.status === "REJECTED";
+                    const userName = req.customer_name || req.customer_email.split("@")[0] || "User";
+
+                    return (
+                      <div className={`ref-reset-request-card ${req.status.toLowerCase()}`} key={req.id}>
+                        {/* Top row: Customer & Product & Status */}
+                        <div className="ref-reset-card-header">
+                          <div className="ref-reset-user-block">
+                            <div className="ref-session-avatar-wrap">
+                              {req.customer_image ? (
+                                <img src={req.customer_image} alt="" className="ref-session-avatar" />
+                              ) : (
+                                <div className="ref-session-avatar-fallback">{userName[0].toUpperCase()}</div>
+                              )}
+                            </div>
+                            <div className="ref-reset-user-meta">
+                              <strong>{userName}</strong>
+                              <span className="ref-user-email-text" dir="ltr">{req.customer_email}</span>
+                              <span className="ref-session-google-tag" dir="ltr"><span className="ref-google-dot" /> Google</span>
+                            </div>
+                          </div>
+
+                          <div className="ref-reset-product-block">
+                            <span className="ref-reset-prod-pill">
+                              <Package size={14} />
+                              <span>{req.product_name}</span>
+                            </span>
+                            {req.license_code && (
+                              <span className="ref-reset-key-pill" dir="ltr">
+                                <KeyRound size={12} />
+                                <span>{req.license_code}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="ref-reset-status-block">
+                            <span className={`ref-status-badge-pill ${req.status.toLowerCase()}`}>
+                              {isPending && <><Clock size={13} /> {t("قيد الانتظار", "Pending")}</>}
+                              {isApproved && <><CheckCircle2 size={13} /> {t("تمت الموافقة", "Approved")}</>}
+                              {isRejected && <><X size={13} /> {t("مرفوض", "Rejected")}</>}
+                            </span>
+                            <div className="ref-reset-date-stamp">
+                              <Calendar size={13} />
+                              <span>{formatRiyadhTime(req.created_at)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Customer Reason Box */}
+                        <div className="ref-reset-reason-bubble">
+                          <div className="ref-reason-label-row">
+                            <Info size={14} />
+                            <span>{t("سبب طلب الرستات من العميل:", "Customer Stated Reason:")}</span>
+                          </div>
+                          <p className="ref-reason-text">"{req.reason}"</p>
+                        </div>
+
+                        {/* Reviewed Audit Note if reviewed */}
+                        {req.reviewed_by && (
+                          <div className="ref-reset-audit-note-box">
+                            <div className="ref-audit-meta-row">
+                              <span>
+                                <strong>{t("تمت المراجعة بواسطة:", "Reviewed by:")}</strong> {req.reviewed_by}
+                              </span>
+                              {req.reviewed_at && (
+                                <span>
+                                  <strong>{t("التاريخ:", "Date:")}</strong> {formatRiyadhTime(req.reviewed_at)}
+                                </span>
+                              )}
+                            </div>
+                            {req.admin_notes && (
+                              <p className="ref-audit-notes-text">
+                                <strong>{t("ملاحظة الإدارة للعميل:", "Admin Note:")}</strong> {req.admin_notes}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Action Row (Approve / Reject & Note input) */}
+                        <div className="ref-reset-action-row">
+                          <div className="ref-reset-note-input-wrap">
+                            <input
+                              type="text"
+                              className="ref-text-input ref-admin-note-input"
+                              placeholder={t("اكتب ملاحظة للعميل (اختياري)...", "Write note for customer (optional)...")}
+                              value={reviewNotes[req.id] !== undefined ? reviewNotes[req.id] : (req.admin_notes || "")}
+                              onChange={(e) => setReviewNotes((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                            />
+                          </div>
+
+                          <div className="ref-reset-btns-wrap">
+                            <button
+                              type="button"
+                              className={`ref-btn-approve-reset ${isApproved ? "already-active" : ""}`}
+                              disabled={reviewingId === req.id}
+                              onClick={() => void handleReviewReset(req.id, "APPROVED")}
+                              title={t("الموافقة على طلب الرستات وإعادة تعيين المفتاح", "Approve reset request")}
+                            >
+                              {reviewingId === req.id ? <LoaderCircle size={15} className="spin" /> : <Check size={15} />}
+                              <span>{isApproved ? t("معتمد مسبقاً (إعادة اعتماد)", "Re-Approve") : t("موافقة على الرستات", "Approve Reset")}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`ref-btn-reject-reset ${isRejected ? "already-active" : ""}`}
+                              disabled={reviewingId === req.id}
+                              onClick={() => void handleReviewReset(req.id, "REJECTED")}
+                              title={t("رفض طلب الرستات", "Reject reset request")}
+                            >
+                              {reviewingId === req.id ? <LoaderCircle size={15} className="spin" /> : <X size={15} />}
+                              <span>{isRejected ? t("مرفوض مسبقاً", "Rejected") : t("رفض الطلب", "Reject")}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
             </div>
           </div>
         )}

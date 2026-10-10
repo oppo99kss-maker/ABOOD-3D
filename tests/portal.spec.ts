@@ -28,7 +28,15 @@ test("private pages and every data action require a session", async ({ request }
   const read = await request.get("/api/portal");
   expect(read.status()).toBe(401);
   expect(read.headers()["cache-control"]).toContain("no-store");
-  for (const action of ["redeem", "createProduct", "updateProduct", "generateKeys"]) {
+  for (const action of [
+    "redeem",
+    "createProduct",
+    "updateProduct",
+    "generateKeys",
+    "requestKeyReset",
+    "dismissNotification",
+    "reviewKeyReset",
+  ]) {
     const write = await request.post("/api/portal", { data: { action } });
     expect(write.status()).toBe(401);
   }
