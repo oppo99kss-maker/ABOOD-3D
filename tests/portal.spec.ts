@@ -46,6 +46,14 @@ test("mobile login fits the screen", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+test("luxury dark background token renders on client", async ({ page }) => {
+  await page.goto("/");
+  const bg = await page.locator("[data-theme='dark']").evaluate((el) => {
+    return window.getComputedStyle(el).backgroundColor;
+  });
+  expect(bg).toContain("rgb(8, 11, 18)");
+});
+
 test("Google OAuth request uses the site's own callback and PKCE", async ({ playwright }) => {
   const request = await playwright.request.newContext({ baseURL: "http://localhost:3101" });
   try {

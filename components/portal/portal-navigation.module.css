@@ -37,6 +37,15 @@
   min-width: 76px;
   max-width: 76px;
   padding: 16px 8px 14px;
+  overflow: visible;
+}
+
+.sidebar.collapsed .sidebarTopHeader {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
 }
 
 /* ==========================================================================
