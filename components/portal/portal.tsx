@@ -308,9 +308,6 @@ export function Portal({ user }: { user: PortalUser }) {
               <h1>{titles[activeTab].title}</h1>
               <p>{titles[activeTab].desc}</p>
             </div>
-            <div className="heading-mark">
-              <Box size={24} />
-            </div>
           </div>
 
           {loading && (
