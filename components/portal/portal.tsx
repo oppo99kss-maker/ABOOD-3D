@@ -429,24 +429,6 @@ export function Portal({ user }: { user: PortalUser }) {
                       })}
                     </section>
                   </div>
-
-                  {/* Recent Products Row */}
-                  <section className="section-block">
-                    <div className="section-title">
-                      <h2>{t("أحدث المنتجات في مكتبتك", "Recent Products in Library")}</h2>
-                      {data.products.length > 3 && (
-                        <button className="text-button" onClick={() => navigate("my-products")}>
-                          {t("عرض جميع المنتجات", "View all products")} <ArrowUpLeft size={15} />
-                        </button>
-                      )}
-                    </div>
-                    <ProductGrid
-                      products={data.products.slice(0, 3)}
-                      ar={ar}
-                      onRedeem={() => navigate("redeem")}
-                      onOpenDetails={(p) => setSelectedProductModal(p)}
-                    />
-                  </section>
                 </>
               )}
 
