@@ -660,8 +660,9 @@ export async function adminProducts(): Promise<Product[]> {
             count(l.id) FILTER (WHERE l.status = 'REDEEMED')::int AS redeemed_keys
      FROM products p
      LEFT JOIN licenses l ON l.product_id = p.id
+     WHERE p.is_archived = false
      GROUP BY p.id
-     ORDER BY p.is_archived ASC, p.created_at DESC`
+     ORDER BY p.created_at DESC`
   );
   return ensureSpoofxAttached(rows);
 }

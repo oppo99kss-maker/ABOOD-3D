@@ -44,6 +44,7 @@ import type {
 
 type Data = {
   products: Product[];
+  allProducts: Product[];
   guides: Guide[];
   settings: SystemSettings;
   inventory: Product[];
@@ -87,6 +88,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
   const [data, setData] = useState<Data>({
     products: [],
+    allProducts: [],
     guides: [],
     settings: {
       site_name: "SpooFX Control Space",
@@ -110,6 +112,7 @@ export function Portal({ user }: { user: PortalUser }) {
       const json = await response.json();
       setData({
         products: json.products || [],
+        allProducts: json.allProducts || json.inventory || [],
         guides: json.guides || [],
         settings: json.settings || {
           site_name: "SpooFX Control Space",
@@ -271,7 +274,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
         {activeTab === "admin" && data.isAdmin ? (
           <AdminControlSpace
-            products={data.products}
+            products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}
             inventory={data.inventory}
             dashboardStats={data.dashboardStats}
             orders={data.orders}

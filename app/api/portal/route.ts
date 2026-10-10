@@ -135,21 +135,22 @@ export async function GET(request: NextRequest) {
       await recordCustomerLogin(email, session?.user?.name, session?.user?.image);
     }
 
-    const [products, guides, settings, inventory, dashboardStats, orders, allGuides] = await Promise.all([
+    const [customerProducts, allAdminProducts, guides, settings, dashboardStats, orders, allGuides] = await Promise.all([
       myProducts(email),
+      admin ? adminProducts() : Promise.resolve([]),
       getGuides(),
       getSystemSettings(),
-      admin ? adminProducts() : Promise.resolve([]),
       admin ? getDashboardStats() : Promise.resolve(null),
       admin ? getOrders() : Promise.resolve([]),
       admin ? adminGuides() : Promise.resolve([]),
     ]);
 
     return json({
-      products,
+      products: customerProducts,
+      allProducts: allAdminProducts,
+      inventory: allAdminProducts,
       guides,
       settings,
-      inventory,
       dashboardStats,
       orders,
       allGuides,
@@ -166,6 +167,7 @@ function optionalHttps(value: unknown) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
+  if (trimmed.startsWith("/") || trimmed.startsWith("data:")) return trimmed;
   return /^https?:\/\//i.test(trimmed) && URL.canParse(trimmed) ? trimmed : undefined;
 }
 
