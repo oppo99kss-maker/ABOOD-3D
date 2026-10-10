@@ -9,9 +9,11 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  CheckSquare,
   ClipboardPaste,
   Clock,
   Copy,
+  CopyPlus,
   ExternalLink,
   Eye,
   EyeOff,
@@ -23,19 +25,24 @@ import {
   Mail,
   Package,
   Plus,
+  Power,
   Radio,
   RefreshCw,
   Save,
   Search,
   Send,
+  Settings,
+  ShieldAlert,
   ShieldCheck,
   Sliders,
+  Square,
   Trash2,
   Upload,
   UserCheck,
   Users,
   Volume2,
   VolumeX,
+  Wrench,
   X,
 } from "lucide-react";
 import type {
@@ -57,7 +64,8 @@ export type AdminSection =
   | "customers"
   | "search-customer"
   | "logs-activations"
-  | "logs-logins";
+  | "logs-logins"
+  | "settings";
 
 export type CustomField = {
   id: string;
@@ -361,6 +369,8 @@ export function AdminControlSpace({
   // 3. PRODUCTS STATE & ACTIONS (MATCHING IMAGES 2 & 3)
   // ====================================================
   const [productSearch, setProductSearch] = useState("");
+  const [productVisibilityFilter, setProductVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [showProductModal, setShowProductModal] = useState(false);
   const [productModalTab, setProductModalTab] = useState<"details" | "custom_fields" | "keys">("details");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -757,9 +767,140 @@ export function AdminControlSpace({
         try {
           await apiAction({ action: "deleteProduct", id: product.id });
           notify(t("تم حذف المنتج بنجاح", "Product deleted successfully"));
+          if (editingProduct?.id === product.id) {
+            setShowProductModal(false);
+            setEditingProduct(null);
+          }
+          setSelectedProductIds((prev) => prev.filter((id) => id !== product.id));
           await onRefresh();
         } catch (err: any) {
           notify(err.message || t("فشل حذف المنتج", "Failed to delete product"), "error");
+        }
+      },
+    });
+  }
+
+  // Duplicate Product (استنساخ منتج)
+  async function handleDuplicateProduct(product: Product) {
+    try {
+      await apiAction({ action: "duplicateProduct", id: product.id });
+      notify(t(`تم استنساخ المنتج "${product.name}" بنجاح!`, `Product "${product.name}" duplicated successfully!`));
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل استنساخ المنتج", "Failed to duplicate product"), "error");
+    }
+  }
+
+  // Multi-select helpers
+  function toggleSelectProduct(id: string) {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSelectAllProducts() {
+    if (selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(filteredProducts.map((p) => p.id));
+    }
+  }
+
+  // Batch Toggle Visibility (إظهار / إخفاء جماعي)
+  async function handleBatchToggleVisibility(isVisible: boolean) {
+    const idsToUpdate = selectedProductIds.length > 0 ? selectedProductIds : "ALL";
+    const label = isVisible ? t("إظهار", "Show") : t("إخفاء", "Hide");
+    try {
+      await apiAction({
+        action: "batchToggleVisibility",
+        ids: idsToUpdate,
+        isVisible,
+      });
+      notify(t(`تم ${label} المنتجات بنجاح!`, `Products ${label} successfully!`));
+      setSelectedProductIds([]);
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل تحديث الظهور الجماعي", "Failed to batch update visibility"), "error");
+    }
+  }
+
+  // Bulk Delete (حذف جماعي)
+  function handleBulkDelete() {
+    if (!selectedProductIds.length) return;
+    setConfirmState({
+      isOpen: true,
+      title: t("حذف المنتجات المحددة نهائياً", "Delete Selected Products"),
+      message: t(
+        `هل أنت متأكد من حذف ${selectedProductIds.length} منتج محدد نهائياً؟ سيتم حذفها وإزالتها من النظام.`,
+        `Are you sure you want to permanently delete ${selectedProductIds.length} selected products?`
+      ),
+      variant: "danger",
+      confirmText: t("تأكيد الحذف الجماعي", "Delete All Selected"),
+      onConfirm: async () => {
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await apiAction({ action: "deleteProducts", ids: selectedProductIds });
+          notify(t(`تم حذف ${selectedProductIds.length} منتج بنجاح!`, `Deleted ${selectedProductIds.length} products successfully!`));
+          setSelectedProductIds([]);
+          await onRefresh();
+        } catch (err: any) {
+          notify(err.message || t("فشل الحذف الجماعي", "Failed to bulk delete"), "error");
+        }
+      },
+    });
+  }
+
+  // Platform & Store Settings State & Handlers (ضبط لوحة الإدارة والمتجر)
+  const [settingsForm, setSettingsForm] = useState<SystemSettings>(initialSettings || {
+    site_name: "SpooFX Control Space",
+    description: "بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص",
+    maintenance_mode: false,
+    maintenance_message: "الموقع تحت الصيانة الدورية حالياً وسيعود للعمل قريباً.",
+    allow_new_activations: true,
+    low_stock_threshold: 5,
+  });
+
+  // Keep settings form in sync with props
+  useEffect(() => {
+    if (initialSettings) {
+      setSettingsForm(initialSettings);
+    }
+  }, [initialSettings]);
+
+  async function handleSaveSettings(e?: FormEvent) {
+    if (e) e.preventDefault();
+    try {
+      await apiAction({
+        action: "updateSettings",
+        settings: settingsForm,
+      });
+      notify(t("تم حفظ وضبط إعدادات المنصة بنجاح!", "Platform settings saved successfully!"));
+      await onRefresh();
+    } catch (err: any) {
+      notify(err.message || t("فشل حفظ إعدادات المنصة", "Failed to save settings"), "error");
+    }
+  }
+
+  function handleClearConsumedKeys() {
+    setConfirmState({
+      isOpen: true,
+      title: t("مسح وتنظيف الأكواد المستهلكة", "Clear Consumed Keys"),
+      message: t(
+        "هل أنت متأكد من تنظيف وحذف المفاتيح المستهلكة من قاعدة البيانات؟ لن يتم المساس بالأكواد المتاحة للبيع.",
+        "Are you sure you want to clean up consumed keys? Available stock keys will not be touched."
+      ),
+      variant: "warning",
+      confirmText: t("تأكيد تنظيف الأكواد", "Confirm Clean Keys"),
+      onConfirm: async () => {
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+        try {
+          for (const p of products) {
+            await apiAction({ action: "clearProductKeys", productId: p.id, type: "REDEEMED" });
+          }
+          notify(t("تم تنظيف الأكواد المستهلكة بنجاح!", "Consumed keys cleaned up successfully!"));
+          await onRefresh();
+        } catch (err: any) {
+          notify(err.message || t("فشل تنظيف الأكواد", "Failed to clear keys"), "error");
         }
       },
     });
@@ -1147,10 +1288,14 @@ export function AdminControlSpace({
   }, [activeSection]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((p) =>
-      (p.name + (p.name_en || "") + (p.description || "") + (p.category || "")).toLowerCase().includes(productSearch.toLowerCase())
-    );
-  }, [products, productSearch]);
+    return products.filter((p) => {
+      const matchesSearch = (p.name + (p.name_en || "") + (p.description || "") + (p.category || "")).toLowerCase().includes(productSearch.toLowerCase());
+      if (!matchesSearch) return false;
+      if (productVisibilityFilter === "VISIBLE") return p.is_visible !== false;
+      if (productVisibilityFilter === "HIDDEN") return p.is_visible === false;
+      return true;
+    });
+  }, [products, productSearch, productVisibilityFilter]);
 
   const navItems = [
     {
@@ -1193,6 +1338,12 @@ export function AdminControlSpace({
       ar: "حضور العملاء والجلسات",
       en: "Active Sessions",
       badge: activeSessions.length || 1,
+    },
+    {
+      id: "settings" as AdminSection,
+      icon: Settings,
+      ar: "ضبط لوحة الإدارة والمتجر",
+      en: "Admin & Store Settings",
     },
   ];
 
@@ -1251,6 +1402,7 @@ export function AdminControlSpace({
               {activeSection === "search-customer" && <Search size={26} />}
               {activeSection === "logs-activations" && <KeyRound size={26} />}
               {activeSection === "logs-logins" && <ShieldCheck size={26} />}
+              {activeSection === "settings" && <Settings size={26} />}
             </div>
             <div>
               <h2 className="hero-main-title">
@@ -1260,6 +1412,7 @@ export function AdminControlSpace({
                 {activeSection === "search-customer" && t("البحث عن عميل", "Customer Search Engine")}
                 {activeSection === "logs-activations" && t("مركز النشاط", "Activity Center")}
                 {activeSection === "logs-logins" && t("حضور العملاء والجلسات", "Active Sessions & Audit")}
+                {activeSection === "settings" && t("ضبط لوحة الإدارة وإعدادات المتجر", "Admin Space & Store Settings")}
               </h2>
               <p className="hero-subtext">
                 {activeSection === "products" && t("تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.", "Full control over product settings and manual license keys.")}
@@ -1268,6 +1421,7 @@ export function AdminControlSpace({
                 {activeSection === "search-customer" && t("البحث الفوري عن بيانات أي عميل والتحقق من حساباته وتراخيصه.", "Instant lookup for customer profiles, devices, and licenses.")}
                 {activeSection === "logs-activations" && t("مراقبة حية لجميع حركات دخول وخروج وتفعيلات الموقع.", "Live monitoring of all activations and account events.")}
                 {activeSection === "logs-logins" && t("تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين.", "Accounts active and verified within the platform.")}
+                {activeSection === "settings" && t("التحكم الشامل في وضع الصيانة، صلاحيات التفعيل، الإجراءات الجماعية وهوية المتجر.", "Comprehensive control over maintenance mode, activations, batch actions, and store branding.")}
               </p>
             </div>
           </div>
@@ -1328,6 +1482,7 @@ export function AdminControlSpace({
       {/* 4. DYNAMIC VIEW CONTENT */}
       <main className="admin-ref-main-view">
         {/* ==================================================== */}
+        {/* ==================================================== */}
         {/* VIEW 1: المنتجات والمخزون (Matching Image 3 & Image 1 buttons) */}
         {/* ==================================================== */}
         {activeSection === "products" && (
@@ -1339,7 +1494,7 @@ export function AdminControlSpace({
                   <span>{t("منتجات المتجر والمخزون المتاح", "Store Products & Available Stock")}</span>
                 </h3>
                 <p className="ref-section-subtitle">
-                  {t("انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه", "Click on any product to manage, edit, and fill stock")}
+                  {t("تحكم فوري في ظهور المنتجات، استنساخها، حذفها، وتعبئة مفاتيحها.", "Instant control over product visibility, cloning, deletion, and stock keys.")}
                 </p>
               </div>
 
@@ -1351,12 +1506,82 @@ export function AdminControlSpace({
               </div>
             </div>
 
+            {/* Filter Chips Bar & Batch Powers */}
+            <div className="ref-products-filter-bar">
+              <div className="ref-filter-chips-cluster">
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "ALL" ? "active" : ""}`}
+                  onClick={() => setProductVisibilityFilter("ALL")}
+                >
+                  <Package size={14} />
+                  <span>{t("الكل", "All")}</span>
+                  <span className="ref-chip-count">{products.length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "VISIBLE" ? "active-green" : ""}`}
+                  onClick={() => setProductVisibilityFilter("VISIBLE")}
+                >
+                  <Eye size={14} />
+                  <span>{t("الظاهرة في المتجر", "Visible in Store")}</span>
+                  <span className="ref-chip-count">{products.filter((p) => p.is_visible !== false).length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "HIDDEN" ? "active-warning" : ""}`}
+                  onClick={() => setProductVisibilityFilter("HIDDEN")}
+                >
+                  <EyeOff size={14} />
+                  <span>{t("المخفية", "Hidden")}</span>
+                  <span className="ref-chip-count">{products.filter((p) => p.is_visible === false).length}</span>
+                </button>
+              </div>
+
+              <div className="ref-batch-actions-cluster">
+                <button
+                  type="button"
+                  className="ref-btn-batch-subtle"
+                  onClick={() => void handleBatchToggleVisibility(true)}
+                  title={t("إظهار جميع المنتجات في المتجر للعملاء", "Make all products visible")}
+                >
+                  <Eye size={14} />
+                  <span>{t("إظهار الكل", "Show All")}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-btn-batch-subtle"
+                  onClick={() => void handleBatchToggleVisibility(false)}
+                  title={t("إخفاء جميع المنتجات عن المتجر", "Hide all products")}
+                >
+                  <EyeOff size={14} />
+                  <span>{t("إخفاء الكل", "Hide All")}</span>
+                </button>
+
+                {selectedProductIds.length > 0 && (
+                  <button
+                    type="button"
+                    className="ref-btn-batch-danger"
+                    onClick={handleBulkDelete}
+                    title={t("حذف المنتجات المحددة نهائياً", "Delete selected products")}
+                  >
+                    <Trash2 size={14} />
+                    <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* 3-Column Product Cards Grid (Matching Images 1 & 3) */}
             <div className="ref-products-grid">
               {filteredProducts.map((p) => {
                 const stockCount = Number(p.available_keys || 0);
+                const isSelected = selectedProductIds.includes(p.id);
                 return (
-                  <div className="ref-product-card" key={p.id}>
+                  <div className={`ref-product-card ${isSelected ? "selected" : ""}`} key={p.id}>
                     {/* Media / 16:9 Banner */}
                     <div className="ref-card-media-banner">
                       {p.image_url ? (
@@ -1366,6 +1591,43 @@ export function AdminControlSpace({
                           <Package size={48} />
                         </div>
                       )}
+
+                      {/* Top-Right: Selection Checkbox */}
+                      <button
+                        type="button"
+                        className={`ref-card-corner-checkbox ${isSelected ? "checked" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSelectProduct(p.id);
+                        }}
+                        title={isSelected ? t("إلغاء التحديد", "Deselect") : t("تحديد", "Select")}
+                      >
+                        {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                      </button>
+
+                      {/* Top-Left: Visibility Pill Button */}
+                      <button
+                        type="button"
+                        className={`ref-card-corner-visibility-badge ${p.is_visible !== false ? "visible" : "hidden"}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleToggleVisibility(p);
+                        }}
+                        title={p.is_visible !== false ? t("انقر لإخفاء المنتج عن المتجر", "Click to hide") : t("انقر لإظهار المنتج في المتجر", "Click to show")}
+                      >
+                        {p.is_visible !== false ? (
+                          <>
+                            <Eye size={12} />
+                            <span>{t("ظاهر", "Visible")}</span>
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff size={12} />
+                            <span>{t("مخفي", "Hidden")}</span>
+                          </>
+                        )}
+                      </button>
+
                       {/* Corner Stock Badge: Clickable to jump straight into keys management */}
                       <button
                         type="button"
@@ -1404,7 +1666,7 @@ export function AdminControlSpace({
                       </p>
                     </div>
 
-                    {/* Card Bottom Actions (Matching Image 1: إضافة مفاتيح on right, تعديل المنتج on left) */}
+                    {/* Card Bottom Actions */}
                     <div className="ref-card-footer-actions">
                       <button
                         className="ref-btn-primary-action"
@@ -1422,6 +1684,30 @@ export function AdminControlSpace({
                       >
                         <Sliders size={15} />
                         <span>{t("تعديل المنتج", "Edit Product")}</span>
+                      </button>
+
+                      <button
+                        className="ref-btn-icon-action"
+                        onClick={() => void handleDuplicateProduct(p)}
+                        title={t("استنساخ هذا المنتج", "Duplicate product")}
+                      >
+                        <CopyPlus size={15} />
+                      </button>
+
+                      <button
+                        className="ref-btn-icon-action"
+                        onClick={() => void handleToggleVisibility(p)}
+                        title={p.is_visible !== false ? t("إخفاء عن المتجر", "Hide") : t("إظهار في المتجر", "Show")}
+                      >
+                        {p.is_visible !== false ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+
+                      <button
+                        className="ref-btn-danger-icon-action"
+                        onClick={() => handleDeleteProduct(p)}
+                        title={t("حذف المنتج نهائياً", "Delete permanently")}
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -1455,10 +1741,93 @@ export function AdminControlSpace({
               </div>
             </div>
 
+            {/* Filter Chips Bar & Batch Powers */}
+            <div className="ref-products-filter-bar">
+              <div className="ref-filter-chips-cluster">
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "ALL" ? "active" : ""}`}
+                  onClick={() => setProductVisibilityFilter("ALL")}
+                >
+                  <Package size={14} />
+                  <span>{t("الكل", "All")}</span>
+                  <span className="ref-chip-count">{products.length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "VISIBLE" ? "active-green" : ""}`}
+                  onClick={() => setProductVisibilityFilter("VISIBLE")}
+                >
+                  <Eye size={14} />
+                  <span>{t("الظاهرة في المتجر", "Visible in Store")}</span>
+                  <span className="ref-chip-count">{products.filter((p) => p.is_visible !== false).length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`ref-filter-chip ${productVisibilityFilter === "HIDDEN" ? "active-warning" : ""}`}
+                  onClick={() => setProductVisibilityFilter("HIDDEN")}
+                >
+                  <EyeOff size={14} />
+                  <span>{t("المخفية", "Hidden")}</span>
+                  <span className="ref-chip-count">{products.filter((p) => p.is_visible === false).length}</span>
+                </button>
+              </div>
+
+              <div className="ref-batch-actions-cluster">
+                <button
+                  type="button"
+                  className="ref-btn-batch-subtle"
+                  onClick={() => void handleBatchToggleVisibility(true)}
+                  title={t("إظهار جميع المنتجات في المتجر للعملاء", "Make all products visible")}
+                >
+                  <Eye size={14} />
+                  <span>{t("إظهار الكل", "Show All")}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-btn-batch-subtle"
+                  onClick={() => void handleBatchToggleVisibility(false)}
+                  title={t("إخفاء جميع المنتجات عن المتجر", "Hide all products")}
+                >
+                  <EyeOff size={14} />
+                  <span>{t("إخفاء الكل", "Hide All")}</span>
+                </button>
+
+                {selectedProductIds.length > 0 && (
+                  <button
+                    type="button"
+                    className="ref-btn-batch-danger"
+                    onClick={handleBulkDelete}
+                    title={t("حذف المنتجات المحددة نهائياً", "Delete selected products")}
+                  >
+                    <Trash2 size={14} />
+                    <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="ref-table-card">
               <table className="ref-data-table">
                 <thead>
                   <tr>
+                    <th style={{ width: "42px" }}>
+                      <button
+                        type="button"
+                        className="ref-th-checkbox"
+                        onClick={toggleSelectAllProducts}
+                        title={selectedProductIds.length === filteredProducts.length ? t("إلغاء تحديد الكل", "Deselect All") : t("تحديد الكل", "Select All")}
+                      >
+                        {selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0 ? (
+                          <CheckSquare size={16} />
+                        ) : (
+                          <Square size={16} />
+                        )}
+                      </button>
+                    </th>
                     <th>{t("المنتج الحالي", "Current Product")}</th>
                     <th>{t("العنوان والترجمة", "Title & Translation")}</th>
                     <th>{t("المخزون والأكواد", "Stock & Keys")}</th>
@@ -1472,8 +1841,20 @@ export function AdminControlSpace({
                   {filteredProducts.map((p) => {
                     const hasFiles = Array.isArray(p.files) && p.files.length > 0;
                     const stockNum = p.available_keys ?? 0;
+                    const isSelected = selectedProductIds.includes(p.id);
                     return (
-                      <tr key={p.id}>
+                      <tr key={p.id} className={isSelected ? "selected-row" : ""}>
+                        <td>
+                          <button
+                            type="button"
+                            className="ref-td-checkbox"
+                            onClick={() => toggleSelectProduct(p.id)}
+                            title={isSelected ? t("إلغاء التحديد", "Deselect") : t("تحديد", "Select")}
+                          >
+                            {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                          </button>
+                        </td>
+
                         <td className="ref-product-col">
                           <div className="ref-thumb-wrap">
                             {p.image_url ? (
@@ -1519,8 +1900,8 @@ export function AdminControlSpace({
                         <td>
                           <button
                             className={`ref-visibility-pill ${p.is_visible !== false ? "visible" : "hidden"}`}
-                            onClick={() => handleToggleVisibility(p)}
-                            title={p.is_visible !== false ? t("انقر للإخفاء", "Click to hide") : t("انقر للإظهار", "Click to show")}
+                            onClick={() => void handleToggleVisibility(p)}
+                            title={p.is_visible !== false ? t("انقر للإخفاء عن المتجر", "Click to hide") : t("انقر للإظهار في المتجر", "Click to show")}
                           >
                             {p.is_visible !== false ? (
                               <>
@@ -1561,6 +1942,14 @@ export function AdminControlSpace({
                             >
                               <Sliders size={14} />
                               <span>{t("الضبط", "Settings")}</span>
+                            </button>
+
+                            <button
+                              className="ref-btn-icon-action"
+                              onClick={() => void handleDuplicateProduct(p)}
+                              title={t("استنساخ هذا المنتج", "Duplicate product")}
+                            >
+                              <CopyPlus size={14} />
                             </button>
 
                             <button
@@ -1963,6 +2352,269 @@ export function AdminControlSpace({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* VIEW 7: ضبط لوحة الإدارة والمتجر الشامل */}
+        {/* ==================================================== */}
+        {activeSection === "settings" && (
+          <div className="ref-view-section">
+            <div className="ref-section-toolbar">
+              <div className="ref-toolbar-text-wrap">
+                <h3 className="ref-section-title">
+                  <Settings size={20} />
+                  <span>{t("ضبط لوحة الإدارة وإعدادات المتجر", "Admin Space & Store Settings")}</span>
+                </h3>
+                <p className="ref-section-subtitle">
+                  {t(
+                    "صلاحيات كاملة للتحكم في وضع الصيانة، إيقاف وتشغيل التفعيلات، الإجراءات الجماعية للمنتجات، وهوية المنصة.",
+                    "Full administrative control over maintenance mode, activation rules, batch product operations, and brand identity."
+                  )}
+                </p>
+              </div>
+
+              <div className="ref-toolbar-actions">
+                <button
+                  type="button"
+                  className="ref-btn-primary-gradient"
+                  onClick={() => void handleSaveSettings()}
+                  disabled={busy}
+                >
+                  {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
+                  <span>{t("حفظ الإعدادات بالكامل", "Save All Settings")}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Grid of Settings Control Cards */}
+            <div className="ref-settings-grid">
+              {/* Card 1: وضع الصيانة للمتجر */}
+              <div className="ref-setting-card">
+                <div className="ref-setting-card-header">
+                  <div className="ref-setting-icon-cube">
+                    <Power size={20} className={settingsForm.maintenance_mode ? "text-warning" : "text-cyan"} />
+                  </div>
+                  <div className="ref-setting-header-titles">
+                    <h4 className="ref-setting-title">{t("وضع الصيانة للمتجر", "Store Maintenance Mode")}</h4>
+                    <p className="ref-setting-desc">
+                      {t("إغلاق المتجر مؤقتاً أمام العملاء وإظهار رسالة صيانة رسمية.", "Temporarily close store for customers with official maintenance banner.")}
+                    </p>
+                  </div>
+                  <div className="ref-setting-toggle-wrap">
+                    <button
+                      type="button"
+                      className={`ref-toggle-pill ${settingsForm.maintenance_mode ? "active-warning" : "inactive"}`}
+                      onClick={() =>
+                        setSettingsForm((prev) => ({ ...prev, maintenance_mode: !prev.maintenance_mode }))
+                      }
+                    >
+                      <span className="ref-toggle-thumb" />
+                      <span>{settingsForm.maintenance_mode ? t("مفعّل (صيانة)", "Active (Maintenance)") : t("معطّل (يعمل)", "Disabled (Online)")}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="ref-setting-card-body">
+                  <label className="ref-field-label">{t("رسالة الصيانة التي تظهر للزوار", "Maintenance Announcement Message")}</label>
+                  <input
+                    type="text"
+                    value={settingsForm.maintenance_message}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, maintenance_message: e.target.value }))}
+                    className="ref-text-input"
+                    placeholder={t("الموقع تحت الصيانة الدورية حالياً وسيعود للعمل قريباً...", "Store is currently under scheduled maintenance...")}
+                  />
+                </div>
+              </div>
+
+              {/* Card 2: صلاحيات تفعيل المفاتيح والتراخيص */}
+              <div className="ref-setting-card">
+                <div className="ref-setting-card-header">
+                  <div className="ref-setting-icon-cube">
+                    <KeyRound size={20} className={settingsForm.allow_new_activations ? "text-green" : "text-danger"} />
+                  </div>
+                  <div className="ref-setting-header-titles">
+                    <h4 className="ref-setting-title">{t("صلاحيات تفعيل التراخيص", "License Key Activations")}</h4>
+                    <p className="ref-setting-desc">
+                      {t("السماح للعملاء بإدخال واسترداد مفاتيح التفعيل وربطها بحساباتهم.", "Allow or pause customer key redemptions across the platform.")}
+                    </p>
+                  </div>
+                  <div className="ref-setting-toggle-wrap">
+                    <button
+                      type="button"
+                      className={`ref-toggle-pill ${settingsForm.allow_new_activations ? "active-green" : "inactive-danger"}`}
+                      onClick={() =>
+                        setSettingsForm((prev) => ({ ...prev, allow_new_activations: !prev.allow_new_activations }))
+                      }
+                    >
+                      <span className="ref-toggle-thumb" />
+                      <span>{settingsForm.allow_new_activations ? t("التفعيل متاح", "Activations Open") : t("التفعيل مجمّد", "Activations Frozen")}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="ref-setting-card-body">
+                  <p className="ref-setting-tip">
+                    {settingsForm.allow_new_activations
+                      ? t("العملاء يمكنهم تفعيل المفاتيح واستلام ملفات SpooFX فوراً دون قيود.", "Customers can redeem keys and download SpooFX files instantly.")
+                      : t("التفعيلات مجمّدة مؤقتاً: أي محاولة تفعيل مفتاح ستُرفض لحين إعادة الفتح.", "Key redemptions paused: any attempt will be held until re-opened.")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3: تنبيه انخفاض المخزون */}
+              <div className="ref-setting-card">
+                <div className="ref-setting-card-header">
+                  <div className="ref-setting-icon-cube">
+                    <ShieldAlert size={20} className="text-cyan" />
+                  </div>
+                  <div className="ref-setting-header-titles">
+                    <h4 className="ref-setting-title">{t("حد تنبيه انخفاض المخزون", "Low Stock Alert Threshold")}</h4>
+                    <p className="ref-setting-desc">
+                      {t("تحديد عدد المفاتيح المتبقية التي يعتبر عندها المخزون حرجاً ويحتاج تعبئة.", "Keys threshold below which inventory is marked critical.")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="ref-setting-card-body">
+                  <div className="ref-input-group-row">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={settingsForm.low_stock_threshold}
+                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, low_stock_threshold: Number(e.target.value) || 5 }))}
+                      className="ref-number-input"
+                    />
+                    <span className="ref-input-unit">{t("مفاتيح أو أقل", "keys or less")}</span>
+                  </div>
+
+                  {/* Products currently below threshold */}
+                  {(() => {
+                    const lowStockProds = products.filter((p) => Number(p.available_keys || 0) <= settingsForm.low_stock_threshold);
+                    return lowStockProds.length > 0 ? (
+                      <div className="ref-low-stock-alert-box">
+                        <AlertTriangle size={15} />
+                        <span>
+                          {t(
+                            `يوجد ${lowStockProds.length} منتجات يقل مخزونها عن هذا الحد: `,
+                            `${lowStockProds.length} products have low stock: `
+                          )}
+                          <strong>{lowStockProds.map((p) => `${p.name} (${p.available_keys || 0})`).join("، ")}</strong>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="ref-stock-healthy-box">
+                        <CheckCircle2 size={15} />
+                        <span>{t("جميع المنتجات تمتلك مخزوناً كافياً أعلى من حد التنبيه.", "All products have sufficient stock above threshold.")}</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Card 4: بيانات وهوية المتجر */}
+              <div className="ref-setting-card">
+                <div className="ref-setting-card-header">
+                  <div className="ref-setting-icon-cube">
+                    <Sliders size={20} className="text-blue" />
+                  </div>
+                  <div className="ref-setting-header-titles">
+                    <h4 className="ref-setting-title">{t("هوية المتجر وبيانات المنصة", "Store Brand & Identity")}</h4>
+                    <p className="ref-setting-desc">
+                      {t("اسم المنصة والوصف التعريفي الذي يظهر في العناوين والتقارير.", "Platform title and description in banners and reports.")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="ref-setting-card-body">
+                  <div className="ref-form-field-group">
+                    <label className="ref-field-label">{t("اسم المنصة / المتجر", "Store Title")}</label>
+                    <input
+                      type="text"
+                      value={settingsForm.site_name}
+                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, site_name: e.target.value }))}
+                      className="ref-text-input"
+                    />
+                  </div>
+
+                  <div className="ref-form-field-group" style={{ marginTop: "12px" }}>
+                    <label className="ref-field-label">{t("وصف المنصة والخدمات", "Store Description")}</label>
+                    <textarea
+                      rows={2}
+                      value={settingsForm.description}
+                      onChange={(e) => setSettingsForm((prev) => ({ ...prev, description: e.target.value }))}
+                      className="ref-textarea-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Universal Batch Powers Section */}
+            <div className="ref-universal-powers-card">
+              <div className="ref-universal-powers-header">
+                <div className="ref-universal-title-row">
+                  <Wrench size={20} className="text-cyan" />
+                  <div>
+                    <h4 className="ref-universal-powers-title">{t("صلاحيات التحكم الجماعي السريعة في المتجر", "Universal Store Batch Powers")}</h4>
+                    <p className="ref-universal-powers-desc">
+                      {t("إجراءات فورية تنطبق على كامل منتجات ومخزون وقاعدة بيانات المتجر بنقرة واحدة.", "Instant operations across all products, inventory, and database in 1 click.")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ref-universal-actions-row">
+                <button
+                  type="button"
+                  className="ref-power-action-btn primary"
+                  onClick={() => void handleBatchToggleVisibility(true)}
+                >
+                  <Eye size={16} />
+                  <div>
+                    <strong>{t("إظهار كافة المنتجات", "Show All Products")}</strong>
+                    <small>{t("جعل جميع المنتجات معروضة فوراً في المتجر", "Make 100% of products visible")}</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-power-action-btn warning"
+                  onClick={() => void handleBatchToggleVisibility(false)}
+                >
+                  <EyeOff size={16} />
+                  <div>
+                    <strong>{t("إخفاء كافة المنتجات", "Hide All Products")}</strong>
+                    <small>{t("حجب جميع المنتجات عن المتجر مؤقتاً", "Hide all products from public view")}</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-power-action-btn danger"
+                  onClick={handleClearConsumedKeys}
+                >
+                  <Trash2 size={16} />
+                  <div>
+                    <strong>{t("تنظيف الأكواد المستهلكة", "Clear Consumed Keys")}</strong>
+                    <small>{t("حذف المفاتيح المستهلكة وإبقاء المخزون المتاح", "Purge sold keys, keep stock safe")}</small>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-power-action-btn subtle"
+                  onClick={() => onRefresh()}
+                >
+                  <RefreshCw size={16} className={busy ? "spin" : ""} />
+                  <div>
+                    <strong>{t("مزامنة وتحديث شامل", "Full System Sync")}</strong>
+                    <small>{t("تحديث الجلسات والتراخيص والإحصائيات", "Sync live sessions & licenses")}</small>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -2562,25 +3214,53 @@ export function AdminControlSpace({
               </div>
             )}
 
-            {/* Modal Bottom Bar (Matching Images 2 & 3) */}
+            {/* Modal Bottom Bar (Matching Images 2 & 3 with extra Admin Powers) */}
             <div className="ref-modal-bottom-bar">
-              <button
-                type="button"
-                className="ref-btn-cancel-modal"
-                onClick={() => setShowProductModal(false)}
-              >
-                {t("إلغاء", "Cancel")}
-              </button>
+              <div className="ref-modal-bottom-left-actions">
+                {editingProduct && (
+                  <>
+                    <button
+                      type="button"
+                      className="ref-btn-modal-danger"
+                      onClick={() => handleDeleteProduct(editingProduct)}
+                      title={t("حذف هذا المنتج نهائياً", "Delete this product permanently")}
+                    >
+                      <Trash2 size={15} />
+                      <span>{t("حذف المنتج", "Delete Product")}</span>
+                    </button>
 
-              <button
-                type="button"
-                className="ref-btn-save-modal"
-                onClick={() => void handleSaveProduct()}
-                disabled={busy || !productForm.name.trim()}
-              >
-                {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
-                <span>{t("حفظ التغييرات (Ctrl+S)", "Save Changes (Ctrl+S)")}</span>
-              </button>
+                    <button
+                      type="button"
+                      className="ref-btn-modal-duplicate"
+                      onClick={() => void handleDuplicateProduct(editingProduct)}
+                      title={t("استنساخ هذا المنتج كمنتج جديد", "Duplicate as new product")}
+                    >
+                      <CopyPlus size={15} />
+                      <span>{t("استنساخ المنتج", "Duplicate")}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="ref-modal-bottom-right-actions">
+                <button
+                  type="button"
+                  className="ref-btn-cancel-modal"
+                  onClick={() => setShowProductModal(false)}
+                >
+                  {t("إلغاء", "Cancel")}
+                </button>
+
+                <button
+                  type="button"
+                  className="ref-btn-save-modal"
+                  onClick={() => void handleSaveProduct()}
+                  disabled={busy || !productForm.name.trim()}
+                >
+                  {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
+                  <span>{t("حفظ التغييرات (Ctrl+S)", "Save Changes (Ctrl+S)")}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

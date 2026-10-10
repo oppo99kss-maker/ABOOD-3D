@@ -814,17 +814,92 @@ export async function archiveProduct(id: string, actorEmail: string, archive = t
 export async function deleteProduct(id: string, actorEmail: string) {
   await ready();
   const p = pool();
-  await p.query("DELETE FROM licenses WHERE product_id = $1", [id]);
-  await p.query("DELETE FROM guides WHERE product_id = $1", [id]);
-  const { rowCount } = await p.query("DELETE FROM products WHERE id = $1", [id]);
+  try {
+    await p.query("DELETE FROM licenses WHERE product_id = $1", [id]);
+    await p.query("DELETE FROM guides WHERE product_id = $1", [id]);
+    const { rowCount } = await p.query("DELETE FROM products WHERE id = $1", [id]);
+    await logAudit({
+      category: "ADMIN",
+      action: "PRODUCT_DELETED",
+      actor_email: actorEmail,
+      target_type: "product",
+      target_id: id,
+    });
+    return (rowCount ?? 0) > 0;
+  } catch (err: any) {
+    console.warn("deleteProduct fallback to safe archive:", err.message);
+    const { rowCount } = await p.query(
+      `UPDATE products SET is_archived = true, is_visible = false, is_active = false, updated_at = now() WHERE id = $1`,
+      [id]
+    );
+    await p.query("DELETE FROM licenses WHERE product_id = $1 AND status = 'AVAILABLE'", [id]);
+    await logAudit({
+      category: "ADMIN",
+      action: "PRODUCT_ARCHIVED_AS_DELETED",
+      actor_email: actorEmail,
+      target_type: "product",
+      target_id: id,
+      details: { reason: err.message },
+    });
+    return (rowCount ?? 0) > 0;
+  }
+}
+
+export async function deleteProducts(ids: string[], actorEmail: string) {
+  await ready();
+  if (!Array.isArray(ids) || ids.length === 0) return { success: true, count: 0 };
+  let count = 0;
+  for (const id of ids) {
+    const ok = await deleteProduct(id, actorEmail);
+    if (ok) count++;
+  }
+  return { success: true, count };
+}
+
+export async function duplicateProduct(id: string, actorEmail: string) {
+  await ready();
+  const p = pool();
+  const res = await p.query("SELECT * FROM products WHERE id = $1", [id]);
+  if (!res.rowCount || !res.rows[0]) throw new Error("PRODUCT_NOT_FOUND");
+  const orig = res.rows[0];
+
+  const newId = randomUUID();
+  const newName = `${orig.name} (نسخة)`;
+  const newNameEn = orig.name_en ? `${orig.name_en} (Copy)` : null;
+
+  const insertRes = await p.query(
+    `INSERT INTO products (
+       id, name, name_en, description, category, access_url, image_url,
+       instructions, default_duration_days, is_visible, is_active, files
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     RETURNING *`,
+    [
+      newId,
+      newName,
+      newNameEn,
+      orig.description || "",
+      orig.category || "General",
+      orig.access_url || null,
+      orig.image_url || null,
+      orig.instructions || null,
+      orig.default_duration_days || 3,
+      false, // Hidden initially so admin can review
+      orig.is_active !== false,
+      typeof orig.files === "string" ? orig.files : JSON.stringify(orig.files || []),
+    ]
+  );
+
   await logAudit({
     category: "ADMIN",
-    action: "PRODUCT_DELETED",
+    action: "PRODUCT_DUPLICATED",
     actor_email: actorEmail,
     target_type: "product",
-    target_id: id,
+    target_id: newId,
+    details: { originalId: id, newName },
   });
-  return (rowCount ?? 0) > 0;
+
+  return insertRes.rows[0] as Product;
 }
 
 export async function toggleProductVisibility(id: string, isVisible: boolean, actorEmail: string) {
@@ -841,6 +916,54 @@ export async function toggleProductVisibility(id: string, isVisible: boolean, ac
     target_id: id,
   });
   return rows[0] as Product | undefined;
+}
+
+export async function batchToggleVisibility(ids: string[] | "ALL", isVisible: boolean, actorEmail: string) {
+  await ready();
+  const p = pool();
+  let rowCount = 0;
+  if (ids === "ALL") {
+    const res = await p.query(
+      "UPDATE products SET is_visible = $1, updated_at = now() WHERE is_archived = false",
+      [isVisible]
+    );
+    rowCount = res.rowCount ?? 0;
+  } else if (Array.isArray(ids) && ids.length > 0) {
+    const res = await p.query(
+      "UPDATE products SET is_visible = $1, updated_at = now() WHERE id = ANY($2::uuid[]) AND is_archived = false",
+      [isVisible, ids]
+    );
+    rowCount = res.rowCount ?? 0;
+  }
+  await logAudit({
+    category: "ADMIN",
+    action: isVisible ? "BATCH_PRODUCTS_SHOWN" : "BATCH_PRODUCTS_HIDDEN",
+    actor_email: actorEmail,
+    details: { ids, count: rowCount },
+  });
+  return { success: true, count: rowCount };
+}
+
+export async function clearProductKeys(productId: string, type: "AVAILABLE" | "REDEEMED" | "ALL", actorEmail: string) {
+  await ready();
+  const p = pool();
+  let query = "DELETE FROM licenses WHERE product_id = $1";
+  const params: any[] = [productId];
+  if (type === "AVAILABLE") {
+    query += " AND status = 'AVAILABLE'";
+  } else if (type === "REDEEMED") {
+    query += " AND status = 'REDEEMED'";
+  }
+  const { rowCount } = await p.query(query, params);
+  await logAudit({
+    category: "INVENTORY",
+    action: "KEYS_CLEARED",
+    actor_email: actorEmail,
+    target_type: "product",
+    target_id: productId,
+    details: { type, deletedCount: rowCount },
+  });
+  return { success: true, deletedCount: rowCount ?? 0 };
 }
 
 // ==========================================

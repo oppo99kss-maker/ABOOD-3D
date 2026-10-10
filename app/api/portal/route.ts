@@ -5,12 +5,16 @@ import {
   adminGuides,
   adminProducts,
   archiveProduct,
+  batchToggleVisibility,
+  clearProductKeys,
   createCompensation,
   createOrder,
   createProduct,
   deleteGuide,
   deleteLicenseKey,
   deleteProduct,
+  deleteProducts,
+  duplicateProduct,
   extendLicense,
   generateKeys,
   getAuditLogs,
@@ -483,6 +487,39 @@ export async function POST(request: NextRequest) {
 
       const res = await sendCustomerMessage(customerEmail, subject || "رسالة من إدارة SpooFX", message, email);
       return json(res);
+    }
+
+    // 20. Admin: Duplicate Product
+    if (data.action === "duplicateProduct") {
+      const id = typeof data.id === "string" ? data.id : "";
+      if (!id) return json({ error: "MISSING_ID" }, 400);
+      const product = await duplicateProduct(id, email);
+      return json({ ok: true, product });
+    }
+
+    // 21. Admin: Delete multiple products
+    if (data.action === "deleteProducts") {
+      const ids = Array.isArray(data.ids) ? data.ids : [];
+      if (!ids.length) return json({ error: "MISSING_IDS" }, 400);
+      const result = await deleteProducts(ids, email);
+      return json({ ok: true, ...result });
+    }
+
+    // 22. Admin: Batch Toggle Visibility
+    if (data.action === "batchToggleVisibility") {
+      const ids = data.ids === "ALL" ? "ALL" : Array.isArray(data.ids) ? data.ids : [];
+      const isVisible = Boolean(data.isVisible);
+      const result = await batchToggleVisibility(ids, isVisible, email);
+      return json({ ok: true, ...result });
+    }
+
+    // 23. Admin: Clear Product Keys
+    if (data.action === "clearProductKeys") {
+      const productId = typeof data.productId === "string" ? data.productId : "";
+      const type = data.type === "AVAILABLE" || data.type === "REDEEMED" ? data.type : "ALL";
+      if (!productId) return json({ error: "MISSING_PRODUCT_ID" }, 400);
+      const result = await clearProductKeys(productId, type, email);
+      return json({ ok: true, ...result });
     }
 
     return json({ error: "UNKNOWN_ACTION" }, 400);
