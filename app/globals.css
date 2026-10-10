@@ -4762,11 +4762,30 @@ svg {
   font-size: 13px;
 }
 
-.ref-customer-discord-tag {
-  display: block;
+.ref-customer-google-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   color: #38BDF8;
   margin-top: 2px;
+}
+
+.ref-google-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+  display: inline-block;
+}
+
+.ref-google-user-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #38BDF8;
 }
 
 .ref-role-pill {
@@ -5301,10 +5320,12 @@ svg {
   color: #F8FAFC;
 }
 
-.ref-session-discord-tag {
+.ref-session-google-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
-  color: #64748B;
-  font-family: monospace;
+  color: #38BDF8;
 }
 
 /* Modals Refined */

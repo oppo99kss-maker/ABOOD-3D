@@ -401,7 +401,7 @@ export function AdminControlSpace({
     accessUrl: "/api/download",
     imageUrl: "",
     instructions: "",
-    defaultDurationDays: 30,
+    defaultDurationDays: 3,
     isVisible: true,
     isActive: true,
     files: [
@@ -426,7 +426,7 @@ export function AdminControlSpace({
         name: "رابط دليل الاستخدام",
         key: "guideUrl",
         type: "TEXT",
-        value: "https://discord.gg/t3n",
+        value: "/portal",
       },
       {
         id: "cf_file",
@@ -546,7 +546,7 @@ export function AdminControlSpace({
           name: "رابط دليل الاستخدام",
           key: "guideUrl",
           type: "TEXT",
-          value: "https://discord.gg/t3n",
+          value: "/portal",
         },
         {
           id: "cf_file",
@@ -587,7 +587,7 @@ export function AdminControlSpace({
       accessUrl: p.access_url || "/api/download",
       imageUrl: p.image_url || "",
       instructions: p.instructions || "",
-      defaultDurationDays: p.default_duration_days || 30,
+      defaultDurationDays: p.default_duration_days || 3,
       isVisible: p.is_visible !== false,
       isActive: p.is_active !== false,
       files: currentFiles,
@@ -614,7 +614,7 @@ export function AdminControlSpace({
       accessUrl: "/api/download",
       imageUrl: "",
       instructions: "",
-      defaultDurationDays: 30,
+      defaultDurationDays: 3,
       isVisible: true,
       isActive: true,
       files: [
@@ -639,7 +639,7 @@ export function AdminControlSpace({
           name: "رابط دليل الاستخدام",
           key: "guideUrl",
           type: "TEXT",
-          value: "https://discord.gg/t3n",
+          value: "/portal",
         },
         {
           id: "cf_file",
@@ -756,11 +756,11 @@ export function AdminControlSpace({
   const [stockModalProductId, setStockModalProductId] = useState<string>(products[0]?.id || "");
   const [stockMode, setStockMode] = useState<"single" | "bulk" | "generate">("single");
   const [singleKeyText, setSingleKeyText] = useState("");
-  const [singleKeyDuration, setSingleKeyDuration] = useState(30);
+  const [singleKeyDuration, setSingleKeyDuration] = useState(3);
   const [bulkKeysText, setBulkKeysText] = useState("");
-  const [bulkDuration, setBulkDuration] = useState(30);
+  const [bulkDuration, setBulkDuration] = useState(3);
   const [generateCount, setGenerateCount] = useState(10);
-  const [generateDuration, setGenerateDuration] = useState(30);
+  const [generateDuration, setGenerateDuration] = useState(3);
   const [newlyGenerated, setNewlyGenerated] = useState<string[]>([]);
   const [copiedKeys, setCopiedKeys] = useState(false);
 
@@ -880,10 +880,10 @@ export function AdminControlSpace({
   const [productKeysSearch, setProductKeysSearch] = useState("");
   const [productKeysFilter, setProductKeysFilter] = useState<"ALL" | "AVAILABLE" | "ISSUED">("ALL");
   const [sallaKeysInput, setSallaKeysInput] = useState("");
-  const [sallaDuration, setSallaDuration] = useState(30);
+  const [sallaDuration, setSallaDuration] = useState(3);
   const [showSingleKeyInline, setShowSingleKeyInline] = useState(false);
   const [singleInlineKey, setSingleInlineKey] = useState("");
-  const [singleInlineDuration, setSingleInlineDuration] = useState(30);
+  const [singleInlineDuration, setSingleInlineDuration] = useState(3);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   const fetchProductKeys = useCallback(async (productId: string) => {
@@ -1118,7 +1118,7 @@ export function AdminControlSpace({
           name: log.customer_name || log.actor_email?.split("@")[0] || "User",
           email: log.actor_email,
           image: log.customer_image,
-          discord_id: log.discord_id || `1315814140004206536`,
+          auth_provider: "Google",
           last_active: log.created_at || new Date().toISOString(),
           ip: log.ip || "142.247.179.206",
           status: log.customer_status || "ACTIVE",
@@ -1132,7 +1132,7 @@ export function AdminControlSpace({
         name: currentUser.split("@")[0],
         email: currentUser,
         image: null,
-        discord_id: "1315814140004206536",
+        auth_provider: "Google",
         last_active: new Date().toISOString(),
         ip: "188.53.111.115",
         status: "ACTIVE",
@@ -1570,7 +1570,7 @@ export function AdminControlSpace({
                     type="text"
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder={t("ابحث باسم العميل أو إيميله أو Discord ID...", "Search by customer name, email or Discord ID...")}
+                    placeholder={t("ابحث باسم العميل أو بريده الإلكتروني...", "Search by customer name or email...")}
                   />
                 </div>
               </div>
@@ -1580,7 +1580,7 @@ export function AdminControlSpace({
                   <thead>
                     <tr>
                       <th>{t("العميل", "Customer")}</th>
-                      <th>{t("البريد / Discord", "Email / Discord")}</th>
+                      <th>{t("البريد الإلكتروني / الحساب", "Email / Account")}</th>
                       <th>{t("الرتبة", "Role")}</th>
                       <th>{t("عنوان IP", "IP Address")}</th>
                       <th>{t("الإجراءات والاشتراكات", "Actions & Subscriptions")}</th>
@@ -1590,7 +1590,6 @@ export function AdminControlSpace({
                     {customers.length > 0 ? (
                       customers.map((c) => {
                         const isMuted = c.status === "SUSPENDED";
-                        const discordId = (c as any).discord_id || `1036532552811358268`;
                         const clientIp = (c as any).last_ip || `178.153.86.119`;
                         const role = (c as any).role || "Customer";
                         const userId = `user-${c.id.slice(0, 16)}...`;
@@ -1613,9 +1612,12 @@ export function AdminControlSpace({
                               </div>
                             </td>
 
-                            <td className="ref-email-discord-col">
+                            <td className="ref-email-auth-col">
                               <span className="ref-customer-email" dir="ltr">{c.email}</span>
-                              <span className="ref-customer-discord-tag" dir="ltr">Discord: {discordId}</span>
+                              <span className="ref-customer-google-tag" dir="ltr">
+                                <span className="ref-google-dot" />
+                                <span>Google</span>
+                              </span>
                             </td>
 
                             <td>
@@ -1683,7 +1685,7 @@ export function AdminControlSpace({
                 type="text"
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
-                placeholder={t("ابحث بالاسم، أو البريد الإلكتروني، أو Discord ID...", "Type name, email, or Discord ID to search...")}
+                placeholder={t("ابحث بالاسم أو البريد الإلكتروني...", "Type name or email to search...")}
                 className="ref-hero-search-input"
               />
               {customerSearch && (
@@ -1826,7 +1828,6 @@ export function AdminControlSpace({
               <div className="ref-timeline-cards-list">
                 {filteredActivationLogs.length > 0 ? (
                   filteredActivationLogs.map((log) => {
-                    const discordId = log.actor_id || `1320194211978543114`;
                     const clientIp = log.ip || `142.247.179.206`;
                     const userName = log.redeemed_by?.split("@")[0] || "koza124";
 
@@ -1850,7 +1851,7 @@ export function AdminControlSpace({
                           </div>
                           <div className="ref-event-user-details">
                             <strong>{userName}</strong>
-                            <span dir="ltr">Discord {discordId}</span>
+                            <span dir="ltr" className="ref-google-user-tag"><span className="ref-google-dot" /> Google</span>
                             <small dir="ltr">IP {clientIp}</small>
                           </div>
                         </div>
@@ -1927,7 +1928,7 @@ export function AdminControlSpace({
                         </div>
                         <div className="ref-session-user-info">
                           <strong className="ref-session-username">{session.name}</strong>
-                          <span dir="ltr" className="ref-session-discord-tag">Discord ID: {session.discord_id}</span>
+                          <span dir="ltr" className="ref-session-google-tag"><span className="ref-google-dot" /> Google</span>
                         </div>
                       </div>
                     </div>
@@ -2260,6 +2261,7 @@ export function AdminControlSpace({
                       <div className="ref-salla-duration-chips">
                         {[
                           { days: 1, label: t("1 يوم", "1 Day") },
+                          { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
                           { days: 7, label: t("7 أيام", "7 Days") },
                           { days: 30, label: t("30 يوماً", "30 Days") },
                           { days: 90, label: t("90 يوماً", "90 Days") },
@@ -2338,6 +2340,7 @@ export function AdminControlSpace({
                         className="ref-inline-duration-select"
                       >
                         <option value={1}>{t("يوم واحد", "1 Day")}</option>
+                        <option value={3}>{t("3 أيام (افتراضي)", "3 Days (Default)")}</option>
                         <option value={7}>{t("7 أيام", "7 Days")}</option>
                         <option value={30}>{t("30 يوماً (شهر)", "30 Days")}</option>
                         <option value={90}>{t("90 يوماً (3 أشهر)", "90 Days")}</option>
@@ -2635,6 +2638,7 @@ export function AdminControlSpace({
                   <div className="ref-duration-pills-row">
                     {[
                       { days: 1, label: t("يوم واحد", "1 Day") },
+                      { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
                       { days: 7, label: t("أسبوع (7 أيام)", "7 Days") },
                       { days: 30, label: t("شهر (30 يوماً)", "30 Days") },
                       { days: 90, label: t("3 أشهر (90 يوماً)", "90 Days") },
@@ -2701,6 +2705,7 @@ export function AdminControlSpace({
                   <div className="ref-duration-pills-row">
                     {[
                       { days: 1, label: t("يوم واحد", "1 Day") },
+                      { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
                       { days: 7, label: t("أسبوع (7 أيام)", "7 Days") },
                       { days: 30, label: t("شهر (30 يوماً)", "30 Days") },
                       { days: 90, label: t("3 أشهر (90 يوماً)", "90 Days") },
@@ -2762,6 +2767,8 @@ export function AdminControlSpace({
                     <label>{t("مدة صلاحية المفاتيح المولدّة", "Duration (Days)")}</label>
                     <div className="ref-duration-pills-row">
                       {[
+                        { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
+                        { days: 7, label: t("7 أيام", "7 Days") },
                         { days: 30, label: t("30 يوماً", "30 Days") },
                         { days: 90, label: t("90 يوماً", "90 Days") },
                         { days: 3650, label: t("مدى الحياة", "Lifetime") },

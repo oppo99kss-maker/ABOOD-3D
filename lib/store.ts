@@ -173,7 +173,7 @@ export async function ready() {
         access_url text,
         image_url text,
         instructions text,
-        default_duration_days integer NOT NULL DEFAULT 30,
+        default_duration_days integer NOT NULL DEFAULT 3,
         is_visible boolean NOT NULL DEFAULT true,
         is_active boolean NOT NULL DEFAULT true,
         is_archived boolean NOT NULL DEFAULT false,
@@ -186,7 +186,8 @@ export async function ready() {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS access_url text;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url text;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS instructions text;
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS default_duration_days integer NOT NULL DEFAULT 30;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS default_duration_days integer NOT NULL DEFAULT 3;
+      ALTER TABLE products ALTER COLUMN default_duration_days SET DEFAULT 3;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS is_visible boolean NOT NULL DEFAULT true;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS is_archived boolean NOT NULL DEFAULT false;
@@ -203,7 +204,7 @@ export async function ready() {
         code_suffix text NOT NULL,
         masked_code text,
         status text NOT NULL DEFAULT 'AVAILABLE',
-        duration_days integer NOT NULL DEFAULT 30,
+        duration_days integer NOT NULL DEFAULT 3,
         batch_id text,
         order_id text,
         issued_to text,
@@ -215,7 +216,8 @@ export async function ready() {
       );
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS masked_code text;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'AVAILABLE';
-      ALTER TABLE licenses ADD COLUMN IF NOT EXISTS duration_days integer NOT NULL DEFAULT 30;
+      ALTER TABLE licenses ADD COLUMN IF NOT EXISTS duration_days integer NOT NULL DEFAULT 3;
+      ALTER TABLE licenses ALTER COLUMN duration_days SET DEFAULT 3;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS batch_id text;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS order_id text;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS issued_to text;
@@ -597,7 +599,7 @@ export async function createProduct(input: {
       input.accessUrl || null,
       input.imageUrl || null,
       input.instructions?.trim() || null,
-      input.defaultDurationDays || 30,
+      input.defaultDurationDays || 3,
       input.isVisible !== false,
       input.isActive !== false,
       JSON.stringify(productFiles),
@@ -665,7 +667,7 @@ export async function updateProduct(input: {
       input.accessUrl || null,
       input.imageUrl || null,
       input.instructions?.trim() || null,
-      input.defaultDurationDays || 30,
+      input.defaultDurationDays || 3,
       input.isVisible !== false,
       input.isActive !== false,
       input.isArchived === true,
@@ -757,7 +759,7 @@ export async function getProductInventory(productId: string) {
 export async function generateKeys(
   productId: string,
   count: number,
-  durationDays = 30,
+  durationDays = 3,
   actorEmail = "SYSTEM"
 ) {
   await ready();
@@ -813,7 +815,7 @@ export async function generateKeys(
 export async function importCustomKeys(
   productId: string,
   rawKeys: string[],
-  durationDays = 30,
+  durationDays = 3,
   actorEmail = "SYSTEM"
 ) {
   await ready();
@@ -1032,7 +1034,7 @@ export async function redeemKey(email: string, code: string, ipAddress?: string)
     }
 
     // 4. Calculate expiration
-    const durationDays = Number(keyRow.duration_days) || 30;
+    const durationDays = Number(keyRow.duration_days) || 3;
     // Lifetime is 3650 days or null
     const isLifetime = durationDays >= 3650;
 

@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         accessUrl: accessUrl || null,
         imageUrl: imageUrl || null,
         instructions: typeof data.instructions === "string" ? data.instructions.trim() : null,
-        defaultDurationDays: Number(data.defaultDurationDays) || 30,
+        defaultDurationDays: Number(data.defaultDurationDays) || 3,
         isVisible: data.isVisible !== false,
         isActive: data.isActive !== false,
         files: Array.isArray(data.files) ? data.files : [],
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
         accessUrl: accessUrl || null,
         imageUrl: imageUrl || null,
         instructions: typeof data.instructions === "string" ? data.instructions.trim() : null,
-        defaultDurationDays: Number(data.defaultDurationDays) || 30,
+        defaultDurationDays: Number(data.defaultDurationDays) || 3,
         isVisible: data.isVisible !== false,
         isActive: data.isActive !== false,
         isArchived: Boolean(data.isArchived),
@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
     if (data.action === "generateKeys") {
       const productId = typeof data.productId === "string" ? data.productId : "";
       const count = Number(data.count);
-      const durationDays = Number(data.durationDays || 30);
+      const durationDays = Number(data.durationDays || 3);
 
       if (!productId || count < 1 || count > 500) {
         return json({ error: "INVALID_COUNT", message: "العدد يجب أن يكون بين 1 و500" }, 400);
@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
     if (data.action === "importKeys") {
       const productId = typeof data.productId === "string" ? data.productId : "";
       const rawKeys = Array.isArray(data.rawKeys) ? data.rawKeys : [];
-      const durationDays = Number(data.durationDays || 30);
+      const durationDays = Number(data.durationDays || 3);
 
       if (!productId || !rawKeys.length) {
         return json({ error: "EMPTY_KEYS", message: "يرجى تزويد قائمة مفاتيح للاستيراد" }, 400);
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
     if (data.action === "grantDirectLicense") {
       const customerEmail = typeof data.customerEmail === "string" ? data.customerEmail.trim() : "";
       const productId = typeof data.productId === "string" ? data.productId : "";
-      const durationDays = Number(data.durationDays || 30);
+      const durationDays = Number(data.durationDays || 3);
       const reason = typeof data.reason === "string" ? data.reason.trim() : "Direct administrative grant";
 
       if (!customerEmail || !productId) return json({ error: "INVALID_GRANT_INPUT" }, 400);
@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
     // 8. Admin: Extend license
     if (data.action === "extendLicense") {
       const licenseId = typeof data.licenseId === "string" ? data.licenseId : "";
-      const additionalDays = Number(data.additionalDays || 30);
+      const additionalDays = Number(data.additionalDays || 3);
       if (!licenseId || additionalDays < 1) return json({ error: "INVALID_EXTEND_DAYS" }, 400);
 
       const result = await extendLicense(licenseId, additionalDays, email);
