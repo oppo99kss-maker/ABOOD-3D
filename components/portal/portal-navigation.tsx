@@ -406,6 +406,18 @@ export function PortalNavigation({
             )}
           </button>
 
+          {!collapsed && (
+            <button
+              type="button"
+              className={css.directLogoutBtn}
+              onClick={onLogout}
+              aria-label={ar ? "تسجيل الخروج" : "Sign Out"}
+            >
+              <LogOut size={13} className={ar ? "rotate-180" : ""} />
+              <span>{ar ? "تسجيل الخروج" : "Sign Out"}</span>
+            </button>
+          )}
+
           {/* Luxury Account Popover Menu */}
           {accountMenuOpen && (
             <div

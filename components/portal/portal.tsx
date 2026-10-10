@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import {
   ArrowUpLeft,
   Box,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ClipboardPaste,
   Clock,
   Download,
@@ -27,6 +29,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  ShoppingBag,
   Sliders,
   Sparkles,
   Sun,
@@ -505,11 +508,34 @@ export function Portal({ user }: { user: PortalUser }) {
             )}
 
             <main className="portal-main">
-          {/* Header */}
+          {/* Header Bar */}
           <div className="page-heading">
-            <div>
+            <div className="page-heading-info">
               <h1>{titles[activeTab].title}</h1>
-              <p>{titles[activeTab].desc}</p>
+              {activeTab !== "overview" && titles[activeTab].desc && (
+                <p>{titles[activeTab].desc}</p>
+              )}
+            </div>
+
+            <div className="portal-top-controls">
+              <button
+                type="button"
+                className="top-ctrl-pill-btn"
+                onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+                title={t("تغيير اللغة", "Toggle Language")}
+              >
+                <Globe2 size={14} />
+                <span>{lang === "ar" ? "EN" : "عربي"}</span>
+              </button>
+
+              <button
+                type="button"
+                className="top-ctrl-pill-btn"
+                onClick={toggleTheme}
+                title={t("تغيير المظهر", "Toggle Theme")}
+              >
+                {isDark ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
             </div>
           </div>
 
@@ -536,100 +562,176 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* TAB 1: OVERVIEW */}
               {/* ==================================================== */}
               {activeTab === "overview" && (
-                <>
-                  <div className="overview-grid">
-                    <div className="overview-column">
+                <div className="ref-overview-wrapper">
+                  <div className="ref-overview-main-grid">
+                    {/* Primary Column (Hero + Metrics) */}
+                    <div className="ref-overview-primary-col">
                       {/* Hero Welcome Card */}
-                      <section className="panel welcome">
-                        <div className="welcome-content">
-                          <span className="eyebrow">
-                            <i className="dot" /> SpooFX Member Space
-                          </span>
+                      <section className="ref-hero-card">
+                        <div className="ref-hero-info">
+                          <div className="ref-hero-status-tag">
+                            <span className="ref-hero-pulse-dot" />
+                            <span>{t("حسابك متصل", "Account Connected")}</span>
+                          </div>
                           <h2>
-                            {t("أهلاً بك،", "Welcome,")} {user.name} <span className="wave">✦</span>
+                            {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
                           </h2>
                           <p>
-                            {data.products.length
+                            {data.products.length > 0
                               ? t(
-                                  `لديك ${data.products.length} منتج مسجل في مكتبتك الرقمية.`,
-                                  `You have ${data.products.length} products in your digital library.`
+                                  `لديك ${data.products.length} منتجات مفعلة بحسابك.`,
+                                  `You have ${data.products.length} active products in your account.`
                                 )
                               : t(
-                                  "مكتبتك فارغة حالياً. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
-                                  "Your library is empty. Enter your license key to activate."
+                                  "مكتبتك الرقمية جاهزة. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
+                                  "Your digital library is ready. Enter your key to activate."
                                 )}
                           </p>
-                          <div className="hero-button-row">
-                            <button
-                              className="primary-button"
-                              onClick={() => navigate(data.products.length ? "my-products" : "redeem")}
-                            >
-                              {data.products.length ? <Package size={16} /> : <KeyRound size={16} />}
-                              {data.products.length ? t("استعراض مكتبتي", "View My Library") : t("تفعيل مفتاح ترخيص", "Activate a Key")}
-                              <ArrowUpLeft size={15} />
-                            </button>
-                            {data.isAdmin && (
-                              <button className="secondary-button" onClick={() => navigate("admin")}>
-                                <ShieldCheck size={16} />
-                                {t("لوحة الإدارة", "Admin Space")}
-                              </button>
-                            )}
-                          </div>
+                        </div>
+                        <div className="ref-hero-avatar-wrap">
+                          {user.image ? (
+                            <img
+                              src={user.image}
+                              alt={user.name}
+                              className="ref-hero-avatar-img"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="ref-hero-avatar-fallback">
+                              {user.name ? user.name[0].toUpperCase() : "U"}
+                            </div>
+                          )}
                         </div>
                       </section>
 
-                      {/* Stat Metrics */}
-                      <div className="stats-grid">
-                        <section className="panel stat">
-                          <span className="stat-icon">
-                            <Package size={18} />
-                          </span>
-                          <strong>{data.products.length}</strong>
-                          <p>{t("المنتجات", "Products")}</p>
-                        </section>
-                        <section className="panel stat">
-                          <span className="stat-icon">
-                            <CheckCircle2 size={18} />
-                          </span>
-                          <strong>{activeProductsCount}</strong>
-                          <p>{t("تراخيص نشطة", "Active licenses")}</p>
-                        </section>
-                        <section className="panel stat">
-                          <span className="stat-icon">
-                            <ShieldCheck size={18} />
-                          </span>
-                          <strong>{data.isAdmin ? t("مدير", "Admin") : t("عميل موثق", "Verified")}</strong>
-                          <p>{t("الرتبة", "Role")}</p>
-                        </section>
+                      {/* 3 Metric Stat Cards */}
+                      <div className="ref-metric-cards-grid">
+                        {/* Card 1: Active Products */}
+                        <div className="ref-metric-card">
+                          <div className="ref-metric-icon-wrap">
+                            <Box size={18} />
+                          </div>
+                          <strong className="ref-metric-value">{data.products.length}</strong>
+                          <span className="ref-metric-label">{t("منتجات مفعلة", "Active Products")}</span>
+                        </div>
+
+                        {/* Card 2: Account Status */}
+                        <div className="ref-metric-card">
+                          <div className="ref-metric-icon-wrap">
+                            <Clock size={18} />
+                          </div>
+                          <strong className="ref-metric-value">{t("فعال", "Active")}</strong>
+                          <span className="ref-metric-label">{t("حالة الحساب", "Account Status")}</span>
+                        </div>
+
+                        {/* Card 3: Member Since */}
+                        <div className="ref-metric-card">
+                          <div className="ref-metric-icon-wrap">
+                            <Clock size={18} />
+                          </div>
+                          <strong className="ref-metric-value">
+                            {new Date().toLocaleDateString(ar ? "ar-SA" : "en-US", { month: "long", year: "numeric" })}
+                          </strong>
+                          <span className="ref-metric-label">{t("عضو منذ", "Member Since")}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Quick Access Menu */}
-                    <section className="panel quick-actions">
-                      <h2>{t("الوصول السريع", "Quick Access")}</h2>
-                      {[
-                        { tab: "my-products" as const, icon: Package, label: t("مكتبة المنتجات", "My Products"), desc: t("ملفاتك وتراخيصك النشطة", "Your files and active licenses") },
-                        { tab: "redeem" as const, icon: KeyRound, label: t("تفعيل مفتاح", "Activate Key"), desc: t("أضف ترخيصاً جديداً إلى حسابك", "Add a new license to account") },
-                        { tab: "tickets" as const, icon: LifeBuoy, label: t("مركز المساعدة", "Help & Guides"), desc: t("تعليمات الاستخدام والأسئلة", "Setup guides & common FAQs") },
-                        { tab: "profile" as const, icon: UserRound, label: t("الملف الشخصي", "Account Profile"), desc: t("سجل التفعيلات وإعدادات الحساب", "Activation history & preferences") },
-                      ].map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <button key={item.tab} onClick={() => navigate(item.tab)}>
-                            <span className="quick-icon">
-                              <Icon size={18} />
-                            </span>
-                            <span>
-                              <strong>{item.label}</strong>
-                              <small>{item.desc}</small>
-                            </span>
-                            <ArrowUpLeft size={16} />
+                    {/* Secondary Column: Quick Actions Card */}
+                    <div className="ref-overview-secondary-col">
+                      <section className="ref-quick-actions-card">
+                        <h3 className="ref-quick-actions-title">{t("إجراءات سريعة", "Quick Actions")}</h3>
+                        <div className="ref-quick-actions-list">
+                          {/* 1. My Products */}
+                          <button
+                            type="button"
+                            className="ref-quick-action-row"
+                            onClick={() => navigate("my-products")}
+                          >
+                            <div className="ref-action-lead">
+                              <span className="ref-action-icon-pill">
+                                <Box size={16} />
+                              </span>
+                              <span className="ref-action-text">{t("منتجاتي", "My Products")}</span>
+                            </div>
+                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
                           </button>
-                        );
-                      })}
-                    </section>
+
+                          {/* 2. Activate Key */}
+                          <button
+                            type="button"
+                            className="ref-quick-action-row"
+                            onClick={() => navigate("redeem")}
+                          >
+                            <div className="ref-action-lead">
+                              <span className="ref-action-icon-pill">
+                                <KeyRound size={16} />
+                              </span>
+                              <span className="ref-action-text">{t("تفعيل مفتاح", "Activate Key")}</span>
+                            </div>
+                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {/* 3. Store */}
+                          <a
+                            href="https://spoofx.rmz.gg/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ref-quick-action-row"
+                          >
+                            <div className="ref-action-lead">
+                              <span className="ref-action-icon-pill">
+                                <ShoppingBag size={16} />
+                              </span>
+                              <span className="ref-action-text">{t("المتجر", "Store")}</span>
+                            </div>
+                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                          </a>
+
+                          {/* 4. Help Center */}
+                          <button
+                            type="button"
+                            className="ref-quick-action-row"
+                            onClick={() => navigate("tickets")}
+                          >
+                            <div className="ref-action-lead">
+                              <span className="ref-action-icon-pill">
+                                <LifeBuoy size={16} />
+                              </span>
+                              <span className="ref-action-text">{t("مركز المساعدة", "Help Center")}</span>
+                            </div>
+                            <ChevronLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                          </button>
+                        </div>
+                      </section>
+                    </div>
                   </div>
-                </>
+
+                  {/* Bottom Luxury Banner Card */}
+                  <section className="ref-bottom-brand-banner">
+                    <div className="ref-brand-banner-lead">
+                      <div className="ref-brand-banner-icon">
+                        <Image src="/brand.svg" width={30} height={30} alt="SpooFX" />
+                      </div>
+                      <div className="ref-brand-banner-meta">
+                        <strong className="ref-brand-banner-name">SpooFX</strong>
+                        <span className="ref-brand-banner-desc">
+                          {t("منتجاتك وتراخيصك في مكان واحد", "Your products and licenses in one place")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ref-brand-banner-badge">
+                      <ShieldCheck size={16} />
+                      <span>{t("وثيقة العمل الحر / موثق رسمياً", "Verified Digital Identity")}</span>
+                    </div>
+                  </section>
+
+                  {/* Copyright Footer */}
+                  <footer className="ref-overview-copyright">
+                    <p>{t("جميع الحقوق محفوظة © 2026 SpooFX", "All rights reserved © 2026 SpooFX")}</p>
+                  </footer>
+                </div>
               )}
 
               {/* ==================================================== */}

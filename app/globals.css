@@ -9091,6 +9091,390 @@ tr.selected-row {
   transform: translateY(-1px);
 }
 
+/* ==========================================================================
+   SPOOFX LUXURY OVERVIEW DASHBOARD (MATCHING IMAGE IDENTITY)
+   Tokens: #080B12, #0C101A, #101623, #243247, #5FD5FF, #EEF4FF, #A5B4C9
+   ========================================================================== */
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-heading-info h1 {
+  font-size: clamp(24px, 2.5vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: #EEF4FF;
+  margin: 0;
+}
+
+.portal-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-ctrl-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #101623;
+  border: 1px solid #243247;
+  color: #A5B4C9;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.top-ctrl-pill-btn:hover {
+  color: #5FD5FF;
+  border-color: rgba(95, 213, 255, 0.35);
+  background: #141C2B;
+  transform: translateY(-1px);
+}
+
+/* Overview Layout Wrapper */
+.ref-overview-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ref-overview-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .ref-overview-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ref-overview-primary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ref-overview-secondary-col {
+  min-width: 0;
+}
+
+/* 1. Hero Welcome Card */
+.ref-hero-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #101623;
+  border: 1px solid #243247;
+  border-radius: 16px;
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ref-hero-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  width: 220px;
+  height: 100%;
+  background: radial-gradient(circle at 80% 20%, rgba(95, 213, 255, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+.ref-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ref-hero-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #34D399;
+}
+
+.ref-hero-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.ref-hero-info h2 {
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 700;
+  color: #EEF4FF;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.ref-hero-info p {
+  font-size: 13px;
+  color: #94A3B8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ref-hero-avatar-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #141C2B;
+  border: 1px solid #243247;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+
+.ref-hero-avatar-img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.ref-hero-avatar-fallback {
+  font-size: 20px;
+  font-weight: 800;
+  color: #5FD5FF;
+}
+
+/* 2. Three Metric Cards Grid */
+.ref-metric-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 680px) {
+  .ref-metric-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ref-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #101623;
+  border: 1px solid #243247;
+  border-radius: 14px;
+  padding: 18px 20px;
+  position: relative;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ref-metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(95, 213, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.ref-metric-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(95, 213, 255, 0.08);
+  border: 1px solid rgba(95, 213, 255, 0.18);
+  color: #5FD5FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.ref-metric-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #EEF4FF;
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+}
+
+.ref-metric-label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* 3. Quick Actions Card */
+.ref-quick-actions-card {
+  background: #101623;
+  border: 1px solid #243247;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ref-quick-actions-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  margin: 0 0 4px;
+  letter-spacing: 0.3px;
+}
+
+.ref-quick-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ref-quick-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: #EEF4FF;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.ref-quick-action-row:hover {
+  background: rgba(95, 213, 255, 0.08);
+  border-color: rgba(95, 213, 255, 0.25);
+  transform: translateX(-2px);
+}
+
+.ref-action-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ref-action-icon-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(95, 213, 255, 0.08);
+  border: 1px solid rgba(95, 213, 255, 0.2);
+  color: #5FD5FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ref-action-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #EEF4FF;
+}
+
+.ref-action-arrow {
+  color: #64748B;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.ref-quick-action-row:hover .ref-action-arrow {
+  color: #5FD5FF;
+  transform: translateX(-2px);
+}
+
+/* 4. Bottom Brand Banner */
+.ref-bottom-brand-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #101623;
+  border: 1px solid #243247;
+  border-radius: 16px;
+  padding: 18px 24px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.ref-brand-banner-lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ref-brand-banner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #141C2B;
+  border: 1px solid #243247;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+
+.ref-brand-banner-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ref-brand-banner-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #EEF4FF;
+}
+
+.ref-brand-banner-desc {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.ref-brand-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34D399;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ref-overview-copyright {
+  text-align: center;
+  padding-block: 8px 16px;
+}
+
+.ref-overview-copyright p {
+  font-size: 11px;
+  color: #475569;
+  margin: 0;
+}
+
 
 
 
