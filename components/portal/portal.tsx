@@ -20,11 +20,13 @@ import {
   KeyRound,
   LifeBuoy,
   LoaderCircle,
+  LogOut,
   Moon,
   Package,
   Search,
   ShieldAlert,
   ShieldCheck,
+  Sliders,
   Sun,
   UserRound,
   X,
@@ -682,157 +684,170 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* TAB 5: PROFILE & ACTIVATION HISTORY */}
               {/* ==================================================== */}
               {activeTab === "profile" && (
-                <div className="profile-layout-grid">
-                  <div className="profile-left-col">
-                    <section className="panel profile">
-                      <Avatar image={user.image} name={user.name} size={84} />
-                      <h2>{user.name}</h2>
-                      <span className="status-pill verified-pill">
-                        <CheckCircle2 size={12} /> Google Verified
-                      </span>
-
-                      <dl>
-                        <div>
-                          <dt>{t("الاسم الكامل", "Full Name")}</dt>
-                          <dd>{user.name}</dd>
+                <div className="profile-page-wrapper">
+                  {/* Top VIP Profile Hero Card */}
+                  <section className="panel profile-hero-card">
+                    <div className="profile-hero-user">
+                      <Avatar image={user.image} name={user.name} size={64} />
+                      <div className="profile-hero-details">
+                        <div className="profile-name-row">
+                          <h2>{user.name}</h2>
+                          {data.isAdmin ? (
+                            <span className="role-tag admin">{t("مدير منصة", "Platform Admin")}</span>
+                          ) : (
+                            <span className="role-tag client">{t("عميل موثق", "Verified Client")}</span>
+                          )}
+                          <span className="status-pill verified-pill">
+                            <CheckCircle2 size={12} /> Google Verified
+                          </span>
                         </div>
-                        <div>
-                          <dt>{t("البريد الإلكتروني", "Email Address")}</dt>
-                          <dd dir="ltr">{user.email}</dd>
-                        </div>
-                        <div>
-                          <dt>{t("الرتبة في النظام", "System Role")}</dt>
-                          <dd>
-                            {data.isAdmin ? (
-                              <span className="role-tag admin">{t("مدير منصة", "Platform Admin")}</span>
-                            ) : (
-                              <span className="role-tag client">{t("عميل موثق", "Verified Client")}</span>
-                            )}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>{t("المنتجات في الحساب", "Total Products")}</dt>
-                          <dd>{data.products.length}</dd>
-                        </div>
-                      </dl>
-
-                      <button className="secondary-button logout-btn" onClick={() => void signOut({ callbackUrl: "/" })}>
-                        {t("تسجيل الخروج", "Sign Out")}
-                      </button>
-                    </section>
-
-                    <section className="panel preferences">
-                      <h2>{t("تفضيلات الواجهة والمظهر", "Display Preferences")}</h2>
-                      <div className="pref-row">
-                        <span>{t("المظهر العام", "Theme Mode")}</span>
-                        <button className="secondary-button" onClick={toggleTheme}>
-                          {isDark ? <Sun size={16} /> : <Moon size={16} />}
-                          {isDark ? t("الوضع الفاتح", "Light Mode") : t("الوضع الداكن", "Dark Mode")}
-                        </button>
-                      </div>
-                      <div className="pref-row">
-                        <span>{t("لغة الواجهة", "Language")}</span>
-                        <button className="secondary-button" onClick={() => setLang(ar ? "en" : "ar")}>
-                          <Globe2 size={16} />
-                          {ar ? "English (LTR)" : "العربية (RTL)"}
-                        </button>
-                      </div>
-                      <p className="pref-note">{t("تفضيلاتك تُحفظ تلقائياً في المتصفح.", "Preferences are preserved locally in your browser.")}</p>
-                    </section>
-                  </div>
-
-                  {/* Activation History Table */}
-                  <section className="panel profile-history-panel">
-                    <div className="history-header">
-                      <div>
-                        <h2>
-                          <History size={18} />
-                          {t("سجل التفعيلات والاشتراكات", "Activation History")}
-                        </h2>
-                        <p>{t("قائمة المنتجات والتراخيص المرتبطة بحسابك وتواريخ صلاحيتها.", "Chronological log of products and licenses attached to your account.")}</p>
+                        <p className="profile-hero-email" dir="ltr">{user.email}</p>
                       </div>
                     </div>
 
-                    {data.products.length > 0 ? (
-                      <div className="admin-table-container">
-                        <table className="admin-table">
-                          <thead>
-                            <tr>
-                              <th>{t("المنتج", "Product")}</th>
-                              <th>{t("الحالة", "Status")}</th>
-                              <th>{t("تاريخ التفعيل", "Activated Date")}</th>
-                              <th>{t("تاريخ الانتهاء", "Expires At")}</th>
-                              <th>{t("الإجراءات", "Actions")}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data.products.map((p) => {
-                              const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
-                              return (
-                                <tr key={p.id}>
-                                  <td className="table-product-cell">
-                                    {p.image_url ? (
-                                      <img src={p.image_url} alt="" className="table-thumb" />
-                                    ) : (
-                                      <div className="table-thumb-fallback">
-                                        <Package size={18} />
-                                      </div>
-                                    )}
-                                    <div>
-                                      <strong>{p.name}</strong>
-                                      <small>{p.category || "General"}</small>
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <span className={`status-badge ${isExpired ? "gray" : "green"}`}>
+                    <div className="profile-hero-metrics">
+                      <div className="hero-stat-pill">
+                        <span>{t("المنتجات المسجلة", "Registered Products")}</span>
+                        <strong>{data.products.length}</strong>
+                      </div>
+                      <div className="hero-stat-pill">
+                        <span>{t("حالة الحساب", "Account Status")}</span>
+                        <strong className="text-success">{t("نشط وموثق", "Active")}</strong>
+                      </div>
+                    </div>
+
+                    <div className="profile-hero-actions">
+                      <button className="secondary-button logout-btn" onClick={() => void signOut({ callbackUrl: "/" })}>
+                        <LogOut size={15} />
+                        {t("تسجيل الخروج", "Sign Out")}
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* Balanced 2-Column Content Grid */}
+                  <div className="profile-content-grid">
+                    {/* Preferences Card */}
+                    <section className="panel preferences-card">
+                      <div className="card-header-row">
+                        <div className="card-header-icon blue">
+                          <Sliders size={18} />
+                        </div>
+                        <div>
+                          <h3>{t("تفضيلات الواجهة", "Display Preferences")}</h3>
+                          <small>{t("المظهر العام وخيارات اللغة", "Theme mode and language settings")}</small>
+                        </div>
+                      </div>
+
+                      <div className="pref-items-list">
+                        <div className="pref-row">
+                          <div>
+                            <strong>{t("المظهر العام", "Theme Mode")}</strong>
+                            <small>{isDark ? t("الوضع الداكن الفخم", "Dark Luxury Theme") : t("الوضع الفاتح", "Light Theme")}</small>
+                          </div>
+                          <button className="secondary-button pref-toggle-btn" onClick={toggleTheme}>
+                            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+                            {isDark ? t("الوضع الفاتح", "Light") : t("الوضع الداكن", "Dark")}
+                          </button>
+                        </div>
+
+                        <div className="pref-row">
+                          <div>
+                            <strong>{t("لغة الواجهة", "Language")}</strong>
+                            <small>{ar ? "العربية (RTL)" : "English (LTR)"}</small>
+                          </div>
+                          <button className="secondary-button pref-toggle-btn" onClick={() => setLang(ar ? "en" : "ar")}>
+                            <Globe2 size={15} />
+                            {ar ? "English" : "العربية"}
+                          </button>
+                        </div>
+
+                        <div className="pref-row">
+                          <div>
+                            <strong>{t("الأمان والتوثيق", "Security")}</strong>
+                            <small>{t("مصادقة Google OAuth مشفرة", "Encrypted Google OAuth 2.0")}</small>
+                          </div>
+                          <span className="security-verified-tag">
+                            <ShieldCheck size={14} /> {t("محمي وموثق", "Secured")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="pref-note">{t("تفضيلاتك تُحفظ تلقائياً في المتصفح.", "Preferences are preserved locally in your browser.")}</p>
+                    </section>
+
+                    {/* Subscriptions & Activations History */}
+                    <section className="panel history-card">
+                      <div className="card-header-row">
+                        <div className="card-header-icon green">
+                          <History size={18} />
+                        </div>
+                        <div>
+                          <h3>{t("سجل الاشتراكات والتراخيص", "Subscription History")}</h3>
+                          <small>{t("التراخيص المرتبطة بحسابك", "Licenses tied to your account")}</small>
+                        </div>
+                        {data.products.length > 0 && (
+                          <span className="history-count-badge">{data.products.length}</span>
+                        )}
+                      </div>
+
+                      {data.products.length > 0 ? (
+                        <div className="profile-products-compact-list">
+                          {data.products.map((p) => {
+                            const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
+                            return (
+                              <div className="compact-product-item" key={p.id}>
+                                <div className="compact-product-icon">
+                                  {p.image_url ? (
+                                    <img src={p.image_url} alt="" />
+                                  ) : (
+                                    <Package size={18} />
+                                  )}
+                                </div>
+                                <div className="compact-product-info">
+                                  <strong>{p.name}</strong>
+                                  <div className="compact-product-sub">
+                                    <span className={`status-badge-inline ${isExpired ? "expired" : "active"}`}>
+                                      <i className="dot" />
                                       {isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
                                     </span>
-                                  </td>
-                                  <td>
-                                    {p.redeemed_at ? (
-                                      <span className="date-str">
-                                        {new Date(p.redeemed_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
-                                      </span>
-                                    ) : (
-                                      "—"
-                                    )}
-                                  </td>
-                                  <td>
-                                    {p.expires_at ? (
-                                      <span className={`date-str ${isExpired ? "text-danger" : ""}`}>
-                                        {new Date(p.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
-                                      </span>
-                                    ) : (
-                                      <span className="badge-tag blue">{t("مدى الحياة", "Lifetime")}</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <button
-                                      className="btn-action"
-                                      onClick={() => setSelectedProductModal(p)}
-                                      title={t("عرض التفاصيل والملفات", "View Details & Files")}
-                                    >
-                                      <FileText size={15} />
-                                      <span>{t("التفاصيل", "Details")}</span>
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="panel empty compact-empty">
-                        <KeyRound size={26} />
-                        <h3>{t("لا توجد اشتراكات نشطة بعد", "No active subscriptions yet")}</h3>
-                        <p>{t("قم بتفعيل أول مفتاح منتج ليظهر في سجل اشتراكاتك.", "Redeem a license key to view your subscription history.")}</p>
-                        <button className="primary-button" onClick={() => navigate("redeem")}>
-                          {t("تفعيل مفتاح ترخيص", "Redeem Key")}
-                        </button>
-                      </div>
-                    )}
-                  </section>
+                                    <span>
+                                      {p.expires_at ? (
+                                        <time dateTime={p.expires_at}>
+                                          {new Date(p.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
+                                        </time>
+                                      ) : (
+                                        t("دائم", "Lifetime")
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  className="btn-action compact-btn"
+                                  onClick={() => setSelectedProductModal(p)}
+                                  title={t("عرض التفاصيل", "View Details")}
+                                >
+                                  <FileText size={14} />
+                                  <span>{t("التفاصيل", "Details")}</span>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="profile-compact-empty">
+                          <div className="empty-key-icon">
+                            <KeyRound size={22} />
+                          </div>
+                          <h4>{t("لا توجد اشتراكات مسجلة بعد", "No active subscriptions yet")}</h4>
+                          <p>{t("قم بتفعيل مفتاح ترخيص رقمي ليظهر في مكتبتك وسجل حسابك.", "Activate a key to link your first product.")}</p>
+                          <button className="primary-button empty-activate-btn" onClick={() => navigate("redeem")}>
+                            <KeyRound size={15} />
+                            {t("تفعيل مفتاح ترخيص", "Activate a Key")}
+                          </button>
+                        </div>
+                      )}
+                    </section>
+                  </div>
                 </div>
               )}
             </>
