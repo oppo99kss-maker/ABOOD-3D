@@ -22,6 +22,7 @@ import {
   KeyRound,
   LifeBuoy,
   LoaderCircle,
+  Lock,
   LogOut,
   Moon,
   Package,
@@ -320,7 +321,7 @@ export function Portal({ user }: { user: PortalUser }) {
     "my-products": { title: t("منتجاتي", "My Products"), desc: t("تراخيصك ومفاتيحك الرقمية.", "Your digital products and keys.") },
     redeem: { title: t("تفعيل مفتاح", "Activate Key"), desc: t("أدخل مفتاحك لإضافة المنتج إلى مكتبتك.", "Enter your key to unlock products.") },
     tickets: { title: t("المساعدة", "Help"), desc: t("أدلة الاستخدام والأسئلة الشائعة.", "Setup guides and documentation.") },
-    profile: { title: t("حسابي", "My Account"), desc: t("بيانات الحساب وسجل التفعيلات.", "Profile and activation history.") },
+    profile: { title: t("حسابي", "My Account"), desc: t("إدارة الحساب والتفضيلات والأمان.", "Manage account settings, preferences and security.") },
     admin: { title: t("لوحة التحكم", "Control Panel"), desc: t("مركز إدارة النظام والتحكم الشامل.", "System control space.") },
   };
 
@@ -989,168 +990,206 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* TAB 5: PROFILE & ACTIVATION HISTORY */}
               {/* ==================================================== */}
               {activeTab === "profile" && (
-                <div className="profile-page-wrapper">
-                  {/* Top VIP Profile Hero Card */}
-                  <section className="panel profile-hero-card">
-                    <div className="profile-hero-user">
-                      <Avatar image={user.image} name={user.name} size={64} />
-                      <div className="profile-hero-details">
-                        <div className="profile-name-row">
-                          <h2>{user.name}</h2>
+                <div className="luxe-profile-container">
+                  {/* 1. VIP Identity Hero Banner */}
+                  <section className="luxe-profile-hero">
+                    <div className="luxe-hero-ambient" />
+
+                    <div className="luxe-hero-main-row">
+                      {/* Avatar with luxury ring & active dot */}
+                      <div className="luxe-avatar-container">
+                        <Avatar image={user.image} name={user.name} size={72} />
+                        <span className="luxe-online-pulse" title={t("متصل الآن", "Online Now")} />
+                      </div>
+
+                      {/* User Identity Details */}
+                      <div className="luxe-identity-details">
+                        <div className="luxe-name-badge-row">
+                          <h2 className="luxe-user-name">{user.name}</h2>
                           {data.isAdmin ? (
-                            <span className="role-tag admin">{t("مدير منصة", "Platform Admin")}</span>
+                            <span className="luxe-vip-badge admin">
+                              <ShieldCheck size={14} />
+                              <span>{t("مدير المنصة", "Platform Admin")}</span>
+                            </span>
                           ) : (
-                            <span className="role-tag client">{t("عميل موثق", "Verified Client")}</span>
+                            <span className="luxe-vip-badge client">
+                              <Sparkles size={14} />
+                              <span>{t("عضو موثق", "Verified Client")}</span>
+                            </span>
                           )}
-                          <span className="status-pill verified-pill">
-                            <CheckCircle2 size={12} /> Google Verified
+                        </div>
+
+                        <div className="luxe-email-row">
+                          <span className="luxe-email-tag" dir="ltr">
+                            <svg className="google-icon-svg" width="14" height="14" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            <span>{user.email}</span>
                           </span>
                         </div>
-                        <p className="profile-hero-email" dir="ltr">{user.email}</p>
+                      </div>
+
+                      {/* Status indicator on end */}
+                      <div className="luxe-session-status-tag">
+                        <span className="luxe-status-dot" />
+                        <span>{t("جلسة نشطة وموثقة", "Active Verified Session")}</span>
                       </div>
                     </div>
 
-                    <div className="profile-hero-metrics">
-                      <div className="hero-stat-pill">
-                        <span>{t("المنتجات المسجلة", "Registered Products")}</span>
-                        <strong>{data.products.length}</strong>
+                    {/* Metadata Footer Strip */}
+                    <div className="luxe-hero-meta-strip">
+                      <div className="luxe-meta-item">
+                        <span className="luxe-meta-label">{t("نوع الحساب", "Account Type")}</span>
+                        <strong className="luxe-meta-val">{t("مصادقة Google المعتمدة", "Google Verified OAuth")}</strong>
                       </div>
-                      <div className="hero-stat-pill">
-                        <span>{t("حالة الحساب", "Account Status")}</span>
-                        <strong className="text-success">{t("نشط وموثق", "Active")}</strong>
+                      <div className="luxe-meta-divider" />
+                      <div className="luxe-meta-item">
+                        <span className="luxe-meta-label">{t("حالة التوثيق", "Verification")}</span>
+                        <strong className="luxe-meta-val text-cyan">{t("معتمد ومحمي 100%", "100% Protected")}</strong>
                       </div>
-                    </div>
-
-                    <div className="profile-hero-actions">
-                      <button className="secondary-button logout-btn" onClick={() => void signOut({ callbackUrl: "/" })}>
-                        <LogOut size={15} />
-                        {t("تسجيل الخروج", "Sign Out")}
-                      </button>
+                      <div className="luxe-meta-divider" />
+                      <div className="luxe-meta-item">
+                        <span className="luxe-meta-label">{t("المكتبة الرقمية", "Digital Library")}</span>
+                        <div className="luxe-meta-action-row">
+                          <strong className="luxe-meta-val">{data.products.length} {t("منتجات", "Products")}</strong>
+                          <button
+                            type="button"
+                            className="luxe-meta-link-btn"
+                            onClick={() => navigate("my-products")}
+                          >
+                            <span>{t("عرض", "View")}</span>
+                            <ArrowUpLeft size={12} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </section>
 
-                  {/* Balanced 2-Column Content Grid */}
-                  <div className="profile-content-grid">
-                    {/* Preferences Card */}
-                    <section className="panel preferences-card">
-                      <div className="card-header-row">
-                        <div className="card-header-icon blue">
+                  {/* 2. Balanced 2-Card Grid */}
+                  <div className="luxe-profile-grid">
+                    {/* Card 1: Appearance & Preferences */}
+                    <section className="luxe-card">
+                      <div className="luxe-card-header">
+                        <div className="luxe-card-icon-box cyan">
                           <Sliders size={18} />
                         </div>
                         <div>
-                          <h3>{t("تفضيلات الواجهة", "Display Preferences")}</h3>
-                          <small>{t("المظهر العام وخيارات اللغة", "Theme mode and language settings")}</small>
+                          <h3 className="luxe-card-title">{t("تفضيلات الواجهة والمظهر", "Display & Preferences")}</h3>
+                          <p className="luxe-card-sub">{t("تخصيص نمط العرض ولغة الواجهة", "Customize theme mode and system language")}</p>
                         </div>
                       </div>
 
-                      <div className="pref-items-list">
-                        <div className="pref-row">
-                          <div>
+                      <div className="luxe-options-list">
+                        {/* Theme Option */}
+                        <div className="luxe-option-row">
+                          <div className="luxe-option-info">
                             <strong>{t("المظهر العام", "Theme Mode")}</strong>
-                            <small>{isDark ? t("الوضع الداكن الفخم", "Dark Luxury Theme") : t("الوضع الفاتح", "Light Theme")}</small>
+                            <span>{isDark ? t("الوضع الداكن الفخم", "Dark Luxury Theme") : t("الوضع الفاتح", "Light Theme")}</span>
                           </div>
-                          <button className="secondary-button pref-toggle-btn" onClick={toggleTheme}>
-                            {isDark ? <Sun size={15} /> : <Moon size={15} />}
-                            {isDark ? t("الوضع الفاتح", "Light") : t("الوضع الداكن", "Dark")}
-                          </button>
+                          <div className="luxe-toggle-group">
+                            <button
+                              type="button"
+                              className={`luxe-segmented-btn ${isDark ? "active" : ""}`}
+                              onClick={() => { if (!isDark) toggleTheme(); }}
+                            >
+                              <Moon size={13} />
+                              <span>{t("داكن", "Dark")}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={`luxe-segmented-btn ${!isDark ? "active" : ""}`}
+                              onClick={() => { if (isDark) toggleTheme(); }}
+                            >
+                              <Sun size={13} />
+                              <span>{t("فاتح", "Light")}</span>
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="pref-row">
-                          <div>
+                        {/* Language Option */}
+                        <div className="luxe-option-row">
+                          <div className="luxe-option-info">
                             <strong>{t("لغة الواجهة", "Language")}</strong>
-                            <small>{ar ? "العربية (RTL)" : "English (LTR)"}</small>
+                            <span>{ar ? "العربية (RTL)" : "English (LTR)"}</span>
                           </div>
-                          <button className="secondary-button pref-toggle-btn" onClick={() => setLang(ar ? "en" : "ar")}>
-                            <Globe2 size={15} />
-                            {ar ? "English" : "العربية"}
-                          </button>
+                          <div className="luxe-toggle-group">
+                            <button
+                              type="button"
+                              className={`luxe-segmented-btn ${ar ? "active" : ""}`}
+                              onClick={() => setLang("ar")}
+                            >
+                              <span>العربية</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={`luxe-segmented-btn ${!ar ? "active" : ""}`}
+                              onClick={() => setLang("en")}
+                            >
+                              <span>English</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="luxe-card-footer-note">
+                        <CheckCircle2 size={13} className="text-cyan" />
+                        <span>{t("تُحفظ جميع التفضيلات تلقائياً في المتصفح.", "Preferences are preserved locally in your browser.")}</span>
+                      </div>
+                    </section>
+
+                    {/* Card 2: Security & Session Management */}
+                    <section className="luxe-card">
+                      <div className="luxe-card-header">
+                        <div className="luxe-card-icon-box green">
+                          <ShieldCheck size={18} />
+                        </div>
+                        <div>
+                          <h3 className="luxe-card-title">{t("الأمان وإدارة الجلسة", "Security & Session")}</h3>
+                          <p className="luxe-card-sub">{t("بيانات الجلسة الموثقة وخيارات الحساب", "Verified session data & account security")}</p>
+                        </div>
+                      </div>
+
+                      <div className="luxe-options-list">
+                        <div className="luxe-option-row">
+                          <div className="luxe-option-info">
+                            <strong>{t("حساب Google المرتبط", "Connected Google Account")}</strong>
+                            <span dir="ltr">{user.email}</span>
+                          </div>
+                          <span className="luxe-verified-badge">
+                            <CheckCircle2 size={13} />
+                            <span>{t("موثق", "Verified")}</span>
+                          </span>
                         </div>
 
-                        <div className="pref-row">
-                          <div>
-                            <strong>{t("الأمان والتوثيق", "Security")}</strong>
-                            <small>{t("مصادقة Google OAuth مشفرة", "Encrypted Google OAuth 2.0")}</small>
+                        <div className="luxe-option-row">
+                          <div className="luxe-option-info">
+                            <strong>{t("بروتوكول الأمان", "Security Protocol")}</strong>
+                            <span>{t("مصادقة Google OAuth 2.0 PKCE", "Encrypted Google OAuth 2.0 PKCE")}</span>
                           </div>
-                          <span className="security-verified-tag">
-                            <ShieldCheck size={14} /> {t("محمي وموثق", "Secured")}
+                          <span className="luxe-secure-badge">
+                            <Lock size={12} />
+                            <span>{t("مشفر", "Encrypted")}</span>
                           </span>
                         </div>
                       </div>
 
-                      <p className="pref-note">{t("تفضيلاتك تُحفظ تلقائياً في المتصفح.", "Preferences are preserved locally in your browser.")}</p>
-                    </section>
-
-                    {/* Subscriptions & Activations History */}
-                    <section className="panel history-card">
-                      <div className="card-header-row">
-                        <div className="card-header-icon green">
-                          <History size={18} />
+                      <div className="luxe-session-action-box">
+                        <div className="luxe-session-action-info">
+                          <strong>{t("تسجيل الخروج", "Sign Out")}</strong>
+                          <span>{t("إنهاء جلستك الحالية على هذا المتصفح بأمان.", "Securely terminate your current session.")}</span>
                         </div>
-                        <div>
-                          <h3>{t("سجل الاشتراكات والتراخيص", "Subscription History")}</h3>
-                          <small>{t("التراخيص المرتبطة بحسابك", "Licenses tied to your account")}</small>
-                        </div>
-                        {data.products.length > 0 && (
-                          <span className="history-count-badge">{data.products.length}</span>
-                        )}
+                        <button
+                          type="button"
+                          className="luxe-logout-action-btn"
+                          onClick={() => void signOut({ callbackUrl: "/" })}
+                        >
+                          <LogOut size={14} />
+                          <span>{t("تسجيل الخروج", "Sign Out")}</span>
+                        </button>
                       </div>
-
-                      {data.products.length > 0 ? (
-                        <div className="profile-products-compact-list">
-                          {data.products.map((p) => {
-                            const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
-                            return (
-                              <div className="compact-product-item" key={p.id}>
-                                <div className="compact-product-icon">
-                                  {p.image_url ? (
-                                    <img src={p.image_url} alt="" />
-                                  ) : (
-                                    <Package size={18} />
-                                  )}
-                                </div>
-                                <div className="compact-product-info">
-                                  <strong>{p.name}</strong>
-                                  <div className="compact-product-sub">
-                                    <span className={`status-badge-inline ${isExpired ? "expired" : "active"}`}>
-                                      <i className="dot" />
-                                      {isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
-                                    </span>
-                                    <span>
-                                      {p.expires_at ? (
-                                        <time dateTime={p.expires_at}>
-                                          {new Date(p.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
-                                        </time>
-                                      ) : (
-                                        t("دائم", "Lifetime")
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                                <button
-                                  className="btn-action compact-btn"
-                                  onClick={() => setSelectedProductModal(p)}
-                                  title={t("عرض التفاصيل", "View Details")}
-                                >
-                                  <FileText size={14} />
-                                  <span>{t("التفاصيل", "Details")}</span>
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="profile-compact-empty">
-                          <div className="empty-key-icon">
-                            <KeyRound size={22} />
-                          </div>
-                          <h4>{t("لا توجد اشتراكات مسجلة بعد", "No active subscriptions yet")}</h4>
-                          <p>{t("قم بتفعيل مفتاح ترخيص رقمي ليظهر في مكتبتك وسجل حسابك.", "Activate a key to link your first product.")}</p>
-                          <button className="primary-button empty-activate-btn" onClick={() => navigate("redeem")}>
-                            <KeyRound size={15} />
-                            {t("تفعيل مفتاح ترخيص", "Activate a Key")}
-                          </button>
-                        </div>
-                      )}
                     </section>
                   </div>
                 </div>
