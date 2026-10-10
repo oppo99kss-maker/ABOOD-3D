@@ -462,7 +462,7 @@ export async function ready() {
       if (currentCount < 3) {
         const coreProducts = [
           {
-            id: "spoo-prod-permanent-01",
+            id: "a1000000-0000-4000-8000-000000000001",
             name: "سبوفر دائم SpooFX Permanent",
             name_en: "SpooFX Permanent Spoofer",
             description: "سبوفر دائم لتغيير معرّفات الهاردوير (HWID) وتخطي الحظر نهائياً مع دعم كامل لجميع اللوحات الأم وتحديثات الألعاب الحديثة.",
@@ -484,7 +484,7 @@ export async function ready() {
             })
           },
           {
-            id: "spoo-prod-temp-02",
+            id: "a2000000-0000-4000-8000-000000000002",
             name: "سبوفر مؤقت SpooFX Temporary",
             name_en: "SpooFX Temp Spoofer",
             description: "سبوفر مؤقت بنقرة واحدة لتشغيل آمن وحماية الهاردوير بدون فورمات أو تعديل في الـ BIOS، متوافق مع كافة الألعاب التنافسية.",
@@ -506,7 +506,7 @@ export async function ready() {
             })
           },
           {
-            id: "spoo-prod-cleaner-03",
+            id: "a3000000-0000-4000-8000-000000000003",
             name: "منظف وتخطي SpooFX Cleaner & TPM",
             name_en: "SpooFX Cleaner & TPM Bypass",
             description: "أداة تنظيف عميقة للآثار وسجلات الألعاب مع تخطي حماية TPM 2.0 وSecure Boot لضمان عمل السبوفر دون أي تعارض أو اكتشاف.",
@@ -530,7 +530,7 @@ export async function ready() {
         ];
 
         for (const item of coreProducts) {
-          const exists = await p.query("SELECT id FROM products WHERE name = $1 OR id = $2", [item.name, item.id]);
+          const exists = await p.query("SELECT id FROM products WHERE name = $1", [item.name]);
           if (!exists.rowCount) {
             await p.query(
               `INSERT INTO products (
