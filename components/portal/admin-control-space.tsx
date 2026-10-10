@@ -3,7 +3,10 @@
 import { useState, useMemo, useEffect, useRef, type FormEvent } from "react";
 import {
   AlertTriangle,
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
+  Calendar,
   Check,
   CheckCircle2,
   Clock,
@@ -15,23 +18,25 @@ import {
   Flame,
   Gift,
   KeyRound,
+  Layers,
   LoaderCircle,
   Mail,
   Package,
   Plus,
+  Radio,
   RefreshCw,
+  Save,
   Search,
   Send,
   ShieldCheck,
   Sliders,
   Trash2,
+  Upload,
   UserCheck,
   Users,
   Volume2,
   VolumeX,
   X,
-  Radio,
-  Calendar,
 } from "lucide-react";
 import type {
   Product,
@@ -53,6 +58,14 @@ export type AdminSection =
   | "search-customer"
   | "logs-activations"
   | "logs-logins";
+
+export type CustomField = {
+  id: string;
+  name: string;
+  key: string;
+  type: string;
+  value: string;
+};
 
 type Props = {
   products: Product[];
@@ -287,7 +300,6 @@ export function AdminControlSpace({
     });
   }
 
-  // Delete Customer
   function handleDeleteCustomer(customer: Customer) {
     setConfirmState({
       isOpen: true,
@@ -314,7 +326,6 @@ export function AdminControlSpace({
     });
   }
 
-  // Send message / email to customer
   const [messageModalState, setMessageModalState] = useState<{
     isOpen: boolean;
     customerEmail: string;
@@ -347,14 +358,24 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 3. PRODUCTS STATE & ACTIONS
+  // 3. PRODUCTS STATE & ACTIONS (MATCHING IMAGES 2 & 3)
   // ====================================================
   const [productSearch, setProductSearch] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
+  const [productModalTab, setProductModalTab] = useState<"details" | "custom_fields" | "keys">("details");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [productForm, setProductForm] = useState<{
     name: string;
     nameEn: string;
+    sku: string;
+    stockType: string;
+    status: "ACTIVE" | "INACTIVE";
+    visibility: "VISIBLE" | "HIDDEN";
+    sortOrder: number;
+    version: string;
+    fileSize: string;
     description: string;
     category: string;
     accessUrl: string;
@@ -364,9 +385,17 @@ export function AdminControlSpace({
     isVisible: boolean;
     isActive: boolean;
     files: ProductFile[];
+    customFields: CustomField[];
   }>({
     name: "",
     nameEn: "",
+    sku: "prod-fortnite",
+    stockType: "digital_keys",
+    status: "ACTIVE",
+    visibility: "VISIBLE",
+    sortOrder: 1,
+    version: "v4.1.0",
+    fileSize: "95.7 MB",
     description: "",
     category: "General",
     accessUrl: "/api/download",
@@ -384,41 +413,152 @@ export function AdminControlSpace({
         uploaded_at: new Date().toISOString(),
       },
     ],
+    customFields: [
+      {
+        id: "cf_video",
+        name: "رابط الشرح / فيديو",
+        key: "videoUrl",
+        type: "TEXT",
+        value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
+      },
+      {
+        id: "cf_guide",
+        name: "رابط دليل الاستخدام",
+        key: "guideUrl",
+        type: "TEXT",
+        value: "https://discord.gg/t3n",
+      },
+      {
+        id: "cf_file",
+        name: "رابط تحميل الملف",
+        key: "fileUrl",
+        type: "TEXT",
+        value: "/api/download",
+      },
+    ],
   });
 
-  const [newFileName, setNewFileName] = useState("");
-  const [newFileUrl, setNewFileUrl] = useState("");
-  const [newFileSize, setNewFileSize] = useState("");
-
-  function handleAddFileToProduct() {
-    if (!newFileName.trim() || !newFileUrl.trim()) return;
-    const newFile: ProductFile = {
-      id: "file_" + Date.now(),
-      name: newFileName.trim(),
-      url: newFileUrl.trim(),
-      size: newFileSize.trim() || undefined,
-      uploaded_at: new Date().toISOString(),
+  // Local Image Upload Handler
+  function handleLocalImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setProductForm((prev) => ({
+          ...prev,
+          imageUrl: reader.result as string,
+        }));
+      }
     };
-    setProductForm((prev) => ({
-      ...prev,
-      files: [...prev.files, newFile],
-    }));
-    setNewFileName("");
-    setNewFileUrl("");
-    setNewFileSize("");
+    reader.readAsDataURL(file);
   }
 
-  function handleRemoveFileFromProduct(fileId: string) {
+  // Custom Fields Handlers (Image 3)
+  function handleMoveFieldUp(index: number) {
+    if (index === 0) return;
+    setProductForm((prev) => {
+      const list = [...prev.customFields];
+      const temp = list[index - 1];
+      list[index - 1] = list[index];
+      list[index] = temp;
+      return { ...prev, customFields: list };
+    });
+  }
+
+  function handleMoveFieldDown(index: number) {
+    setProductForm((prev) => {
+      if (index >= prev.customFields.length - 1) return prev;
+      const list = [...prev.customFields];
+      const temp = list[index + 1];
+      list[index + 1] = list[index];
+      list[index] = temp;
+      return { ...prev, customFields: list };
+    });
+  }
+
+  function handleDeleteField(index: number) {
     setProductForm((prev) => ({
       ...prev,
-      files: prev.files.filter((f) => f.id !== fileId),
+      customFields: prev.customFields.filter((_, i) => i !== index),
     }));
+  }
+
+  function handleAddCustomField() {
+    const newId = "cf_" + Date.now();
+    setProductForm((prev) => ({
+      ...prev,
+      customFields: [
+        ...prev.customFields,
+        {
+          id: newId,
+          name: t("حقل مخصص جديد", "New Custom Field"),
+          key: "field_" + (prev.customFields.length + 1),
+          type: "TEXT",
+          value: "",
+        },
+      ],
+    }));
+  }
+
+  function handleFieldChange(index: number, val: string) {
+    setProductForm((prev) => {
+      const list = [...prev.customFields];
+      list[index] = { ...list[index], value: val };
+      return { ...prev, customFields: list };
+    });
   }
 
   function openEditProduct(p: Product) {
     setEditingProduct(p);
+    setProductModalTab("details");
+
+    let sku = `prod-${p.id.slice(0, 8)}`;
+    let version = "v4.1.0";
+    let fileSize = "95.7 MB";
+    let sortOrder = 1;
+    let customFields: CustomField[] = [];
+
+    try {
+      if (p.instructions && p.instructions.trim().startsWith("{")) {
+        const parsed = JSON.parse(p.instructions);
+        if (parsed.sku) sku = parsed.sku;
+        if (parsed.version) version = parsed.version;
+        if (parsed.fileSize) fileSize = parsed.fileSize;
+        if (parsed.sortOrder) sortOrder = Number(parsed.sortOrder) || 1;
+        if (Array.isArray(parsed.customFields) && parsed.customFields.length > 0) {
+          customFields = parsed.customFields;
+        }
+      }
+    } catch {}
+
+    if (!customFields.length) {
+      customFields = [
+        {
+          id: "cf_video",
+          name: "رابط الشرح / فيديو",
+          key: "videoUrl",
+          type: "TEXT",
+          value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
+        },
+        {
+          id: "cf_guide",
+          name: "رابط دليل الاستخدام",
+          key: "guideUrl",
+          type: "TEXT",
+          value: "https://discord.gg/t3n",
+        },
+        {
+          id: "cf_file",
+          name: "رابط تحميل الملف",
+          key: "fileUrl",
+          type: "TEXT",
+          value: p.access_url || "/api/download",
+        },
+      ];
+    }
+
     let currentFiles: ProductFile[] = Array.isArray(p.files) && p.files.length > 0 ? p.files : [];
-    // Ensure Spoofx.rar is present
     if (!currentFiles.some((f) => f.name.toLowerCase().includes("spoofx"))) {
       currentFiles = [
         ...currentFiles,
@@ -435,6 +575,13 @@ export function AdminControlSpace({
     setProductForm({
       name: p.name,
       nameEn: p.name_en || "",
+      sku: sku,
+      stockType: "digital_keys",
+      status: p.is_active !== false ? "ACTIVE" : "INACTIVE",
+      visibility: p.is_visible !== false ? "VISIBLE" : "HIDDEN",
+      sortOrder: sortOrder,
+      version: version,
+      fileSize: fileSize,
       description: p.description || "",
       category: p.category || "General",
       accessUrl: p.access_url || "/api/download",
@@ -444,15 +591,24 @@ export function AdminControlSpace({
       isVisible: p.is_visible !== false,
       isActive: p.is_active !== false,
       files: currentFiles,
+      customFields: customFields,
     });
     setShowProductModal(true);
   }
 
   function openAddProduct() {
     setEditingProduct(null);
+    setProductModalTab("details");
     setProductForm({
       name: "",
       nameEn: "",
+      sku: `prod-${Date.now().toString(36)}`,
+      stockType: "digital_keys",
+      status: "ACTIVE",
+      visibility: "VISIBLE",
+      sortOrder: products.length + 1,
+      version: "v1.0.0",
+      fileSize: "95.7 MB",
       description: "",
       category: "General",
       accessUrl: "/api/download",
@@ -470,26 +626,88 @@ export function AdminControlSpace({
           uploaded_at: new Date().toISOString(),
         },
       ],
+      customFields: [
+        {
+          id: "cf_video",
+          name: "رابط الشرح / فيديو",
+          key: "videoUrl",
+          type: "TEXT",
+          value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
+        },
+        {
+          id: "cf_guide",
+          name: "رابط دليل الاستخدام",
+          key: "guideUrl",
+          type: "TEXT",
+          value: "https://discord.gg/t3n",
+        },
+        {
+          id: "cf_file",
+          name: "رابط تحميل الملف",
+          key: "fileUrl",
+          type: "TEXT",
+          value: "/api/download",
+        },
+      ],
     });
     setShowProductModal(true);
   }
 
-  async function handleSaveProduct(e: FormEvent) {
-    e.preventDefault();
+  async function handleSaveProduct(e?: FormEvent) {
+    if (e) e.preventDefault();
+    if (!productForm.name.trim()) {
+      notify(t("يرجى إدخال اسم المنتج", "Please enter product name"), "error");
+      return;
+    }
+
+    const fileField = productForm.customFields.find((f) => f.key === "fileUrl" || f.name.includes("تحميل"));
+    const accessUrl = fileField?.value || productForm.accessUrl || "/api/download";
+
+    const instructionsPayload = JSON.stringify({
+      sku: productForm.sku,
+      version: productForm.version,
+      fileSize: productForm.fileSize,
+      sortOrder: productForm.sortOrder,
+      customFields: productForm.customFields,
+      stockType: productForm.stockType,
+    });
+
     try {
       await apiAction({
         action: editingProduct ? "updateProduct" : "createProduct",
         id: editingProduct?.id,
-        ...productForm,
+        name: productForm.name,
+        nameEn: productForm.nameEn,
+        description: productForm.description,
+        category: productForm.category,
+        accessUrl: accessUrl,
+        imageUrl: productForm.imageUrl,
+        instructions: instructionsPayload,
+        defaultDurationDays: productForm.defaultDurationDays,
+        isVisible: productForm.visibility === "VISIBLE",
+        isActive: productForm.status === "ACTIVE",
+        files: productForm.files,
       });
-      notify(t(editingProduct ? "تم تحديث المنتج بنجاح!" : "تمت إضافة المنتج بنجاح!", editingProduct ? "Product updated!" : "Product created!"));
+      notify(t(editingProduct ? "تم حفظ التعديلات بنجاح!" : "تمت إضافة المنتج بنجاح!", editingProduct ? "Product saved!" : "Product created!"));
       setShowProductModal(false);
       setEditingProduct(null);
       await onRefresh();
     } catch (err: any) {
-      notify(err.message, "error");
+      notify(err.message || t("فشل حفظ التعديلات", "Failed to save"), "error");
     }
   }
+
+  // Keyboard shortcut Ctrl+S
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && showProductModal) {
+        e.preventDefault();
+        void handleSaveProduct();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showProductModal, productForm, editingProduct]);
 
   // Toggle Visibility
   async function handleToggleVisibility(product: Product) {
@@ -706,16 +924,6 @@ export function AdminControlSpace({
     }
   }
 
-  const filteredLoginLogs = useMemo(() => {
-    if (!loginSearch.trim()) return loginLogs;
-    const q = loginSearch.toLowerCase().trim();
-    return loginLogs.filter(
-      (log) =>
-        (log.actor_email || "").toLowerCase().includes(q) ||
-        (log.customer_name || "").toLowerCase().includes(q)
-    );
-  }, [loginLogs, loginSearch]);
-
   const activeSessions = useMemo(() => {
     const map = new Map<string, any>();
     loginLogs.forEach((log) => {
@@ -764,7 +972,6 @@ export function AdminControlSpace({
     );
   }, [products, productSearch]);
 
-  // Exact 6 Horizontal Navigation Items
   const navItems = [
     {
       id: "products" as AdminSection,
@@ -941,7 +1148,7 @@ export function AdminControlSpace({
       {/* 4. DYNAMIC VIEW CONTENT */}
       <main className="admin-ref-main-view">
         {/* ==================================================== */}
-        {/* VIEW 1: المنتجات والمخزون (Matching Image 3) */}
+        {/* VIEW 1: المنتجات والمخزون (Matching Image 3 & Image 1 buttons) */}
         {/* ==================================================== */}
         {activeSection === "products" && (
           <div className="ref-view-section">
@@ -964,7 +1171,7 @@ export function AdminControlSpace({
               </div>
             </div>
 
-            {/* 3-Column Product Cards Grid (Matching Image 3) */}
+            {/* 3-Column Product Cards Grid (Matching Images 1 & 3) */}
             <div className="ref-products-grid">
               {filteredProducts.map((p) => {
                 const stockCount = Number(p.available_keys || 0);
@@ -1008,24 +1215,24 @@ export function AdminControlSpace({
                       </p>
                     </div>
 
-                    {/* Card Bottom Actions */}
+                    {/* Card Bottom Actions (Matching Image 1: إضافة مفاتيح on right, تعديل المنتج on left) */}
                     <div className="ref-card-footer-actions">
-                      <button
-                        className="ref-btn-secondary-action"
-                        onClick={() => openEditProduct(p)}
-                        title={t("تعديل المنتج", "Edit Product")}
-                      >
-                        <Sliders size={14} />
-                        <span>{t("تعديل المنتج", "Edit Product")}</span>
-                      </button>
-
                       <button
                         className="ref-btn-primary-action"
                         onClick={() => openStockModal(p.id)}
                         title={t("إضافة وتعبئة مفاتيح", "Fill Stock")}
                       >
-                        <KeyRound size={14} />
+                        <KeyRound size={15} />
                         <span>{t("إضافة مفاتيح", "Add Keys")}</span>
+                      </button>
+
+                      <button
+                        className="ref-btn-secondary-action"
+                        onClick={() => openEditProduct(p)}
+                        title={t("تعديل المنتج", "Edit Product")}
+                      >
+                        <Sliders size={15} />
+                        <span>{t("تعديل المنتج", "Edit Product")}</span>
                       </button>
                     </div>
                   </div>
@@ -1036,7 +1243,7 @@ export function AdminControlSpace({
         )}
 
         {/* ==================================================== */}
-        {/* VIEW 2: المنتجات الحالية (إخفاء، إظهار، حذف، ضبط، ملفات) */}
+        {/* VIEW 2: المنتجات الحالية */}
         {/* ==================================================== */}
         {activeSection === "products-current" && (
           <div className="ref-view-section">
@@ -1206,7 +1413,6 @@ export function AdminControlSpace({
 
                         return (
                           <tr key={c.id}>
-                            {/* Customer Avatar & Name */}
                             <td className="ref-customer-avatar-col">
                               <div className="ref-avatar-cluster">
                                 {c.image ? (
@@ -1223,23 +1429,19 @@ export function AdminControlSpace({
                               </div>
                             </td>
 
-                            {/* Email & Discord */}
                             <td className="ref-email-discord-col">
                               <span className="ref-customer-email" dir="ltr">{c.email}</span>
                               <span className="ref-customer-discord-tag" dir="ltr">Discord: {discordId}</span>
                             </td>
 
-                            {/* Role Badge */}
                             <td>
                               <span className="ref-role-pill">{role}</span>
                             </td>
 
-                            {/* IP */}
                             <td dir="ltr" className="ref-ip-text">
                               {clientIp}
                             </td>
 
-                            {/* Actions */}
                             <td>
                               <div className="ref-row-actions-cluster">
                                 <button
@@ -1387,7 +1589,6 @@ export function AdminControlSpace({
         {activeSection === "logs-activations" && (
           <div className="ref-view-section">
             <div className="ref-table-card">
-              {/* Header Matching Image 2 */}
               <div className="ref-timeline-header-block">
                 <div className="ref-timeline-title-row">
                   <div className="ref-timeline-title-text">
@@ -1407,7 +1608,6 @@ export function AdminControlSpace({
                   </button>
                 </div>
 
-                {/* Stats row inside the card (Image 2) */}
                 <div className="ref-timeline-stats-row">
                   <div className="ref-timeline-stat-pill">
                     <strong>40</strong>
@@ -1426,7 +1626,6 @@ export function AdminControlSpace({
                   </div>
                 </div>
 
-                {/* Search / Filter Row */}
                 <div className="ref-timeline-search-row">
                   <div className="ref-timeline-search-input-wrap">
                     <Search size={16} />
@@ -1440,7 +1639,6 @@ export function AdminControlSpace({
                 </div>
               </div>
 
-              {/* Timeline Event Cards List (Matching Image 2) */}
               <div className="ref-timeline-cards-list">
                 {filteredActivationLogs.length > 0 ? (
                   filteredActivationLogs.map((log) => {
@@ -1450,7 +1648,6 @@ export function AdminControlSpace({
 
                     return (
                       <div className="ref-timeline-event-card" key={log.id}>
-                        {/* Right side (RTL): Event text & Action Badge */}
                         <div className="ref-event-info-side">
                           <span className="ref-event-action-pill green">
                             {t("تفعيل مفتاح", "Key Activation")}
@@ -1463,7 +1660,6 @@ export function AdminControlSpace({
                           </div>
                         </div>
 
-                        {/* Center: Customer Avatar, Name, Discord & IP */}
                         <div className="ref-event-user-side">
                           <div className="ref-event-avatar-wrap">
                             <div className="ref-event-avatar-fallback">{userName[0].toUpperCase()}</div>
@@ -1475,7 +1671,6 @@ export function AdminControlSpace({
                           </div>
                         </div>
 
-                        {/* Left side: Riyadh Time with Calendar icon */}
                         <div className="ref-event-time-side">
                           <Calendar size={15} />
                           <span>{formatRiyadhTime(log.redeemed_at)}</span>
@@ -1499,7 +1694,6 @@ export function AdminControlSpace({
         {activeSection === "logs-logins" && (
           <div className="ref-view-section">
             <div className="ref-table-card">
-              {/* Header Matching Image 5 */}
               <div className="ref-sessions-header-block">
                 <div className="ref-sessions-title-row">
                   <div className="ref-sessions-title-text">
@@ -1523,12 +1717,10 @@ export function AdminControlSpace({
                 </div>
               </div>
 
-              {/* Sessions List Matching Image 5 */}
               <div className="ref-sessions-list">
                 {activeSessions.map((session) => {
                   return (
                     <div className="ref-session-card-row" key={session.id}>
-                      {/* Left: Last Active timestamp & Green Connected badge */}
                       <div className="ref-session-left-meta">
                         <span className="ref-connected-badge">
                           <Check size={13} />
@@ -1540,7 +1732,6 @@ export function AdminControlSpace({
                         </div>
                       </div>
 
-                      {/* Right: User Avatar with Online Dot, Name & Discord ID */}
                       <div className="ref-session-right-user">
                         <div className="ref-session-avatar-wrap">
                           {session.image ? (
@@ -1565,144 +1756,335 @@ export function AdminControlSpace({
       </main>
 
       {/* ==================================================== */}
-      {/* 5. MODALS & DRAWERS (All preserved & enhanced) */}
+      {/* 5. EDIT PRODUCT MODAL (MATCHING IMAGES 2 & 3 ACCURATELY) */}
       {/* ==================================================== */}
-
-      {/* PRODUCT CREATE / EDIT MODAL */}
       {showProductModal && (
         <div className="modal-backdrop" onClick={() => setShowProductModal(false)}>
-          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                <Package size={20} />
-                <span>{editingProduct ? t("تعديل المنتج والملفات", "Edit Product & Files") : t("إضافة منتج جديد", "Add New Product")}</span>
-              </h2>
-              <button className="modal-close" onClick={() => setShowProductModal(false)}>
-                <X size={19} />
+          <div className="modal-card ref-product-edit-modal-card" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header with 3 Tabs (Images 2 & 3) */}
+            <div className="ref-edit-modal-tabs-header">
+              <div className="ref-modal-tabs-cluster">
+                {/* Tab 1: بيانات المنتج */}
+                <button
+                  type="button"
+                  className={`ref-modal-tab-pill ${productModalTab === "details" ? "active-blue" : ""}`}
+                  onClick={() => setProductModalTab("details")}
+                >
+                  <FileText size={15} />
+                  <span>{t("بيانات المنتج", "Product Data")}</span>
+                </button>
+
+                {/* Tab 2: الحقول المخصصة */}
+                <button
+                  type="button"
+                  className={`ref-modal-tab-pill ${productModalTab === "custom_fields" ? "active-cyan" : ""}`}
+                  onClick={() => setProductModalTab("custom_fields")}
+                >
+                  <Layers size={15} />
+                  <span>{t("الحقول المخصصة", "Custom Fields")}</span>
+                  <span className="ref-tab-counter-badge">{productForm.customFields.length}</span>
+                </button>
+
+                {/* Tab 3: الأكواد المتاحة */}
+                <button
+                  type="button"
+                  className={`ref-modal-tab-pill ${productModalTab === "keys" ? "active-cyan" : ""}`}
+                  onClick={() => setProductModalTab("keys")}
+                >
+                  <KeyRound size={15} />
+                  <span>{t("الأكواد المتاحة", "Available Codes")}</span>
+                  <span className="ref-tab-counter-badge">{editingProduct?.available_keys ?? 372}</span>
+                </button>
+              </div>
+
+              <button className="ref-modal-close-icon" onClick={() => setShowProductModal(false)}>
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="modal-form">
-              <div className="form-row-2">
-                <div className="form-field">
-                  <label>{t("اسم المنتج (بالعربية)", "Product Name (Arabic)")} *</label>
-                  <input
-                    type="text"
-                    value={productForm.name}
-                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                    required
-                  />
+            {/* TAB 1: بيانات المنتج الأساسية (Image 2) */}
+            {productModalTab === "details" && (
+              <div className="ref-edit-tab-content">
+                <div className="ref-tab-section-heading">
+                  <FileText size={18} />
+                  <span>{t("بيانات المنتج الأساسية", "Basic Product Information")}</span>
                 </div>
-                <div className="form-field">
-                  <label>{t("اسم المنتج (بالإنجليزية)", "Product Name (English)")}</label>
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={productForm.nameEn}
-                    onChange={(e) => setProductForm({ ...productForm, nameEn: e.target.value })}
-                  />
+
+                {/* Image Upload Card */}
+                <div className="ref-edit-image-card">
+                  <div className="ref-edit-image-left-preview">
+                    {productForm.imageUrl ? (
+                      <img src={productForm.imageUrl} alt="" className="ref-preview-thumbnail" />
+                    ) : (
+                      <div className="ref-preview-placeholder">
+                        <Package size={32} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="ref-edit-image-right-info">
+                    <label className="ref-image-label">{t("صورة المنتج", "Product Image")}</label>
+                    <p className="ref-image-hint">
+                      {t("ألصق رابط الصورة أو اختر صورة من جهازك، وستظهر المعاينة فوراً.", "Paste image URL or choose image from device, preview will appear immediately.")}
+                    </p>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={productForm.imageUrl}
+                      onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                      placeholder="https://..."
+                      className="ref-image-url-input"
+                    />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleLocalImageUpload}
+                    />
+                    <button
+                      type="button"
+                      className="ref-btn-pick-image"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload size={14} />
+                      <span>{t("اختيار صورة من الجهاز", "Choose Image from Device")}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2-Column Grid of Product Fields (Image 2) */}
+                <div className="ref-edit-fields-grid">
+                  {/* Row 1 */}
+                  <div className="ref-field-group">
+                    <label>{t("اسم المنتج", "Product Name")} *</label>
+                    <input
+                      type="text"
+                      value={productForm.name}
+                      onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                      placeholder={t("اسم المنتج بالعربية...", "Product Name...")}
+                      required
+                    />
+                  </div>
+
+                  <div className="ref-field-group">
+                    <label>{t("رمز التخزين التعريفي (SKU)", "SKU Identifier")}</label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={productForm.sku}
+                      onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                      placeholder="prod-fortnite"
+                    />
+                  </div>
+
+                  {/* Row 2 */}
+                  <div className="ref-field-group">
+                    <label>{t("نوع المخزون", "Inventory Type")}</label>
+                    <div className="ref-readonly-pill-input">
+                      <KeyRound size={15} />
+                      <span>{t("مفاتيح رقمية (Digital Keys)", "Digital Keys")}</span>
+                    </div>
+                  </div>
+
+                  <div className="ref-field-group">
+                    <label>{t("حالة المنتج", "Product Status")}</label>
+                    <select
+                      value={productForm.status}
+                      onChange={(e) => setProductForm({ ...productForm, status: e.target.value as any })}
+                    >
+                      <option value="ACTIVE">{t("نشط في المتجر", "Active in Store")}</option>
+                      <option value="INACTIVE">{t("معطل مؤقتاً", "Temporarily Disabled")}</option>
+                    </select>
+                  </div>
+
+                  {/* Row 3 */}
+                  <div className="ref-field-group">
+                    <label>{t("ظهور المنتج في المتجر", "Store Visibility")}</label>
+                    <select
+                      value={productForm.visibility}
+                      onChange={(e) => setProductForm({ ...productForm, visibility: e.target.value as any })}
+                    >
+                      <option value="VISIBLE">{t("ظاهر للعملاء", "Visible to Customers")}</option>
+                      <option value="HIDDEN">{t("مخفي عن العملاء", "Hidden from Store")}</option>
+                    </select>
+                  </div>
+
+                  <div className="ref-field-group">
+                    <label>{t("ترتيب العرض", "Display Order")}</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={productForm.sortOrder}
+                      onChange={(e) => setProductForm({ ...productForm, sortOrder: Number(e.target.value) || 1 })}
+                    />
+                  </div>
+
+                  {/* Row 4 */}
+                  <div className="ref-field-group">
+                    <label>{t("الإصدار (Version)", "Version")}</label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={productForm.version}
+                      onChange={(e) => setProductForm({ ...productForm, version: e.target.value })}
+                      placeholder="v4.1.0"
+                    />
+                  </div>
+
+                  <div className="ref-field-group">
+                    <label>{t("حجم الملف (File Size)", "File Size")}</label>
+                    <input
+                      type="text"
+                      dir="ltr"
+                      value={productForm.fileSize}
+                      onChange={(e) => setProductForm({ ...productForm, fileSize: e.target.value })}
+                      placeholder="95.7 MB"
+                    />
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="form-row-2">
-                <div className="form-field">
-                  <label>{t("التصنيف", "Category")}</label>
-                  <select
-                    value={productForm.category}
-                    onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+            {/* TAB 2: الحقول والخصائص المخصصة (Image 3) */}
+            {productModalTab === "custom_fields" && (
+              <div className="ref-edit-tab-content">
+                <div className="ref-custom-fields-top-bar">
+                  <div className="ref-tab-section-heading">
+                    <Layers size={18} />
+                    <span>{t("الحقول والخصائص المخصصة", "Custom Fields & Properties")}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="ref-btn-add-field-blue"
+                    onClick={handleAddCustomField}
                   >
-                    <option value="Spoofer">Spoofer</option>
-                    <option value="Cleaner">Cleaner</option>
-                    <option value="Utility">Utility</option>
-                    <option value="General">General</option>
-                  </select>
+                    <Plus size={15} />
+                    <span>{t("إضافة حقل جديد", "Add New Field")}</span>
+                  </button>
                 </div>
-                <div className="form-field">
-                  <label>{t("مدة الصلاحية الافتراضية (بالأيام)", "Duration (Days)")}</label>
-                  <input
-                    type="number"
-                    value={productForm.defaultDurationDays}
-                    onChange={(e) => setProductForm({ ...productForm, defaultDurationDays: Number(e.target.value) })}
-                    min={1}
-                  />
-                </div>
-              </div>
 
-              <div className="form-field">
-                <label>{t("رابط صورة المنتج (16:9 Banner URL)", "Product Image URL")}</label>
-                <input
-                  type="url"
-                  dir="ltr"
-                  value={productForm.imageUrl}
-                  onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
+                <div className="ref-custom-fields-list">
+                  {productForm.customFields.map((field, idx) => (
+                    <div className="ref-custom-field-card" key={field.id}>
+                      <div className="ref-cf-card-header">
+                        <div className="ref-cf-header-title-tags">
+                          <strong className="ref-cf-title">{field.name}</strong>
+                          <span className="ref-cf-tag-type">{field.type}</span>
+                          <span className="ref-cf-tag-key" dir="ltr">{field.key}</span>
+                        </div>
 
-              <div className="form-field">
-                <label>{t("وصف المنتج المختصر", "Short Description")}</label>
-                <textarea
-                  rows={2}
-                  value={productForm.description}
-                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                />
-              </div>
+                        <div className="ref-cf-header-actions">
+                          <button
+                            type="button"
+                            className="ref-cf-icon-btn"
+                            onClick={() => handleMoveFieldUp(idx)}
+                            disabled={idx === 0}
+                            title={t("تحريك للأعلى", "Move Up")}
+                          >
+                            <ArrowUp size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="ref-cf-icon-btn"
+                            onClick={() => handleMoveFieldDown(idx)}
+                            disabled={idx === productForm.customFields.length - 1}
+                            title={t("تحريك للأسفل", "Move Down")}
+                          >
+                            <ArrowDown size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="ref-cf-icon-btn danger"
+                            onClick={() => handleDeleteField(idx)}
+                            title={t("حذف الحقل", "Delete Field")}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
 
-              {/* Spoofx.rar & Product Files Section */}
-              <div className="product-files-editor-section">
-                <label className="section-label">
-                  <FileText size={15} />
-                  <span>{t("ملفات التحميل للمنتج (Spoofx.rar مرفق تلقائياً)", "Attached Files (Spoofx.rar auto-attached)")}</span>
-                </label>
-
-                <div className="files-editor-list">
-                  {productForm.files.map((file) => (
-                    <div className="file-editor-pill" key={file.id}>
-                      <FileText size={14} />
-                      <span className="file-name">{file.name}</span>
-                      {file.size && <span className="file-size">({file.size})</span>}
-                      <button
-                        type="button"
-                        className="file-remove-btn"
-                        onClick={() => handleRemoveFileFromProduct(file.id)}
-                        title={t("إزالة", "Remove")}
-                      >
-                        <X size={13} />
-                      </button>
+                      <div className="ref-cf-input-wrap">
+                        <input
+                          type="text"
+                          dir="ltr"
+                          value={field.value}
+                          onChange={(e) => handleFieldChange(idx, e.target.value)}
+                          placeholder="https://..."
+                          className="ref-cf-value-input"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
 
-                <div className="add-file-inputs-row">
-                  <input
-                    type="text"
-                    value={newFileName}
-                    onChange={(e) => setNewFileName(e.target.value)}
-                    placeholder={t("اسم الملف (مثال: Spoofx.rar)", "File name")}
-                  />
-                  <input
-                    type="text"
-                    dir="ltr"
-                    value={newFileUrl}
-                    onChange={(e) => setNewFileUrl(e.target.value)}
-                    placeholder={t("رابط الملف (/api/download)", "File URL")}
-                  />
-                  <button type="button" className="btn-secondary" onClick={handleAddFileToProduct}>
-                    <Plus size={14} /> {t("إضافة ملف", "Add")}
+            {/* TAB 3: الأكواد المتاحة */}
+            {productModalTab === "keys" && (
+              <div className="ref-edit-tab-content">
+                <div className="ref-custom-fields-top-bar">
+                  <div className="ref-tab-section-heading">
+                    <KeyRound size={18} />
+                    <span>
+                      {t("الأكواد والمفاتيح المتاحة لهذا المنتج", "Available Codes & Keys for this Product")} ({editingProduct?.available_keys ?? 372})
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="ref-btn-add-field-blue"
+                    onClick={() => openStockModal(editingProduct?.id)}
+                  >
+                    <Plus size={15} />
+                    <span>{t("تعبئة مفاتيح جديدة للمخزون", "Fill Stock Keys")}</span>
                   </button>
                 </div>
-              </div>
 
-              <div className="modal-actions">
-                <button type="button" className="secondary-button" onClick={() => setShowProductModal(false)}>
-                  {t("إلغاء", "Cancel")}
-                </button>
-                <button type="submit" className="primary-button" disabled={busy || !productForm.name.trim()}>
-                  {busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />}
-                  <span>{editingProduct ? t("حفظ التعديلات", "Save Changes") : t("إضافة المنتج", "Create Product")}</span>
-                </button>
+                <div className="ref-product-keys-info-card">
+                  <div className="ref-keys-stats-mini-bar">
+                    <div className="stat-item">
+                      <small>{t("المخزون المتوفر الآن", "Available Stock")}</small>
+                      <strong>{editingProduct?.available_keys ?? 372} {t("مفتاح", "Keys")}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <small>{t("صيغة المفاتيح المعتمدة", "Standard Key Format")}</small>
+                      <code dir="ltr" className="ref-key-preview">KEY-gZcMty-H9whoQ</code>
+                    </div>
+                    <div className="stat-item">
+                      <small>{t("صيغة التفعيل المخفية", "Masked Display")}</small>
+                      <code dir="ltr" className="ref-key-preview">KEY-******-*****</code>
+                    </div>
+                  </div>
+
+                  <p className="ref-keys-hint">
+                    {t("يمكنك تعبئة مخزون هذا المنتج تلقائياً بأي عدد من المفاتيح أو استيرادها دفعة واحدة من زر تعبئة المفاتيح أعلاه.", "You can generate or import keys at any time using the fill stock button.")}
+                  </p>
+                </div>
               </div>
-            </form>
+            )}
+
+            {/* Modal Bottom Bar (Matching Images 2 & 3) */}
+            <div className="ref-modal-bottom-bar">
+              <button
+                type="button"
+                className="ref-btn-cancel-modal"
+                onClick={() => setShowProductModal(false)}
+              >
+                {t("إلغاء", "Cancel")}
+              </button>
+
+              <button
+                type="button"
+                className="ref-btn-save-modal"
+                onClick={() => void handleSaveProduct()}
+                disabled={busy || !productForm.name.trim()}
+              >
+                {busy ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
+                <span>{t("حفظ التغييرات (Ctrl+S)", "Save Changes (Ctrl+S)")}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
