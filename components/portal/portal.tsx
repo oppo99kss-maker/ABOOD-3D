@@ -302,9 +302,6 @@ export function Portal({ user }: { user: PortalUser }) {
           {/* Header */}
           <div className="page-heading">
             <div>
-              <span className="eyebrow">
-                <Box size={13} /> SPOOFX SPACE / {activeTab.replace("-", " ").toUpperCase()}
-              </span>
               <h1>{titles[activeTab].title}</h1>
               <p>{titles[activeTab].desc}</p>
             </div>
