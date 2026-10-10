@@ -255,7 +255,7 @@ export async function ready() {
 
       -- Backfill from existing redeemed licenses
       INSERT INTO customers (id, email, name, status, created_at, last_login_at)
-      SELECT gen_random_uuid(), lower(l.redeemed_by), split_part(l.redeemed_by, '@', 1), 'ACTIVE', min(l.redeemed_at), max(l.redeemed_at)
+      SELECT gen_random_uuid(), lower(l.redeemed_by), split_part(lower(l.redeemed_by), '@', 1), 'ACTIVE', coalesce(min(l.redeemed_at), now()), coalesce(max(l.redeemed_at), now())
       FROM licenses l
       WHERE l.redeemed_by IS NOT NULL
       GROUP BY lower(l.redeemed_by)
