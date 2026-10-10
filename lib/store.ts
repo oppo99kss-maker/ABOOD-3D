@@ -52,6 +52,20 @@ export type LicenseKey = {
   created_at: string;
 };
 
+export type Customer = {
+  id: string;
+  email: string;
+  name: string;
+  image?: string | null;
+  status: "ACTIVE" | "SUSPENDED";
+  created_at: string;
+  last_login_at: string;
+  notes?: string;
+  products_count: number;
+  active_licenses: number;
+  orders_count: number;
+};
+
 export type Order = {
   id: string;
   order_number: string;
@@ -215,6 +229,37 @@ export async function ready() {
       CREATE INDEX IF NOT EXISTS licenses_product_idx ON licenses (product_id);
       CREATE INDEX IF NOT EXISTS licenses_status_idx ON licenses (status);
       CREATE INDEX IF NOT EXISTS licenses_expires_idx ON licenses (expires_at);
+    `);
+
+    // 2.5. Customers table
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        email text UNIQUE NOT NULL,
+        name text NOT NULL DEFAULT '',
+        image text,
+        status text NOT NULL DEFAULT 'ACTIVE',
+        notes text NOT NULL DEFAULT '',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        last_login_at timestamptz NOT NULL DEFAULT now()
+      );
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS name text NOT NULL DEFAULT '';
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS image text;
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'ACTIVE';
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS notes text NOT NULL DEFAULT '';
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS last_login_at timestamptz NOT NULL DEFAULT now();
+
+      CREATE INDEX IF NOT EXISTS idx_customers_email ON customers (lower(email));
+      CREATE INDEX IF NOT EXISTS idx_customers_name ON customers (lower(name));
+      CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (status);
+
+      -- Backfill from existing redeemed licenses
+      INSERT INTO customers (id, email, name, status, created_at, last_login_at)
+      SELECT gen_random_uuid(), lower(l.redeemed_by), split_part(l.redeemed_by, '@', 1), 'ACTIVE', min(l.redeemed_at), max(l.redeemed_at)
+      FROM licenses l
+      WHERE l.redeemed_by IS NOT NULL
+      GROUP BY lower(l.redeemed_by)
+      ON CONFLICT (email) DO NOTHING;
     `);
 
     // 3. Orders table
@@ -932,73 +977,219 @@ export async function redeemKey(email: string, code: string, ipAddress?: string)
 // ==========================================
 // CUSTOMERS & LICENSES MANAGEMENT
 // ==========================================
-export async function getCustomers(search = "", limit = 50, offset = 0) {
-  await ready();
-  const cleanSearch = `%${search.trim().toLowerCase()}%`;
-  const { rows } = await pool().query(
-    `SELECT l.redeemed_by AS email,
-            count(DISTINCT l.product_id)::int AS products_count,
-            count(l.id) FILTER (WHERE l.expires_at IS NULL OR l.expires_at > now())::int AS active_licenses,
-            min(l.redeemed_at) AS first_joined,
-            max(l.redeemed_at) AS last_activity
-     FROM licenses l
-     WHERE l.redeemed_by IS NOT NULL
-       AND ($1 = '%%' OR lower(l.redeemed_by) LIKE $1)
-     GROUP BY l.redeemed_by
-     ORDER BY last_activity DESC
-     LIMIT $2 OFFSET $3`,
-    [cleanSearch, limit, offset]
-  );
-  return rows;
-}
-
-export async function getCustomerDetails(email: string) {
+export async function recordCustomerLogin(
+  email: string,
+  name?: string | null,
+  image?: string | null
+) {
+  if (!email) return;
   await ready();
   const cleanEmail = email.toLowerCase().trim();
+  const cleanName = (name || "").trim() || cleanEmail.split("@")[0];
+  await pool().query(
+    `INSERT INTO customers (id, email, name, image, status, created_at, last_login_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, 'ACTIVE', now(), now())
+     ON CONFLICT (email) DO UPDATE
+     SET name = CASE WHEN EXCLUDED.name != '' THEN EXCLUDED.name ELSE customers.name END,
+         image = COALESCE(EXCLUDED.image, customers.image),
+         last_login_at = now()`,
+    [cleanEmail, cleanName, image || null]
+  );
+}
 
-  // Products & Licenses
+export async function getCustomers(options: {
+  search?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+} = {}) {
+  await ready();
+  const rawSearch = (options.search || "").trim();
+  const statusFilter = (options.status || "").trim().toUpperCase();
+  const limit = Math.max(1, Math.min(100, options.limit || 25));
+  const offset = Math.max(0, options.offset || 0);
+
+  const whereClauses: string[] = [];
+  const params: any[] = [];
+
+  if (rawSearch) {
+    params.push(`%${rawSearch.toLowerCase()}%`);
+    const pIdx = params.length;
+    whereClauses.push(
+      `(lower(c.name) LIKE $${pIdx} OR lower(c.email) LIKE $${pIdx} OR c.id::text ILIKE $${pIdx})`
+    );
+  }
+
+  if (statusFilter && statusFilter !== "ALL") {
+    params.push(statusFilter);
+    whereClauses.push(`c.status = $${params.length}`);
+  }
+
+  const whereSQL = whereClauses.length ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+  // 1. Total Count
+  const countRes = await pool().query(
+    `SELECT count(c.id)::int AS total FROM customers c ${whereSQL}`,
+    params
+  );
+  const total = countRes.rows[0]?.total || 0;
+
+  // 2. Fetch rows with stats
+  const pageParams = [...params];
+  pageParams.push(limit);
+  const limitIdx = pageParams.length;
+  pageParams.push(offset);
+  const offsetIdx = pageParams.length;
+
+  const { rows } = await pool().query(
+    `SELECT c.id, c.email, c.name, c.image, c.status, c.notes, c.created_at, c.last_login_at,
+            COALESCE(lic.products_count, 0)::int AS products_count,
+            COALESCE(lic.active_licenses, 0)::int AS active_licenses,
+            COALESCE(ord.orders_count, 0)::int AS orders_count
+     FROM customers c
+     LEFT JOIN (
+       SELECT lower(redeemed_by) AS email,
+              count(DISTINCT product_id) AS products_count,
+              count(id) FILTER (WHERE expires_at IS NULL OR expires_at > now()) AS active_licenses
+       FROM licenses
+       WHERE redeemed_by IS NOT NULL
+       GROUP BY lower(redeemed_by)
+     ) lic ON lic.email = lower(c.email)
+     LEFT JOIN (
+       SELECT lower(customer_email) AS email,
+              count(id) AS orders_count
+       FROM orders
+       WHERE customer_email IS NOT NULL
+       GROUP BY lower(customer_email)
+     ) ord ON ord.email = lower(c.email)
+     ${whereSQL}
+     ORDER BY c.last_login_at DESC
+     LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    pageParams
+  );
+
+  return {
+    customers: rows,
+    total,
+    page: Math.floor(offset / limit) + 1,
+    totalPages: Math.ceil(total / limit) || 1,
+  };
+}
+
+export async function getCustomerDetails(identifier: string) {
+  await ready();
+  const clean = identifier.toLowerCase().trim();
+
+  // 1. Find or create customer
+  const customerRes = await pool().query(
+    `SELECT id, email, name, image, status, notes, created_at, last_login_at
+     FROM customers
+     WHERE lower(email) = $1 OR id::text = $1
+     LIMIT 1`,
+    [clean]
+  );
+
+  let customer = customerRes.rows[0];
+  if (!customer && clean.includes("@")) {
+    const upsertRes = await pool().query(
+      `INSERT INTO customers (id, email, name, status, created_at, last_login_at)
+       VALUES (gen_random_uuid(), $1, split_part($1, '@', 1), 'ACTIVE', now(), now())
+       ON CONFLICT (email) DO UPDATE SET last_login_at = now()
+       RETURNING id, email, name, image, status, notes, created_at, last_login_at`,
+      [clean]
+    );
+    customer = upsertRes.rows[0];
+  }
+
+  const customerEmail = customer ? customer.email.toLowerCase() : clean;
+
+  // 2. Licenses
   const licensesRes = await pool().query(
     `SELECT l.id, l.product_id, p.name AS product_name, p.image_url,
             l.code_suffix, l.masked_code, l.status, l.duration_days,
             l.redeemed_at, l.expires_at,
             CASE
+              WHEN l.status IN ('BLOCKED', 'REVOKED') THEN l.status
               WHEN l.expires_at IS NULL THEN 'ACTIVE'
               WHEN l.expires_at > now() THEN 'ACTIVE'
               ELSE 'EXPIRED'
             END AS calculated_status
      FROM licenses l
      JOIN products p ON p.id = l.product_id
-     WHERE l.redeemed_by = $1
-     ORDER BY l.redeemed_at DESC`,
-    [cleanEmail]
+     WHERE lower(l.redeemed_by) = $1 OR lower(l.issued_to) = $1
+     ORDER BY l.redeemed_at DESC NULLS LAST, l.created_at DESC`,
+    [customerEmail]
   );
 
-  // Compensations
+  // 3. Compensations
   const compRes = await pool().query(
     `SELECT c.*, p.name AS original_product_name
      FROM compensations c
      LEFT JOIN products p ON p.id = c.original_product_id
-     WHERE c.customer_email = $1
+     WHERE lower(c.customer_email) = $1
      ORDER BY c.created_at DESC`,
-    [cleanEmail]
+    [customerEmail]
   );
 
-  // Orders
+  // 4. Orders
   const ordersRes = await pool().query(
     `SELECT o.*, p.name AS product_name
      FROM orders o
      JOIN products p ON p.id = o.product_id
-     WHERE o.customer_email = $1
+     WHERE lower(o.customer_email) = $1
      ORDER BY o.created_at DESC`,
-    [cleanEmail]
+    [customerEmail]
+  );
+
+  // 5. Audit logs for customer
+  const logsRes = await pool().query(
+    `SELECT id, category, action, actor_email, actor_role, details, created_at
+     FROM audit_logs
+     WHERE lower(actor_email) = $1 
+        OR details::text ILIKE $2
+     ORDER BY created_at DESC
+     LIMIT 50`,
+    [customerEmail, `%${customerEmail}%`]
   );
 
   return {
-    email: cleanEmail,
+    customer: customer || {
+      id: identifier,
+      email: customerEmail,
+      name: customerEmail.split("@")[0],
+      image: null,
+      status: "ACTIVE",
+      created_at: new Date().toISOString(),
+      last_login_at: new Date().toISOString(),
+    },
     licenses: licensesRes.rows,
     compensations: compRes.rows,
     orders: ordersRes.rows,
+    logs: logsRes.rows,
   };
+}
+
+export async function updateCustomerStatus(
+  email: string,
+  status: "ACTIVE" | "SUSPENDED",
+  notes = "",
+  actorEmail = "admin"
+) {
+  await ready();
+  const cleanEmail = email.toLowerCase().trim();
+  await pool().query(
+    `UPDATE customers 
+     SET status = $1, notes = COALESCE($2, notes) 
+     WHERE lower(email) = $3`,
+    [status, notes, cleanEmail]
+  );
+  await logAudit({
+    category: "CUSTOMER",
+    action: status === "SUSPENDED" ? "SUSPEND_CUSTOMER" : "ACTIVATE_CUSTOMER",
+    actor_email: actorEmail,
+    details: { email: cleanEmail, status, notes },
+  });
+  return { ok: true, email: cleanEmail, status };
 }
 
 export async function grantDirectLicense(input: {

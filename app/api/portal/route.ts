@@ -23,9 +23,11 @@ import {
   importCustomKeys,
   issueKeyToOrder,
   myProducts,
+  recordCustomerLogin,
   redeemKey,
   saveGuide,
   suspendLicense,
+  updateCustomerStatus,
   updateProduct,
   updateSystemSettings,
 } from "@/lib/store";
@@ -72,14 +74,18 @@ export async function GET(request: NextRequest) {
 
     if (view === "admin-customers" && admin) {
       const search = searchParams.get("search") || "";
-      const customers = await getCustomers(search);
-      return json({ customers });
+      const status = searchParams.get("status") || "";
+      const page = parseInt(searchParams.get("page") || "1", 10);
+      const limit = parseInt(searchParams.get("limit") || "25", 10);
+      const offset = Math.max(0, (page - 1) * limit);
+      const result = await getCustomers({ search, status, limit, offset });
+      return json(result);
     }
 
     if (view === "admin-customer-details" && admin) {
-      const targetEmail = searchParams.get("email");
-      if (!targetEmail) return json({ error: "MISSING_EMAIL" }, 400);
-      const details = await getCustomerDetails(targetEmail);
+      const target = searchParams.get("email") || searchParams.get("id");
+      if (!target) return json({ error: "MISSING_IDENTIFIER" }, 400);
+      const details = await getCustomerDetails(target);
       return json(details);
     }
 
@@ -95,6 +101,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Default portal load
+    const session = await getServerSession(authOptions);
+    if (email) {
+      await recordCustomerLogin(email, session?.user?.name, session?.user?.image);
+    }
+
     const [products, guides, settings, inventory, dashboardStats, orders, allGuides] = await Promise.all([
       myProducts(email),
       getGuides(),
@@ -381,6 +392,17 @@ export async function POST(request: NextRequest) {
     if (data.action === "updateSettings") {
       const updated = await updateSystemSettings(data.settings || {}, email);
       return json({ ok: true, settings: updated });
+    }
+
+    // 16. Admin: Update Customer Status
+    if (data.action === "updateCustomerStatus") {
+      const customerEmail = typeof data.email === "string" ? data.email.trim() : "";
+      const status = data.status === "SUSPENDED" ? "SUSPENDED" : "ACTIVE";
+      const notes = typeof data.notes === "string" ? data.notes.trim() : "";
+      if (!customerEmail) return json({ error: "MISSING_EMAIL" }, 400);
+
+      const res = await updateCustomerStatus(customerEmail, status, notes, email);
+      return json(res);
     }
 
     return json({ error: "UNKNOWN_ACTION" }, 400);
