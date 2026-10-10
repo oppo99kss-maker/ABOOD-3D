@@ -33,7 +33,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export function isAdmin(email: string) {
+function isAdmin(email: string) {
   const admins = [process.env.ADMIN_EMAIL, process.env.ADMIN_EMAILS]
     .filter(Boolean)
     .join(",")
