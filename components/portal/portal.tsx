@@ -182,7 +182,7 @@ export function Portal({ user }: { user: PortalUser }) {
     if (busy || !key.trim()) return;
     setBusy(true);
     try {
-      const res = await action({ action: "redeem", code: key.trim().toUpperCase() });
+      const res = await action({ action: "redeem", code: key.trim() });
       setKey("");
       await refresh();
       notify.success(
@@ -200,7 +200,7 @@ export function Portal({ user }: { user: PortalUser }) {
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
-        setKey(text.trim().toUpperCase());
+        setKey(text.trim());
       }
     } catch {
       // clipboard permission denied
@@ -538,14 +538,19 @@ export function Portal({ user }: { user: PortalUser }) {
                     <p>{t("أدخل رمز المفتاح الذي حصلت عليه بعد الشراء لإضافة المنتج إلى مكتبتك فوراً.", "Enter the key code received upon purchase to unlock the product immediately.")}</p>
 
                     <form onSubmit={redeem}>
-                      <label htmlFor="license-key">{t("رمز الترخيص (SPFX-XXXX-XXXX)", "License Code")}</label>
+                      <div className="label-with-format">
+                        <label htmlFor="license-key">{t("رمز مفتاح الترخيص", "License Key")}</label>
+                        <span className="key-format-tag" dir="ltr" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
+                          KEY-******-*****
+                        </span>
+                      </div>
                       <div className="key-input-wrapper">
                         <input
                           id="license-key"
                           dir="ltr"
                           value={key}
-                          onChange={(e) => setKey(e.target.value.toUpperCase())}
-                          placeholder="SPFX-XXXXXX-XXXXXX-XXXXXX"
+                          onChange={(e) => setKey(e.target.value.trim())}
+                          placeholder="KEY-******-*****"
                           required
                           maxLength={48}
                           autoComplete="off"
@@ -595,7 +600,7 @@ export function Portal({ user }: { user: PortalUser }) {
                     <h2>{t("خطوات التشغيل السريع", "Quick Steps")}</h2>
                     {[
                       t("تسجيل الدخول بحساب Google المعتمد", "Sign in with verified Google account"),
-                      t("إدخال مفتاح الترخيص المكون من مقاطع", "Enter your structured SpooFX license key"),
+                      t("إدخال مفتاح الترخيص بصيغة KEY-******-*****", "Enter your license key in KEY-******-***** format"),
                       t("فتح صفحة منتجاتي لتحميل الملفات والتعليمات", "Open My Products to download software & guides"),
                     ].map((step, index) => (
                       <div key={step}>

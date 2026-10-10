@@ -400,23 +400,33 @@ export function hashCode(code: string) {
 }
 
 export function maskCode(code: string): string {
-  const clean = code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-  if (clean.length < 8) return "SPFX-******";
-  const suffix = clean.slice(-6);
-  return `SPFX-******-******-******-******-${suffix}`;
+  const clean = code.replace(/[^a-zA-Z0-9]/g, "");
+  if (clean.length < 8) return "KEY-******-*****";
+  const suffix = clean.slice(-5);
+  return `KEY-******-${suffix}`;
 }
 
 export function generateSingleKey(suffix?: string): { key: string; hash: string; masked: string; rawSuffix: string } {
-  const raw = randomBytes(15).toString("hex").toUpperCase();
-  const formattedSuffix = suffix ? suffix.slice(-6).toUpperCase() : raw.slice(-6);
-  const parts = raw.match(/.{1,6}/g)!;
-  if (suffix) parts[parts.length - 1] = formattedSuffix;
-  const key = `SPFX-${parts.join("-")}`;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let part1 = "";
+  for (let i = 0; i < 6; i++) {
+    part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  let part2 = "";
+  if (suffix && suffix.trim()) {
+    part2 = suffix.trim().replace(/[^a-zA-Z0-9]/g, "").slice(-6);
+    while (part2.length < 6) part2 = "X" + part2;
+  } else {
+    for (let i = 0; i < 6; i++) {
+      part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+  }
+  const key = `KEY-${part1}-${part2}`;
   return {
     key,
     hash: hashCode(key),
-    masked: `SPFX-******-******-******-******-${parts[parts.length - 1]}`,
-    rawSuffix: parts[parts.length - 1],
+    masked: `KEY-******-${part2.slice(-5)}`,
+    rawSuffix: part2,
   };
 }
 
