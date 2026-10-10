@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
+  ArrowUpRight,
   Box,
+  ChevronLeft,
+  ChevronRight,
   Globe2,
   House,
   KeyRound,
@@ -11,7 +14,9 @@ import {
   LogOut,
   Menu,
   Moon,
+  PanelRightClose,
   ShieldCheck,
+  ShoppingBag,
   Sun,
   UserRound,
   X,
@@ -57,35 +62,80 @@ export function PortalNavigation({
   user,
 }: Props) {
   const ar = lang === "ar";
+  const [collapsed, setCollapsed] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLDivElement>(null);
 
-  const items: {
-    tab: PortalTab;
-    icon: LucideIcon;
-    ar: string;
-    en: string;
-    count?: number;
+  const sections: {
+    title: { ar: string; en: string };
+    items: {
+      tab?: PortalTab;
+      href?: string;
+      icon: LucideIcon;
+      title: { ar: string; en: string };
+      count?: number;
+      isExternal?: boolean;
+    }[];
   }[] = [
-    { tab: "overview", icon: House, ar: "الرئيسية", en: "Home" },
     {
-      tab: "my-products",
-      icon: Box,
-      ar: "منتجاتي",
-      en: "My Products",
-      count: productCount,
+      title: { ar: "عام", en: "General" },
+      items: [
+        {
+          tab: "overview",
+          icon: House,
+          title: { ar: "الرئيسية", en: "Overview" },
+        },
+        {
+          tab: "my-products",
+          icon: Box,
+          title: { ar: "منتجاتي", en: "My Products" },
+          count: productCount,
+        },
+        {
+          tab: "redeem",
+          icon: KeyRound,
+          title: { ar: "تفعيل مفتاح", en: "Activate Key" },
+        },
+      ],
     },
-    { tab: "redeem", icon: KeyRound, ar: "تفعيل مفتاح", en: "Activate Key" },
-    { tab: "tickets", icon: LifeBuoy, ar: "المساعدة", en: "Help Center" },
-    { tab: "profile", icon: UserRound, ar: "حسابي", en: "My Account" },
+    {
+      title: { ar: "المساعدة", en: "Help" },
+      items: [
+        {
+          tab: "tickets",
+          icon: LifeBuoy,
+          title: { ar: "مركز المساعدة", en: "Help Center" },
+        },
+        {
+          href: "https://spoofx.rmz.gg/",
+          icon: ShoppingBag,
+          title: { ar: "المتجر", en: "Store" },
+          isExternal: true,
+        },
+      ],
+    },
+    {
+      title: { ar: "الحساب", en: "Account" },
+      items: [
+        {
+          tab: "profile",
+          icon: UserRound,
+          title: { ar: "الملف الشخصي", en: "Profile" },
+        },
+      ],
+    },
     ...(isAdmin
       ? [
           {
-            tab: "admin" as const,
-            icon: ShieldCheck,
-            ar: "الإدارة",
-            en: "Admin Space",
+            title: { ar: "الإدارة", en: "Admin" },
+            items: [
+              {
+                tab: "admin" as const,
+                icon: ShieldCheck,
+                title: { ar: "لوحة الإدارة", en: "Admin Space" },
+              },
+            ],
           },
         ]
       : []),
@@ -105,7 +155,7 @@ export function PortalNavigation({
       if (event.key !== "Tab") return;
       const controls = Array.from(
         drawer.current?.querySelectorAll<HTMLElement>(
-          "button:not([disabled])",
+          "button:not([disabled]), a:not([disabled])",
         ) || [],
       );
       const first = controls[0];
@@ -139,133 +189,191 @@ export function PortalNavigation({
     onMobileChange(false);
   };
 
-  return (
-    <>
-      {/* ==================================================== */}
-      {/* 1. DESKTOP PERMANENT SIDEBAR (قائمة جانبية فخمة ومتساوية) */}
-      {/* ==================================================== */}
-      <aside
-        className={css.sidebar}
-        aria-label={ar ? "القائمة الجانبية" : "Sidebar Navigation"}
-      >
-        {/* Brand Header */}
-        <div className={css.sidebarBrandWrap}>
-          <button
-            type="button"
-            className={css.brand}
-            onClick={() => navigate("overview")}
-            aria-label={ar ? "SpooFX — الرئيسية" : "SpooFX — Home"}
-          >
-            <div className={css.brandImgWrap}>
-              <Image src="/brand.svg" width={38} height={38} alt="SpooFX" priority />
-            </div>
-            <div className={css.brandText}>
-              <span>
-                Spoo<strong>FX</strong>
-              </span>
-              <small>CONTROL SPACE</small>
-            </div>
-          </button>
-        </div>
+  const ArrowIcon = ar ? ChevronLeft : ChevronRight;
 
-        {/* Navigation Items (متساوية ومرتبة) */}
-        <div className={css.sidebarNavWrap}>
-          <div className={css.sidebarSectionTitle}>
-            <span>{ar ? "القائمة الرئيسية" : "MAIN NAVIGATION"}</span>
-          </div>
+  const renderNavList = () => (
+    <div className={css.navSectionsContainer}>
+      {sections.map((section, sIdx) => (
+        <div key={sIdx} className={css.navSectionGroup}>
+          {!collapsed && (
+            <div className={css.sectionHeaderTitle}>
+              <span>{ar ? section.title.ar : section.title.en}</span>
+            </div>
+          )}
 
-          <nav className={css.sidebarNavList}>
-            {items.map(({ tab, icon: Icon, ar: arabic, en, count }) => {
-              const isActive = activeTab === tab;
-              const isAdminTab = tab === "admin";
+          <div className={css.sectionItemsList}>
+            {section.items.map((item, iIdx) => {
+              const Icon = item.icon;
+              const label = ar ? item.title.ar : item.title.en;
+
+              if (item.isExternal && item.href) {
+                return (
+                  <a
+                    key={iIdx}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={css.navItemBtn}
+                    title={label}
+                  >
+                    <div className={css.itemIconWrap}>
+                      <Icon size={18} strokeWidth={1.8} />
+                    </div>
+                    {!collapsed && <span className={css.itemLabel}>{label}</span>}
+                    {!collapsed && (
+                      <ArrowUpRight size={14} className={css.externalArrow} />
+                    )}
+                  </a>
+                );
+              }
+
+              const isActive = activeTab === item.tab;
               return (
                 <button
-                  key={tab}
+                  key={iIdx}
                   type="button"
-                  aria-label={ar ? arabic : en}
+                  aria-label={label}
                   aria-current={isActive ? "page" : undefined}
-                  className={`${css.sidebarNavItem} ${isAdminTab ? css.sidebarAdminItem : ""}`}
+                  className={css.navItemBtn}
                   data-active={isActive}
-                  onClick={() => navigate(tab)}
+                  title={label}
+                  onClick={() => item.tab && navigate(item.tab)}
                 >
-                  <div className={css.navIconBox}>
+                  <div className={css.itemIconWrap}>
                     <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
                   </div>
-                  <span className={css.navLabel}>{ar ? arabic : en}</span>
-                  {count !== undefined && (
-                    <span className={css.navCountBadge}>{count}</span>
+                  {!collapsed && <span className={css.itemLabel}>{label}</span>}
+                  {!collapsed && item.count !== undefined && (
+                    <span className={css.countBadgePill}>{item.count}</span>
                   )}
-                  {isAdminTab && (
-                    <span className={css.adminBadgePill}>ADMIN</span>
+                  {!collapsed && isActive && (
+                    <ArrowIcon size={14} className={css.activeChevron} />
                   )}
                 </button>
               );
             })}
-          </nav>
+          </div>
         </div>
+      ))}
+    </div>
+  );
 
-        {/* Footer & User Card */}
-        <div className={css.sidebarFooter}>
+  return (
+    <>
+      {/* ==================================================== */}
+      {/* 1. DESKTOP SIDEBAR (مطابق تماماً للصورة المرفقة) */}
+      {/* ==================================================== */}
+      <aside
+        className={`${css.sidebar} ${collapsed ? css.collapsed : ""}`}
+        aria-label={ar ? "القائمة الجانبية" : "Sidebar Navigation"}
+      >
+        {/* Top Header matching reference image: Brand + Toggle button */}
+        <div className={css.sidebarTopHeader}>
           <button
             type="button"
-            className={css.userProfileCard}
-            onClick={() => navigate("profile")}
-            title={ar ? "حسابي والملف الشخصي" : "Profile & Account"}
+            className={css.sidebarBrandBtn}
+            onClick={() => navigate("overview")}
+            aria-label={ar ? "الرئيسية" : "Home"}
           >
-            <div className={css.userAvatarWrap}>
+            <div className={css.brandLogoFrame}>
+              <Image src="/brand.svg" width={36} height={36} alt="SpooFX" priority />
+            </div>
+            {!collapsed && (
+              <div className={css.brandTitlesWrap}>
+                <strong className={css.brandMainTitle}>SpooFX</strong>
+                <span className={css.brandSubtitle}>
+                  {ar ? "بوابة المنتجات والدعم" : "Products & Support Portal"}
+                </span>
+              </div>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className={css.collapseSidebarToggle}
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? (ar ? "توسيع القائمة" : "Expand") : (ar ? "تصغير القائمة" : "Collapse")}
+          >
+            <PanelRightClose size={17} className={ar ? "" : "rotate-180"} />
+          </button>
+        </div>
+
+        {/* Navigation Sections */}
+        {renderNavList()}
+
+        {/* Footer Area matching reference image: User Card + Logout */}
+        <div className={css.sidebarFooterBlock}>
+          {/* User Profile Card */}
+          <button
+            type="button"
+            className={css.userProfileRow}
+            onClick={() => navigate("profile")}
+            title={ar ? "الملف الشخصي" : "Profile"}
+          >
+            <div className={css.userAvatarImgWrap}>
               {user.image ? (
                 <img
-                  className={css.avatarImage}
+                  className={css.userAvatarImg}
                   src={user.image}
-                  width={34}
-                  height={34}
+                  width={36}
+                  height={36}
                   alt={user.name}
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className={css.avatarFallback}>
+                <div className={css.userAvatarFallback}>
                   {user.name ? user.name[0].toUpperCase() : "U"}
                 </div>
               )}
-              <span className={css.userOnlineDot} />
             </div>
-            <div className={css.userInfoText}>
-              <strong className={css.userName}>{user.name}</strong>
-              <small className={css.userEmail}>
-                {user.email || (ar ? "حساب قوقل موثق" : "Google Account")}
-              </small>
-            </div>
+
+            {!collapsed && (
+              <>
+                <div className={css.userTextInfo}>
+                  <strong className={css.userDisplayName}>{user.name}</strong>
+                  <div className={css.userConnectedStatus}>
+                    <span className={css.greenPulseDot} />
+                    <span>{ar ? "حسابك متصل" : "Connected"}</span>
+                  </div>
+                </div>
+                <ArrowIcon size={14} className={css.userChevron} />
+              </>
+            )}
           </button>
 
-          <div className={css.sidebarControlsRow}>
-            <button
-              type="button"
-              className={css.controlBtn}
-              onClick={onToggleLanguage}
-              title={ar ? "Switch to English" : "التبديل إلى العربية"}
-            >
-              <Globe2 size={15} />
-              <span>{ar ? "English" : "العربية"}</span>
-            </button>
+          {/* Logout Row */}
+          <button
+            type="button"
+            className={css.logoutButtonRow}
+            onClick={onLogout}
+            title={ar ? "تسجيل الخروج" : "Sign out"}
+          >
+            <LogOut size={16} />
+            {!collapsed && <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>}
+          </button>
 
-            <button
-              type="button"
-              className={css.controlIconBtn}
-              onClick={onToggleTheme}
-              title={ar ? "تبديل المظهر" : "Toggle theme"}
-            >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
-            <button
-              type="button"
-              className={css.controlLogoutBtn}
-              onClick={onLogout}
-              title={ar ? "تسجيل الخروج" : "Sign out"}
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+          {/* Compact Quick Language & Theme Controls */}
+          {!collapsed && (
+            <div className={css.compactToolsRow}>
+              <button
+                type="button"
+                className={css.toolPillBtn}
+                onClick={onToggleLanguage}
+                title={ar ? "Switch to English" : "التبديل إلى العربية"}
+              >
+                <Globe2 size={13} />
+                <span>{ar ? "English" : "العربية"}</span>
+              </button>
+              <button
+                type="button"
+                className={css.toolIconBtn}
+                onClick={onToggleTheme}
+                title={ar ? "تبديل المظهر" : "Toggle theme"}
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -275,36 +383,37 @@ export function PortalNavigation({
       <header className={css.mobileHeader}>
         <button
           type="button"
-          className={css.brand}
+          className={css.sidebarBrandBtn}
           onClick={() => navigate("overview")}
           aria-label="SpooFX"
         >
-          <div className={css.brandImgWrap}>
+          <div className={css.brandLogoFrame}>
             <Image src="/brand.svg" width={32} height={32} alt="SpooFX" priority />
           </div>
-          <div className={css.brandText}>
-            <span>
-              Spoo<strong>FX</strong>
+          <div className={css.brandTitlesWrap}>
+            <strong className={css.brandMainTitle}>SpooFX</strong>
+            <span className={css.brandSubtitle}>
+              {ar ? "بوابة المنتجات والدعم" : "Products & Support"}
             </span>
           </div>
         </button>
 
         <div className={css.mobileHeaderActions}>
           <button
-            className={css.controlIconBtn}
+            className={css.toolIconBtn}
             type="button"
             onClick={onToggleLanguage}
             title={ar ? "Switch to English" : "التبديل إلى العربية"}
           >
-            <Globe2 size={16} />
+            <Globe2 size={15} />
           </button>
           <button
-            className={css.controlIconBtn}
+            className={css.toolIconBtn}
             type="button"
             onClick={onToggleTheme}
             title={ar ? "تبديل المظهر" : "Toggle theme"}
           >
-            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
           <button
             ref={trigger}
@@ -333,11 +442,11 @@ export function PortalNavigation({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={css.drawerTop}>
-              <div className={css.brandText}>
-                <span>
-                  Spoo<strong>FX</strong>
+              <div className={css.brandTitlesWrap}>
+                <strong className={css.brandMainTitle}>SpooFX</strong>
+                <span className={css.brandSubtitle}>
+                  {ar ? "بوابة المنتجات والدعم" : "Products & Support Portal"}
                 </span>
-                <small>CONTROL SPACE</small>
               </div>
               <button
                 ref={close}
@@ -352,61 +461,38 @@ export function PortalNavigation({
               </button>
             </div>
 
-            <nav className={css.drawerLinks}>
-              {items.map(({ tab, icon: Icon, ar: arabic, en, count }) => {
-                const isActive = activeTab === tab;
-                const isAdminTab = tab === "admin";
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    aria-label={ar ? arabic : en}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`${css.sidebarNavItem} ${isAdminTab ? css.sidebarAdminItem : ""}`}
-                    data-active={isActive}
-                    onClick={() => navigate(tab)}
-                  >
-                    <div className={css.navIconBox}>
-                      <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
-                    </div>
-                    <span className={css.navLabel}>{ar ? arabic : en}</span>
-                    {count !== undefined && (
-                      <span className={css.navCountBadge}>{count}</span>
-                    )}
-                    {isAdminTab && (
-                      <span className={css.adminBadgePill}>ADMIN</span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
+            <div className={css.drawerBody}>
+              {renderNavList()}
+            </div>
 
             <div className={css.drawerFooter}>
               <button
                 type="button"
-                className={css.userProfileCard}
+                className={css.userProfileRow}
                 onClick={() => navigate("profile")}
               >
-                <div className={css.userAvatarWrap}>
+                <div className={css.userAvatarImgWrap}>
                   {user.image ? (
                     <img
-                      className={css.avatarImage}
+                      className={css.userAvatarImg}
                       src={user.image}
-                      width={32}
-                      height={32}
+                      width={34}
+                      height={34}
                       alt={user.name}
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className={css.avatarFallback}>
+                    <div className={css.userAvatarFallback}>
                       {user.name ? user.name[0].toUpperCase() : "U"}
                     </div>
                   )}
-                  <span className={css.userOnlineDot} />
                 </div>
-                <div className={css.userInfoText}>
-                  <strong className={css.userName}>{user.name}</strong>
-                  <small className={css.userEmail}>{user.email || ""}</small>
+                <div className={css.userTextInfo}>
+                  <strong className={css.userDisplayName}>{user.name}</strong>
+                  <div className={css.userConnectedStatus}>
+                    <span className={css.greenPulseDot} />
+                    <span>{ar ? "حسابك متصل" : "Connected"}</span>
+                  </div>
                 </div>
               </button>
 

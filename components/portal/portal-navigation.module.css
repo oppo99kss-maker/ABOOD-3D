@@ -1,304 +1,319 @@
 /* ==========================================================================
-   SIDEBAR NAVIGATION (قائمة جانبية فخمة ومتساوية بدون مشاكل)
+   SIDEBAR NAVIGATION - MATCHING EXACT REFERENCE IMAGE
    ========================================================================== */
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 270px;
-  min-width: 270px;
-  max-width: 270px;
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
   height: 100vh;
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(13, 17, 24, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-inline-end: 1px solid var(--border);
+  background: #0A0F17;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
   box-sizing: border-box;
-  padding: 20px 14px 16px;
+  padding: 16px 12px 14px;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
+  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar::-webkit-scrollbar {
   display: none;
 }
 
-/* Brand Section */
-.sidebarBrandWrap {
-  padding: 4px 6px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 16px;
+.sidebar.collapsed {
+  width: 74px;
+  min-width: 74px;
+  max-width: 74px;
+  padding: 16px 8px 14px;
 }
 
-.brand {
+/* ==========================================================================
+   TOP HEADER (BRAND & COLLAPSE BUTTON)
+   ========================================================================== */
+
+.sidebarTopHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
-  text-align: start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 10px;
+}
+
+.sidebarBrandBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: transparent;
   border: none;
+  padding: 0;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 10px;
-  width: 100%;
-  transition: opacity 0.15s ease;
+  text-align: start;
+  flex: 1;
+  min-width: 0;
 }
 
-.brand:hover {
-  opacity: 0.92;
-}
-
-.brandImgWrap {
+.brandLogoFrame {
   position: relative;
   width: 38px;
   height: 38px;
   flex: none;
-  border-radius: 10px;
-  overflow: hidden;
+  border-radius: 9px;
+  background: #111A26;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
+  overflow: hidden;
 }
 
-.brandText {
+.brandTitlesWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brandMainTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+}
+
+.brandSubtitle {
+  font-size: 10.5px;
+  color: #64748B;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collapseSidebarToggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.collapseSidebarToggle:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ==========================================================================
+   NAVIGATION SECTIONS (MATCHING IMAGE)
+   ========================================================================== */
+
+.navSectionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.navSectionGroup {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.brandText span {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  color: #F8FAFC;
-  line-height: 1.1;
-}
-
-.brandText strong {
-  color: #38BDF8;
-}
-
-.brandText small {
-  font-size: 8px;
-  font-weight: 700;
+.sectionHeaderTitle {
+  font-size: 11px;
+  font-weight: 600;
   color: #64748B;
-  letter-spacing: 1.5px;
+  padding: 12px 10px 5px;
+  letter-spacing: 0.2px;
 }
 
-/* Section Title */
-.sidebarSectionTitle {
-  padding: 0 10px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #64748B;
-  text-transform: uppercase;
-}
-
-/* Navigation List & Items (متساوية ومنظمة) */
-.sidebarNavWrap {
+.sectionItemsList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 100%;
+  gap: 3px;
 }
 
-.sidebarNavList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.sidebarNavItem {
+.navItemBtn {
   position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  height: 44px;
+  height: 42px;
   padding: 0 12px;
-  border-radius: 10px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 13.5px;
   font-weight: 500;
   color: #94A3B8;
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   text-align: start;
 }
 
-.sidebarNavItem:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #F8FAFC;
-  border-color: rgba(255, 255, 255, 0.07);
+.sidebar.collapsed .navItemBtn {
+  justify-content: center;
+  padding: 0;
 }
 
-.sidebarNavItem[data-active="true"] {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(56, 189, 248, 0.03));
-  border-color: rgba(56, 189, 248, 0.3);
-  color: #38BDF8;
+.navItemBtn:hover {
+  background: rgba(255, 255, 255, 0.035);
+  color: #F1F5F9;
+}
+
+/* Active State: Teal/Cyan Rounded Outline matching reference screenshot */
+.navItemBtn[data-active="true"] {
+  border: 1px solid rgba(13, 148, 136, 0.55);
+  background: rgba(13, 148, 136, 0.1);
+  color: #F8FAFC;
   font-weight: 600;
 }
 
-/* Active Indicator Pill on Starting Edge */
-.sidebarNavItem[data-active="true"]::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 20px;
-  border-radius: 4px;
-  background: #38BDF8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+.navItemBtn[data-active="true"] .itemIconWrap {
+  color: #2DD4BF;
 }
 
-.navIconBox {
+.itemIconWrap {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   flex: none;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.03);
   color: inherit;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
 }
 
-.sidebarNavItem[data-active="true"] .navIconBox {
-  background: rgba(56, 189, 248, 0.18);
-  color: #38BDF8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
-}
-
-.navLabel {
+.itemLabel {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.navCountBadge {
+.countBadgePill {
   font-size: 11px;
   font-weight: 700;
   padding: 1px 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #94A3B8;
+  border-radius: 5px;
+  background: #111A24;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  margin-inline-start: auto;
 }
 
-.sidebarNavItem[data-active="true"] .navCountBadge {
-  background: rgba(56, 189, 248, 0.2);
+.navItemBtn[data-active="true"] .countBadgePill {
+  background: rgba(13, 148, 136, 0.22);
+  border-color: rgba(13, 148, 136, 0.45);
+  color: #2DD4BF;
+}
+
+.activeChevron {
+  margin-inline-start: auto;
+  color: #2DD4BF;
+  flex: none;
+}
+
+.externalArrow {
+  margin-inline-start: auto;
+  color: #64748B;
+  flex: none;
+  transition: transform 0.15s ease;
+}
+
+.navItemBtn:hover .externalArrow {
   color: #38BDF8;
-  border-color: rgba(56, 189, 248, 0.35);
+  transform: translate(-1px, -1px);
 }
 
-/* Admin Item Distinct Badge & Border */
-.sidebarAdminItem {
-  background: rgba(56, 189, 248, 0.03);
-  border-color: rgba(56, 189, 248, 0.14);
-}
+/* ==========================================================================
+   FOOTER SECTION (USER PROFILE CARD & LOGOUT)
+   ========================================================================== */
 
-.sidebarAdminItem:hover {
-  background: rgba(56, 189, 248, 0.09);
-  border-color: rgba(56, 189, 248, 0.28);
-  color: #38BDF8;
-}
-
-.adminBadgePill {
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(56, 189, 248, 0.15);
-  color: #38BDF8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  letter-spacing: 0.5px;
-}
-
-/* Footer / User Profile & Controls */
-.sidebarFooter {
+.sidebarFooterBlock {
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.userProfileCard {
+.userProfileRow {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   padding: 8px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   text-align: start;
   transition: all 0.15s ease;
   box-sizing: border-box;
 }
 
-.userProfileCard:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+.sidebar.collapsed .userProfileRow {
+  justify-content: center;
+  padding: 6px;
 }
 
-.userAvatarWrap {
-  position: relative;
-  width: 34px;
-  height: 34px;
+.userProfileRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.userAvatarImgWrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
   flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.avatarImage {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+.userAvatarImg {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   object-fit: cover;
-  border: 1.5px solid rgba(56, 189, 248, 0.6);
 }
 
-.avatarFallback {
+.userAvatarFallback {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #38BDF8;
   font-weight: 700;
   font-size: 13px;
 }
 
-.userOnlineDot {
-  position: absolute;
-  bottom: 0;
-  inset-inline-end: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #10B981;
-  border: 2px solid #0F172A;
-  box-shadow: 0 0 6px #10B981;
-}
-
-.userInfoText {
+.userTextInfo {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -306,8 +321,8 @@
   flex: 1;
 }
 
-.userName {
-  font-size: 12.5px;
+.userDisplayName {
+  font-size: 13px;
   font-weight: 600;
   color: #F8FAFC;
   white-space: nowrap;
@@ -315,83 +330,104 @@
   text-overflow: ellipsis;
 }
 
-.userEmail {
-  font-size: 10px;
+.userConnectedStatus {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
   color: #64748B;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.sidebarControlsRow {
+.greenPulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+  display: inline-block;
+  flex: none;
+}
+
+.userChevron {
+  margin-inline-start: auto;
+  color: #64748B;
+  flex: none;
+}
+
+/* Logout Button */
+.logoutButtonRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  border-radius: 8px;
+  color: #94A3B8;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.logoutButtonRow:hover {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Language and Theme Pill Controls */
+.compactToolsRow {
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
+  padding-top: 4px;
 }
 
-.controlBtn {
+.toolPillBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 8px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: #94A3B8;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #64748B;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.controlBtn:hover {
+.toolPillBtn:hover {
   color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.controlIconBtn {
+.toolIconBtn {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   flex: none;
-  border-radius: 8px;
-  color: #94A3B8;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  color: #64748B;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.controlIconBtn:hover {
+.toolIconBtn:hover {
   color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-.controlLogoutBtn {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: none;
-  border-radius: 8px;
-  color: #94A3B8;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.controlLogoutBtn:hover {
-  color: #EF4444;
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ==========================================================================
@@ -415,9 +451,8 @@
     justify-content: space-between;
     height: 56px;
     padding: 0 16px;
-    background: rgba(13, 17, 24, 0.94);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
+    background: #0A0F17;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     position: sticky;
     top: 0;
     z-index: 50;
@@ -435,8 +470,8 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #F8FAFC;
     cursor: pointer;
   }
@@ -455,10 +490,10 @@
   width: min(300px, 86vw);
   display: flex;
   flex-direction: column;
-  padding: 20px 16px;
-  background: rgba(15, 23, 42, 0.98);
+  padding: 18px 14px;
+  background: #0A0F17;
   box-shadow: 0 0 45px rgba(0, 0, 0, 0.8);
-  border-inline-end: 1px solid var(--border);
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
   box-sizing: border-box;
 }
 
@@ -466,7 +501,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding-bottom: 14px;
 }
 
@@ -476,7 +511,7 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #94A3B8;
   cursor: pointer;
@@ -484,22 +519,21 @@
 
 .drawerCloseBtn:hover {
   color: #F8FAFC;
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-.drawerLinks {
+.drawerBody {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 16px;
   flex: 1;
   overflow-y: auto;
+  margin-top: 10px;
 }
 
 .drawerFooter {
   margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -516,7 +550,7 @@
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: #EF4444;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
