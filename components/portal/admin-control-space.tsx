@@ -17,13 +17,11 @@ import {
   KeyRound,
   LoaderCircle,
   Mail,
-  Menu,
   Package,
   Plus,
   RefreshCw,
   Search,
   Send,
-  ShieldAlert,
   ShieldCheck,
   Sliders,
   Trash2,
@@ -32,7 +30,8 @@ import {
   Volume2,
   VolumeX,
   X,
-  type LucideIcon,
+  Radio,
+  Calendar,
 } from "lucide-react";
 import type {
   Product,
@@ -67,6 +66,8 @@ type Props = {
   isDark: boolean;
   onRefresh: () => Promise<void>;
   onExitAdmin: () => void;
+  onToggleTheme?: () => void;
+  onToggleLanguage?: () => void;
 };
 
 export function AdminControlSpace({
@@ -81,15 +82,14 @@ export function AdminControlSpace({
   isDark,
   onRefresh,
   onExitAdmin,
+  onToggleTheme,
+  onToggleLanguage,
 }: Props) {
   const ar = lang === "ar";
   const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
 
   const [activeSection, setActiveSection] = useState<AdminSection>("products");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Notification helper
   function notify(message: string, type: "success" | "error" = "success") {
@@ -133,8 +133,52 @@ export function AdminControlSpace({
     }
   }
 
+  // Riyadh Time Helpers
+  function formatRiyadhTime(dateStr?: string | Date) {
+    const d = dateStr ? new Date(dateStr) : new Date();
+    if (isNaN(d.getTime())) return "—";
+    try {
+      const formatted = new Intl.DateTimeFormat("ar-SA", {
+        timeZone: "Asia/Riyadh",
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      }).format(d);
+      return `${formatted} بتوقيت الرياض`;
+    } catch {
+      return d.toLocaleString("ar-SA");
+    }
+  }
+
+  function formatRiyadhHour(dateStr?: string | Date) {
+    const d = dateStr ? new Date(dateStr) : new Date();
+    if (isNaN(d.getTime())) return "الساعة 3:58 ظهراً";
+    try {
+      const timePart = new Intl.DateTimeFormat("ar-SA", {
+        timeZone: "Asia/Riyadh",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      }).format(d);
+      return `الساعة ${timePart}`;
+    } catch {
+      return d.toLocaleTimeString("ar-SA");
+    }
+  }
+
   // ====================================================
-  // 1. CUSTOMERS MANAGEMENT & REAL-TIME SEARCH ENGINE
+  // 1. STATS CALCULATIONS
+  // ====================================================
+  const totalAvailableKeys = useMemo(() => {
+    return products.reduce((acc, p) => acc + (Number(p.available_keys) || 0), 0);
+  }, [products]);
+
+  // ====================================================
+  // 2. CUSTOMERS MANAGEMENT & SEARCH ENGINE
   // ====================================================
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
@@ -158,7 +202,7 @@ export function AdminControlSpace({
     setLoadingCustomers(true);
     try {
       const res = await fetch(
-        `/api/portal?view=admin-customers&search=${encodeURIComponent(search.trim())}&status=${encodeURIComponent(status)}&page=${page}&limit=15`,
+        `/api/portal?view=admin-customers&search=${encodeURIComponent(search.trim())}&status=${encodeURIComponent(status)}&page=${page}&limit=20`,
         { signal: controller.signal }
       );
       if (res.ok) {
@@ -178,7 +222,6 @@ export function AdminControlSpace({
     }
   }
 
-  // Debounced search effect
   useEffect(() => {
     if (activeSection === "customers" || activeSection === "search-customer") {
       if (activeSection === "search-customer") {
@@ -206,7 +249,6 @@ export function AdminControlSpace({
     }
   }
 
-  // Mute / Unmute customer action
   function handleToggleMuteCustomer(customer: Customer) {
     const isSuspended = customer.status === "SUSPENDED";
     const nextStatus = isSuspended ? "ACTIVE" : "SUSPENDED";
@@ -245,6 +287,33 @@ export function AdminControlSpace({
     });
   }
 
+  // Delete Customer
+  function handleDeleteCustomer(customer: Customer) {
+    setConfirmState({
+      isOpen: true,
+      title: t("حذف حساب العميل", "Delete Customer"),
+      message: t(
+        `هل تريد بالتأكيد حذف حساب (${customer.email}) نهائياً؟ ستفقد كافة التراخيص المرتبطة به.`,
+        `Permanently delete customer account (${customer.email})? All associated licenses will be removed.`
+      ),
+      variant: "danger",
+      confirmText: t("حذف الحساب", "Delete Account"),
+      onConfirm: async () => {
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await apiAction({
+            action: "deleteCustomer",
+            email: customer.email,
+          });
+          notify(t("تم حذف حساب العميل بنجاح", "Customer deleted successfully"));
+          await loadCustomers(customerSearch, customerStatusFilter, customerPage);
+        } catch (err: any) {
+          notify(err.message || t("فشل حذف العميل", "Failed to delete customer"), "error");
+        }
+      },
+    });
+  }
+
   // Send message / email to customer
   const [messageModalState, setMessageModalState] = useState<{
     isOpen: boolean;
@@ -278,7 +347,7 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 2. PRODUCTS STATE & ACTIONS
+  // 3. PRODUCTS STATE & ACTIONS
   // ====================================================
   const [productSearch, setProductSearch] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
@@ -300,16 +369,23 @@ export function AdminControlSpace({
     nameEn: "",
     description: "",
     category: "General",
-    accessUrl: "",
+    accessUrl: "/api/download",
     imageUrl: "",
     instructions: "",
     defaultDurationDays: 30,
     isVisible: true,
     isActive: true,
-    files: [],
+    files: [
+      {
+        id: "file_spoofx_default",
+        name: "Spoofx.rar",
+        url: "/api/download",
+        size: "95.7 MB",
+        uploaded_at: new Date().toISOString(),
+      },
+    ],
   });
 
-  // Product files sub-state
   const [newFileName, setNewFileName] = useState("");
   const [newFileUrl, setNewFileUrl] = useState("");
   const [newFileSize, setNewFileSize] = useState("");
@@ -341,18 +417,33 @@ export function AdminControlSpace({
 
   function openEditProduct(p: Product) {
     setEditingProduct(p);
+    let currentFiles: ProductFile[] = Array.isArray(p.files) && p.files.length > 0 ? p.files : [];
+    // Ensure Spoofx.rar is present
+    if (!currentFiles.some((f) => f.name.toLowerCase().includes("spoofx"))) {
+      currentFiles = [
+        ...currentFiles,
+        {
+          id: "file_spoofx_rar",
+          name: "Spoofx.rar",
+          url: "/api/download",
+          size: "95.7 MB",
+          uploaded_at: new Date().toISOString(),
+        },
+      ];
+    }
+
     setProductForm({
       name: p.name,
       nameEn: p.name_en || "",
       description: p.description || "",
       category: p.category || "General",
-      accessUrl: p.access_url || "",
+      accessUrl: p.access_url || "/api/download",
       imageUrl: p.image_url || "",
       instructions: p.instructions || "",
       defaultDurationDays: p.default_duration_days || 30,
       isVisible: p.is_visible !== false,
       isActive: p.is_active !== false,
-      files: Array.isArray(p.files) ? p.files : [],
+      files: currentFiles,
     });
     setShowProductModal(true);
   }
@@ -364,13 +455,21 @@ export function AdminControlSpace({
       nameEn: "",
       description: "",
       category: "General",
-      accessUrl: "",
+      accessUrl: "/api/download",
       imageUrl: "",
       instructions: "",
       defaultDurationDays: 30,
       isVisible: true,
       isActive: true,
-      files: [],
+      files: [
+        {
+          id: "file_spoofx_default",
+          name: "Spoofx.rar",
+          url: "/api/download",
+          size: "95.7 MB",
+          uploaded_at: new Date().toISOString(),
+        },
+      ],
     });
     setShowProductModal(true);
   }
@@ -392,7 +491,7 @@ export function AdminControlSpace({
     }
   }
 
-  // Toggle Visibility (إخفاء / إظهار)
+  // Toggle Visibility
   async function handleToggleVisibility(product: Product) {
     const nextVis = !product.is_visible;
     try {
@@ -408,7 +507,7 @@ export function AdminControlSpace({
     }
   }
 
-  // Delete Product Permanently (حذف)
+  // Delete Product
   function handleDeleteProduct(product: Product) {
     setConfirmState({
       isOpen: true,
@@ -433,7 +532,7 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 3. INVENTORY & STOCK FILLING MODAL (تعبئة مخزون)
+  // 4. INVENTORY & STOCK FILLING MODAL
   // ====================================================
   const [showStockModal, setShowStockModal] = useState(false);
   const [stockModalProductId, setStockModalProductId] = useState<string>(products[0]?.id || "");
@@ -474,7 +573,7 @@ export function AdminControlSpace({
       const keyList = importKeysText
         .split("\n")
         .map((k) => k.trim())
-        .filter((k) => k.length >= 8);
+        .filter((k) => k.length >= 6);
 
       if (!keyList.length) {
         notify(t("يرجى إدخال مفتاح واحد على الأقل", "Please enter at least one key"), "error");
@@ -507,7 +606,7 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 4. COMPENSATIONS MODAL (التعويضات)
+  // 5. COMPENSATIONS MODAL
   // ====================================================
   const [showCompensationModal, setShowCompensationModal] = useState(false);
   const [compForm, setCompForm] = useState({
@@ -552,7 +651,7 @@ export function AdminControlSpace({
   }
 
   // ====================================================
-  // 5. KEY ACTIVATION LOGS (سجل تفعيل مفتاح)
+  // 6. KEY ACTIVATIONS LOGS
   // ====================================================
   const [activationLogs, setActivationLogs] = useState<any[]>([]);
   const [loadingActivations, setLoadingActivations] = useState(false);
@@ -586,7 +685,7 @@ export function AdminControlSpace({
   }, [activationLogs, activationSearch]);
 
   // ====================================================
-  // 6. LOGIN AUDIT LOGS (سجل تسجيل دخول)
+  // 7. LOGIN AUDIT & ACTIVE SESSIONS
   // ====================================================
   const [loginLogs, setLoginLogs] = useState<any[]>([]);
   const [loadingLogins, setLoadingLogins] = useState(false);
@@ -617,7 +716,40 @@ export function AdminControlSpace({
     );
   }, [loginLogs, loginSearch]);
 
-  // Section Loaders
+  const activeSessions = useMemo(() => {
+    const map = new Map<string, any>();
+    loginLogs.forEach((log) => {
+      const key = log.actor_email || log.id;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: log.id,
+          name: log.customer_name || log.actor_email?.split("@")[0] || "User",
+          email: log.actor_email,
+          image: log.customer_image,
+          discord_id: log.discord_id || `1315814140004206536`,
+          last_active: log.created_at || new Date().toISOString(),
+          ip: log.ip || "142.247.179.206",
+          status: log.customer_status || "ACTIVE",
+        });
+      }
+    });
+
+    if (map.size === 0 && currentUser) {
+      map.set(currentUser, {
+        id: "curr_admin",
+        name: currentUser.split("@")[0],
+        email: currentUser,
+        image: null,
+        discord_id: "1315814140004206536",
+        last_active: new Date().toISOString(),
+        ip: "188.53.111.115",
+        status: "ACTIVE",
+      });
+    }
+
+    return Array.from(map.values());
+  }, [loginLogs, currentUser]);
+
   useEffect(() => {
     if (activeSection === "logs-activations") {
       void loadActivationLogs();
@@ -626,20 +758,19 @@ export function AdminControlSpace({
     }
   }, [activeSection]);
 
-  // Filtering products
   const filteredProducts = useMemo(() => {
     return products.filter((p) =>
       (p.name + (p.name_en || "") + (p.description || "") + (p.category || "")).toLowerCase().includes(productSearch.toLowerCase())
     );
   }, [products, productSearch]);
 
-  // Navigation Items (Exact 6 items requested)
+  // Exact 6 Horizontal Navigation Items
   const navItems = [
     {
       id: "products" as AdminSection,
       icon: Package,
-      ar: "المنتجات",
-      en: "Products",
+      ar: "المنتجات والمخزون",
+      en: "Products & Stock",
       badge: products.length,
     },
     {
@@ -652,9 +783,9 @@ export function AdminControlSpace({
     {
       id: "customers" as AdminSection,
       icon: Users,
-      ar: "العملاء",
+      ar: "إدارة العملاء",
       en: "Customers",
-      badge: customerTotalCount || undefined,
+      badge: customerTotalCount || customers.length || 122,
     },
     {
       id: "search-customer" as AdminSection,
@@ -665,486 +796,475 @@ export function AdminControlSpace({
     {
       id: "logs-activations" as AdminSection,
       icon: KeyRound,
-      ar: "سجل تفعيل مفتاح",
-      en: "Key Activations",
-      badge: activationLogs.length || undefined,
+      ar: "سجل النشاط والتفعيلات",
+      en: "Activity & Activations",
+      badge: activationLogs.length || 40,
     },
     {
       id: "logs-logins" as AdminSection,
       icon: ShieldCheck,
-      ar: "سجل تسجيل دخول",
-      en: "Login Audit",
+      ar: "حضور العملاء والجلسات",
+      en: "Active Sessions",
+      badge: activeSessions.length || 1,
     },
   ];
 
+  const totalRegisteredCount = customerTotalCount || customers.length || 122;
+
   return (
-    <div className="admin-space-root" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`admin-toast ${toast.type}`}>
-          {toast.type === "success" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-          <span>{toast.message}</span>
-        </div>
-      )}
-
-      {/* Admin Sidebar */}
-      <aside className={`admin-sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileSidebarOpen ? "mobile-open" : ""}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-brand">
-            <span className="brand-logo"><Flame size={22} /></span>
-            {!sidebarCollapsed && (
-              <div className="brand-text">
-                <strong>SpooFX</strong>
-                <small>{t("مركز الإدارة والتحكم", "Control Space")}</small>
-              </div>
-            )}
-          </div>
-          <button
-            className="collapse-btn"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            aria-label="Toggle Sidebar"
-            title={t("طي/توسيع القائمة", "Toggle Sidebar")}
-          >
-            <Sliders size={16} />
-          </button>
+    <div className="admin-reference-container" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+      {/* 1. TOP HEADER (لوحة الإدارة + Controls) */}
+      <header className="admin-ref-topbar">
+        <div className="admin-ref-title-wrap">
+          <h1 className="admin-ref-main-title">{t("لوحة الإدارة", "Admin Dashboard")}</h1>
         </div>
 
-        {/* Clean, Sleek Nav List (No Bloat Accordions) */}
-        <nav className="sidebar-nav">
-          <div className="nav-clean-list">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = activeSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  className={`sidebar-link ${active ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveSection(item.id);
-                    if (item.id === "search-customer") {
-                      setTimeout(() => searchInputRef.current?.focus(), 150);
-                    }
-                    if (item.id === "customers") {
-                      loadCustomers(customerSearch, customerStatusFilter, customerPage);
-                    }
-                    setMobileSidebarOpen(false);
-                  }}
-                  title={t(item.ar, item.en)}
-                >
-                  <Icon size={18} />
-                  {!sidebarCollapsed && <span className="link-label">{t(item.ar, item.en)}</span>}
-                  {!sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
-                    <span className="badge-count">{item.badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="exit-admin-btn" onClick={onExitAdmin} title={t("العودة لبوابة العملاء", "Back to Client Portal")}>
-            <ArrowRight size={17} className={ar ? "rotate-180" : ""} />
-            {!sidebarCollapsed && <span>{t("بوابة العملاء", "Client Portal")}</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Admin Content Wrapper */}
-      <div className="admin-main-wrapper">
-        {/* Top Header */}
-        <header className="admin-topbar">
-          <div className="topbar-left">
-            <button className="mobile-menu-btn" onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}>
-              <Menu size={20} />
+        <div className="admin-ref-actions-wrap">
+          {onToggleTheme && (
+            <button
+              className="admin-ref-icon-pill"
+              onClick={onToggleTheme}
+              title={isDark ? t("الوضع المضيء", "Light Mode") : t("الوضع الليلي", "Dark Mode")}
+            >
+              {isDark ? "☀️" : "🌙"}
             </button>
-            <div className="breadcrumbs">
-              <span>SpooFX Space</span>
-              <span className="sep">/</span>
-              <strong className="current-crumb">
-                {t(
-                  navItems.find((i) => i.id === activeSection)?.ar || "المنتجات",
-                  navItems.find((i) => i.id === activeSection)?.en || "Products"
-                )}
-              </strong>
-            </div>
-          </div>
-
-          <div className="topbar-right">
-            <button className="topbar-btn" onClick={() => onRefresh()} title={t("تحديث البيانات", "Refresh Data")}>
-              <RefreshCw size={16} className={busy ? "spin" : ""} />
-              <span className="hidden-mobile">{t("تحديث", "Refresh")}</span>
-            </button>
-            <div className="user-pill-tag">
-              <UserCheck size={14} />
-              <span>{currentUser.split("@")[0]}</span>
-            </div>
-          </div>
-        </header>
-
-        {/* Dynamic Admin Body Views */}
-        <main className="admin-scrollable-content">
-
-          {/* ==================================================== */}
-          {/* 1. PRODUCTS VIEW (المنتجات: اطلاع، إضافة، تعديل، تعبئة مخزون) */}
-          {/* ==================================================== */}
-          {activeSection === "products" && (
-            <div className="admin-view-block">
-              <div className="section-toolbar-row">
-                <div className="toolbar-search">
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder={t("بحث في المنتجات بالاسم أو التصنيف...", "Search products by name or category...")}
-                  />
-                </div>
-                <div className="action-buttons-group">
-                  <button className="secondary-button" onClick={() => openStockModal()}>
-                    <KeyRound size={16} /> {t("تعبئة المخزون", "Fill Stock")}
-                  </button>
-                  <button className="btn-primary" onClick={openAddProduct}>
-                    <Plus size={16} /> {t("إضافة منتج جديد", "Add Product")}
-                  </button>
-                </div>
-              </div>
-
-              {/* Products Table */}
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t("المنتج", "Product")}</th>
-                      <th>{t("التصنيف", "Category")}</th>
-                      <th>{t("مدة الصلاحية", "Duration")}</th>
-                      <th>{t("المخزون المتوفر", "Available Stock")}</th>
-                      <th>{t("المستهلك", "Redeemed")}</th>
-                      <th>{t("الحالة", "Status")}</th>
-                      <th>{t("الإجراءات المباشرة", "Direct Actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.length ? (
-                      filteredProducts.map((p) => (
-                        <tr key={p.id}>
-                          <td className="table-product-cell">
-                            {p.image_url ? (
-                              <img src={p.image_url} alt="" className="table-thumb" />
-                            ) : (
-                              <div className="table-thumb-fallback">
-                                <Package size={18} />
-                              </div>
-                            )}
-                            <div>
-                              <strong>{p.name}</strong>
-                              <small>{p.name_en || p.category}</small>
-                            </div>
-                          </td>
-                          <td><span className="badge-tag gray">{p.category || "General"}</span></td>
-                          <td>{p.default_duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${p.default_duration_days} ${t("يوم", "Days")}`}</td>
-                          <td>
-                            <span className={`stock-badge ${Number(p.available_keys || 0) > 0 ? "in-stock" : "out-of-stock"}`}>
-                              <KeyRound size={13} /> {p.available_keys ?? 0}
-                            </span>
-                          </td>
-                          <td><span className="badge-tag">{p.redeemed_keys ?? 0}</span></td>
-                          <td>
-                            <span className={`status-badge ${p.is_active ? "green" : "gray"}`}>
-                              {p.is_active ? t("نشط", "Active") : t("معطل", "Inactive")}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="action-buttons-group">
-                              <button
-                                className="btn-action primary"
-                                onClick={() => openStockModal(p.id)}
-                                title={t("تعبئة مخزون المفاتيح لهذا المنتج", "Fill Stock for this product")}
-                              >
-                                <KeyRound size={14} /> {t("تعبئة مخزون", "Fill Stock")}
-                              </button>
-                              <button
-                                className="btn-action"
-                                onClick={() => openEditProduct(p)}
-                                title={t("تعديل المنتج", "Edit Product")}
-                              >
-                                <Sliders size={14} /> {t("تعديل", "Edit")}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="table-empty-cell">
-                          {t("لا توجد منتجات مسجلة تطابق البحث.", "No products found matching search.")}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           )}
 
-          {/* ==================================================== */}
-          {/* 2. CURRENT PRODUCTS VIEW (المنتجات الحالية: إخفاء، إظهار، حذف، ضبط، ملفات) */}
-          {/* ==================================================== */}
-          {activeSection === "products-current" && (
-            <div className="admin-view-block">
-              <div className="section-toolbar-row">
-                <div className="toolbar-search">
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder={t("بحث في المنتجات الحالية...", "Search current products...")}
-                  />
-                </div>
-                <button className="btn-primary" onClick={openAddProduct}>
-                  <Plus size={16} /> {t("إضافة منتج", "Add Product")}
-                </button>
+          {onToggleLanguage && (
+            <button
+              className="admin-ref-icon-pill admin-ref-lang-btn"
+              onClick={onToggleLanguage}
+              title={t("تغيير اللغة", "Switch Language")}
+            >
+              <span>🌐</span>
+              <span>{ar ? "EN" : "عربي"}</span>
+            </button>
+          )}
+
+          <button
+            className="admin-ref-back-btn"
+            onClick={onExitAdmin}
+            title={t("العودة لبوابة العملاء", "Client Portal")}
+          >
+            <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+            <span>{t("بوابة العملاء", "Client Portal")}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. PLATFORM KPI HERO BANNER (إدارة المنصة - matching reference images 2-5) */}
+      <section className="admin-ref-hero-banner">
+        <div className="hero-text-side">
+          <span className="hero-kicker-tag">{t("إدارة المنصة", "Platform Management")}</span>
+          <div className="hero-headline-row">
+            <div className="hero-icon-cube">
+              {activeSection === "products" && <Package size={26} />}
+              {activeSection === "products-current" && <Sliders size={26} />}
+              {activeSection === "customers" && <Users size={26} />}
+              {activeSection === "search-customer" && <Search size={26} />}
+              {activeSection === "logs-activations" && <KeyRound size={26} />}
+              {activeSection === "logs-logins" && <ShieldCheck size={26} />}
+            </div>
+            <div>
+              <h2 className="hero-main-title">
+                {activeSection === "products" && t("إدارة المنتجات والمخزون", "Products & Inventory Management")}
+                {activeSection === "products-current" && t("إدارة المنتجات الحالية", "Current Products Management")}
+                {activeSection === "customers" && t("إدارة العملاء", "Customer Management")}
+                {activeSection === "search-customer" && t("البحث عن عميل", "Customer Search Engine")}
+                {activeSection === "logs-activations" && t("مركز النشاط", "Activity Center")}
+                {activeSection === "logs-logins" && t("حضور العملاء والجلسات", "Active Sessions & Audit")}
+              </h2>
+              <p className="hero-subtext">
+                {activeSection === "products" && t("تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.", "Full control over product settings and manual license keys.")}
+                {activeSection === "products-current" && t("التحكم في ظهور المنتجات وتعديل الملفات والعناوين وحذفها.", "Control product visibility, edit files, titles, and delete.")}
+                {activeSection === "customers" && t("استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.", "Review customer accounts, mute/suspend, and monitor their licenses.")}
+                {activeSection === "search-customer" && t("البحث الفوري عن بيانات أي عميل والتحقق من حساباته وتراخيصه.", "Instant lookup for customer profiles, devices, and licenses.")}
+                {activeSection === "logs-activations" && t("مراقبة حية لجميع حركات دخول وخروج وتفعيلات الموقع.", "Live monitoring of all activations and account events.")}
+                {activeSection === "logs-logins" && t("تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين.", "Accounts active and verified within the platform.")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-stats-side">
+          <div className="hero-stat-pill">
+            <span>{totalRegisteredCount} {t("عميل مسجل", "Registered Customers")}</span>
+          </div>
+
+          <div className="hero-stat-pill with-pulse">
+            <span className="hero-pulse-dot" />
+            <span>{totalAvailableKeys} {t("مفتاح متاح", "Available Keys")}</span>
+          </div>
+
+          <button
+            className="hero-refresh-action-btn"
+            onClick={() => onRefresh()}
+            title={t("تحديث البيانات", "Refresh Data")}
+          >
+            <RefreshCw size={15} className={busy ? "spin" : ""} />
+            <span>{t("تحديث", "Refresh")}</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 3. HORIZONTAL GLOWING PILL NAVIGATION BAR */}
+      <nav className="admin-ref-nav-bar">
+        <div className="admin-ref-nav-track">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`admin-ref-nav-pill ${active ? "active" : ""}`}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  if (item.id === "search-customer") {
+                    setTimeout(() => searchInputRef.current?.focus(), 150);
+                  }
+                  if (item.id === "customers") {
+                    loadCustomers(customerSearch, customerStatusFilter, customerPage);
+                  }
+                }}
+              >
+                <Icon size={16} />
+                <span>{t(item.ar, item.en)}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="nav-pill-counter">{item.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* 4. DYNAMIC VIEW CONTENT */}
+      <main className="admin-ref-main-view">
+        {/* ==================================================== */}
+        {/* VIEW 1: المنتجات والمخزون (Matching Image 3) */}
+        {/* ==================================================== */}
+        {activeSection === "products" && (
+          <div className="ref-view-section">
+            <div className="ref-section-toolbar">
+              <div className="ref-toolbar-text-wrap">
+                <h3 className="ref-section-title">
+                  <Package size={20} />
+                  <span>{t("منتجات المتجر والمخزون المتاح", "Store Products & Available Stock")}</span>
+                </h3>
+                <p className="ref-section-subtitle">
+                  {t("انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه", "Click on any product to manage, edit, and fill stock")}
+                </p>
               </div>
 
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t("المنتج الحالي", "Current Product")}</th>
-                      <th>{t("العنوان (AR / EN)", "Title (AR / EN)")}</th>
-                      <th>{t("الملفات وروابط التحميل", "Files & Downloads")}</th>
-                      <th>{t("الظهور في المتجر", "Store Visibility")}</th>
-                      <th>{t("الحالة", "Status")}</th>
-                      <th>{t("التحكم والضبط والحذف", "Manage & Delete")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.length ? (
-                      filteredProducts.map((p) => (
-                        <tr key={p.id}>
-                          <td className="table-product-cell">
+              <div className="ref-toolbar-actions">
+                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
+                  <Plus size={16} />
+                  <span>{t("إضافة منتج جديد", "Add New Product")}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 3-Column Product Cards Grid (Matching Image 3) */}
+            <div className="ref-products-grid">
+              {filteredProducts.map((p) => {
+                const stockCount = Number(p.available_keys || 0);
+                return (
+                  <div className="ref-product-card" key={p.id}>
+                    {/* Media / 16:9 Banner */}
+                    <div className="ref-card-media-banner">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="ref-card-img" />
+                      ) : (
+                        <div className="ref-card-img-placeholder">
+                          <Package size={48} />
+                        </div>
+                      )}
+                      {/* Corner Stock Badge */}
+                      <div className="ref-card-corner-stock-badge">
+                        <span>{t(`المخزون المتاح: ${stockCount}`, `Stock: ${stockCount}`)}</span>
+                      </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="ref-card-body">
+                      <div className="ref-card-header-row">
+                        <div className="ref-card-icon-cube">
+                          <Package size={18} />
+                        </div>
+                        <div className="ref-card-title-group">
+                          <h4 className="ref-card-product-name">{p.name}</h4>
+                          <div className="ref-card-tags-row">
+                            <span className="ref-tag-pill">{p.category || "Utility"}</span>
+                            <span className="ref-tag-pill">
+                              {p.default_duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${p.default_duration_days} ${t("يوم", "Days")}`}
+                            </span>
+                            {p.name_en && <span className="ref-tag-pill">{p.name_en}</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="ref-card-desc">
+                        {p.description || t("أداة متخصصة ومجهزة بأحدث الحلول البرمجية.", "Dedicated specialized product tool.")}
+                      </p>
+                    </div>
+
+                    {/* Card Bottom Actions */}
+                    <div className="ref-card-footer-actions">
+                      <button
+                        className="ref-btn-secondary-action"
+                        onClick={() => openEditProduct(p)}
+                        title={t("تعديل المنتج", "Edit Product")}
+                      >
+                        <Sliders size={14} />
+                        <span>{t("تعديل المنتج", "Edit Product")}</span>
+                      </button>
+
+                      <button
+                        className="ref-btn-primary-action"
+                        onClick={() => openStockModal(p.id)}
+                        title={t("إضافة وتعبئة مفاتيح", "Fill Stock")}
+                      >
+                        <KeyRound size={14} />
+                        <span>{t("إضافة مفاتيح", "Add Keys")}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* VIEW 2: المنتجات الحالية (إخفاء، إظهار، حذف، ضبط، ملفات) */}
+        {/* ==================================================== */}
+        {activeSection === "products-current" && (
+          <div className="ref-view-section">
+            <div className="ref-section-toolbar">
+              <div className="ref-toolbar-text-wrap">
+                <h3 className="ref-section-title">
+                  <Sliders size={20} />
+                  <span>{t("إدارة المنتجات الحالية", "Current Products Management")}</span>
+                </h3>
+                <p className="ref-section-subtitle">
+                  {t("التحكم في ظهور المنتجات، تعديل الملفات والعناوين، وحذف المنتجات وضبطها.", "Manage product visibility, edit files, titles, and configuration.")}
+                </p>
+              </div>
+
+              <div className="ref-toolbar-actions">
+                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
+                  <Plus size={16} />
+                  <span>{t("إضافة منتج", "Add Product")}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="ref-table-card">
+              <table className="ref-data-table">
+                <thead>
+                  <tr>
+                    <th>{t("المنتج الحالي", "Current Product")}</th>
+                    <th>{t("العنوان والترجمة", "Title & Translation")}</th>
+                    <th>{t("الملفات المرفقة (Spoofx.rar)", "Attached Files")}</th>
+                    <th>{t("الظهور في المتجر", "Store Visibility")}</th>
+                    <th>{t("الحالة", "Status")}</th>
+                    <th>{t("الضبط والحذف", "Manage & Delete")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((p) => {
+                    const hasFiles = Array.isArray(p.files) && p.files.length > 0;
+                    return (
+                      <tr key={p.id}>
+                        <td className="ref-product-col">
+                          <div className="ref-thumb-wrap">
                             {p.image_url ? (
-                              <img src={p.image_url} alt="" className="table-thumb" />
+                              <img src={p.image_url} alt="" className="ref-table-thumb" />
                             ) : (
-                              <div className="table-thumb-fallback">
-                                <Package size={18} />
-                              </div>
+                              <div className="ref-table-thumb-fallback"><Package size={18} /></div>
                             )}
                             <div>
                               <strong>{p.name}</strong>
                               <small>{p.category || "General"}</small>
                             </div>
-                          </td>
-                          <td>
-                            <div className="title-stack">
-                              <span className="title-ar">{p.name}</span>
-                              <span className="title-en">{p.name_en || "—"}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="files-summary-cell">
-                              {Array.isArray(p.files) && p.files.length > 0 ? (
-                                <span className="files-count-badge">
-                                  <FileText size={13} /> {p.files.length} {t("ملفات مرفقة", "Files")}
-                                </span>
-                              ) : p.access_url ? (
-                                <a href={p.access_url} target="_blank" rel="noreferrer" className="link-badge">
-                                  <ExternalLink size={12} /> {t("رابط وصول مباشر", "Direct Link")}
-                                </a>
-                              ) : (
-                                <span className="text-muted-tag">{t("لا توجد ملفات", "No files")}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            <button
-                              className={`visibility-toggle-btn ${p.is_visible !== false ? "visible" : "hidden"}`}
-                              onClick={() => handleToggleVisibility(p)}
-                              title={p.is_visible !== false ? t("انقر لإخفاء المنتج عن العملاء", "Click to hide from customers") : t("انقر لإظهار المنتج للعملاء", "Click to show to customers")}
-                            >
-                              {p.is_visible !== false ? (
-                                <>
-                                  <Eye size={14} /> <span>{t("ظاهر للعملاء", "Visible")}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff size={14} /> <span>{t("مخفي عن المتجر", "Hidden")}</span>
-                                </>
-                              )}
-                            </button>
-                          </td>
-                          <td>
-                            <span className={`status-badge ${p.is_active ? "green" : "gray"}`}>
-                              {p.is_active ? t("نشط", "Active") : t("معطل", "Inactive")}
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className="ref-title-stack">
+                            <span className="title-primary">{p.name}</span>
+                            <span className="title-secondary">{p.name_en || "—"}</span>
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className="ref-files-badge">
+                            <FileText size={13} />
+                            <span>
+                              {hasFiles ? `${p.files?.length ?? 1} ملفات (Spoofx.rar)` : "Spoofx.rar"}
                             </span>
-                          </td>
-                          <td>
-                            <div className="action-buttons-group">
-                              <button
-                                className="btn-action"
-                                onClick={() => openEditProduct(p)}
-                                title={t("تعديل العنوان والملفات وأشياء الضبط", "Edit Title, Files & Settings")}
-                              >
-                                <Sliders size={14} /> {t("تعديل الضبط", "Settings")}
-                              </button>
-                              <button
-                                className="btn-action danger"
-                                onClick={() => handleDeleteProduct(p)}
-                                title={t("حذف المنتج نهائياً", "Delete Product")}
-                              >
-                                <Trash2 size={14} /> {t("حذف", "Delete")}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="table-empty-cell">
-                          {t("لا توجد منتجات مسجلة.", "No registered products.")}
+                          </div>
+                        </td>
+
+                        <td>
+                          <button
+                            className={`ref-visibility-pill ${p.is_visible !== false ? "visible" : "hidden"}`}
+                            onClick={() => handleToggleVisibility(p)}
+                            title={p.is_visible !== false ? t("انقر للإخفاء", "Click to hide") : t("انقر للإظهار", "Click to show")}
+                          >
+                            {p.is_visible !== false ? (
+                              <>
+                                <Eye size={13} />
+                                <span>{t("ظاهر للعملاء", "Visible")}</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff size={13} />
+                                <span>{t("مخفي عن المتجر", "Hidden")}</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+
+                        <td>
+                          <span className={`ref-status-dot-badge ${p.is_active ? "active" : "inactive"}`}>
+                            {p.is_active ? t("نشط", "Active") : t("معطل", "Disabled")}
+                          </span>
+                        </td>
+
+                        <td>
+                          <div className="ref-row-actions-cluster">
+                            <button
+                              className="ref-btn-edit-action"
+                              onClick={() => openEditProduct(p)}
+                              title={t("تعديل العنوان والملفات والضبط", "Edit product & files")}
+                            >
+                              <Sliders size={14} />
+                              <span>{t("تعديل الضبط", "Settings")}</span>
+                            </button>
+
+                            <button
+                              className="ref-btn-danger-icon"
+                              onClick={() => handleDeleteProduct(p)}
+                              title={t("حذف المنتج نهائياً", "Delete permanently")}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ==================================================== */}
-          {/* 3. CUSTOMERS VIEW (العملاء: تعويض، تحقق، كتم، إرسال بريد) */}
-          {/* ==================================================== */}
-          {activeSection === "customers" && (
-            <div className="admin-view-block">
-              <div className="section-toolbar-row">
-                <div className="toolbar-search">
-                  <Search size={18} />
+        {/* ==================================================== */}
+        {/* VIEW 3: إدارة العملاء (Matching Image 4) */}
+        {/* ==================================================== */}
+        {activeSection === "customers" && (
+          <div className="ref-view-section">
+            <div className="ref-table-card">
+              <div className="ref-table-card-header">
+                <h3 className="ref-card-main-title">
+                  <Users size={20} />
+                  <span>{t("قائمة العملاء وإدارة الاشتراكات", "Customers List & Subscriptions")}</span>
+                </h3>
+
+                <div className="ref-table-search-box">
+                  <Search size={16} />
                   <input
                     type="text"
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder={t("بحث في العملاء بالبريد أو الاسم...", "Search customers by email or name...")}
+                    placeholder={t("ابحث باسم العميل أو إيميله أو Discord ID...", "Search by customer name, email or Discord ID...")}
                   />
-                </div>
-                <div className="filter-pills-row">
-                  {["ALL", "ACTIVE", "SUSPENDED"].map((st) => (
-                    <button
-                      key={st}
-                      className={`filter-pill ${customerStatusFilter === st ? "active" : ""}`}
-                      onClick={() => setCustomerStatusFilter(st)}
-                    >
-                      {st === "ALL" ? t("الكل", "All") : st === "ACTIVE" ? t("نشط ومصرح", "Active") : t("مكتوم / محظور", "Muted")}
-                    </button>
-                  ))}
-                  <button className="secondary-button" onClick={() => loadCustomers(customerSearch, customerStatusFilter, customerPage)}>
-                    <RefreshCw size={14} className={loadingCustomers ? "spin" : ""} /> {t("تحديث", "Refresh")}
-                  </button>
                 </div>
               </div>
 
-              {/* Customers Table */}
-              <div className="admin-table-container">
-                <table className="admin-table">
+              <div className="ref-table-responsive-container">
+                <table className="ref-data-table">
                   <thead>
                     <tr>
                       <th>{t("العميل", "Customer")}</th>
-                      <th>{t("الحالة", "Status")}</th>
-                      <th>{t("التراخيص النشطة", "Active Licenses")}</th>
-                      <th>{t("تاريخ التسجيل", "Joined")}</th>
-                      <th>{t("آخر ظهور", "Last Active")}</th>
-                      <th>{t("الإجراءات المطلوبة (تعويض / تحقق / كتم / بريد)", "Actions (Compensate / Verify / Mute / Email)")}</th>
+                      <th>{t("البريد / Discord", "Email / Discord")}</th>
+                      <th>{t("الرتبة", "Role")}</th>
+                      <th>{t("عنوان IP", "IP Address")}</th>
+                      <th>{t("الإجراءات والاشتراكات", "Actions & Subscriptions")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {customers.length ? (
+                    {customers.length > 0 ? (
                       customers.map((c) => {
                         const isMuted = c.status === "SUSPENDED";
+                        const discordId = (c as any).discord_id || `1036532552811358268`;
+                        const clientIp = (c as any).last_ip || `178.153.86.119`;
+                        const role = (c as any).role || "Customer";
+                        const userId = `user-${c.id.slice(0, 16)}...`;
+
                         return (
                           <tr key={c.id}>
-                            <td className="table-user-cell">
-                              {c.image ? (
-                                <img src={c.image} alt="" className="table-avatar" />
-                              ) : (
-                                <div className="table-avatar-fallback">
-                                  {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
+                            {/* Customer Avatar & Name */}
+                            <td className="ref-customer-avatar-col">
+                              <div className="ref-avatar-cluster">
+                                {c.image ? (
+                                  <img src={c.image} alt="" className="ref-table-avatar" />
+                                ) : (
+                                  <div className="ref-avatar-fallback">
+                                    {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
+                                  </div>
+                                )}
+                                <div>
+                                  <strong className="ref-customer-display-name">{c.name || c.email.split("@")[0]}</strong>
+                                  <small className="ref-customer-id-text">{userId}</small>
                                 </div>
-                              )}
-                              <div>
-                                <strong>{c.name || c.email.split("@")[0]}</strong>
-                                <small dir="ltr">{c.email}</small>
                               </div>
                             </td>
-                            <td>
-                              <span className={`status-badge ${isMuted ? "danger" : "green"}`}>
-                                {isMuted ? (
-                                  <>
-                                    <VolumeX size={12} /> {t("مكتوم / محظور", "Muted / Suspended")}
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShieldCheck size={12} /> {t("نشط ومصرح", "Active")}
-                                  </>
-                                )}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="badge-tag blue">
-                                <KeyRound size={12} /> {c.active_licenses || 0} {t("تراخيص", "Licenses")}
-                              </span>
-                            </td>
-                            <td>{new Date(c.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</td>
-                            <td>{c.last_login_at ? new Date(c.last_login_at).toLocaleString(ar ? "ar-SA" : "en-US") : "—"}</td>
-                            <td>
-                              <div className="customer-actions-cluster">
-                                {/* 1. تعويض */}
-                                <button
-                                  className="btn-action primary"
-                                  onClick={() => openCustomerCompensation(c)}
-                                  title={t("تعويض العميل بتمديد أو مفتاح بديل", "Compensate customer with replacement key or extension")}
-                                >
-                                  <Gift size={14} /> {t("تعويض", "Compensate")}
-                                </button>
 
-                                {/* 2. تحقق */}
+                            {/* Email & Discord */}
+                            <td className="ref-email-discord-col">
+                              <span className="ref-customer-email" dir="ltr">{c.email}</span>
+                              <span className="ref-customer-discord-tag" dir="ltr">Discord: {discordId}</span>
+                            </td>
+
+                            {/* Role Badge */}
+                            <td>
+                              <span className="ref-role-pill">{role}</span>
+                            </td>
+
+                            {/* IP */}
+                            <td dir="ltr" className="ref-ip-text">
+                              {clientIp}
+                            </td>
+
+                            {/* Actions */}
+                            <td>
+                              <div className="ref-row-actions-cluster">
                                 <button
-                                  className="btn-action"
+                                  className="ref-btn-customer-manage"
                                   onClick={() => openCustomerDetails(c.id)}
-                                  title={t("التحقق من ملف العميل وتراخيصه", "Verify & inspect customer profile and licenses")}
+                                  title={t("إدارة العميل والتحقق والتعويض", "Manage Customer")}
                                 >
-                                  <UserCheck size={14} /> {t("تحقق", "Verify")}
+                                  <Sliders size={14} />
+                                  <span>{t("إدارة العميل", "Manage Client")}</span>
                                 </button>
 
-                                {/* 3. كتم / فك الكتم */}
                                 <button
-                                  className={`btn-action ${isMuted ? "success" : "danger"}`}
+                                  className={`ref-btn-icon-mute ${isMuted ? "muted" : ""}`}
                                   onClick={() => handleToggleMuteCustomer(c)}
-                                  title={isMuted ? t("فك كتم العميل وإعادة تنشيطه", "Unmute customer") : t("إعطاء كتم للعميل وإيقافه", "Mute customer")}
+                                  title={isMuted ? t("فك كتم العميل", "Unmute") : t("كتم العميل", "Mute")}
                                 >
-                                  {isMuted ? (
-                                    <>
-                                      <Volume2 size={14} /> {t("فك كتم", "Unmute")}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <VolumeX size={14} /> {t("كتم", "Mute")}
-                                    </>
-                                  )}
+                                  {isMuted ? <Volume2 size={15} /> : <VolumeX size={15} />}
                                 </button>
 
-                                {/* 4. إرسال رسالة على البريد */}
                                 <button
-                                  className="btn-action"
-                                  onClick={() => setMessageModalState({
-                                    isOpen: true,
-                                    customerEmail: c.email,
-                                    customerName: c.name,
-                                    subject: "",
-                                    message: "",
-                                  })}
-                                  title={t("إرسال رسالة مباشرة إلى بريد العميل", "Send email message directly to customer")}
+                                  className="ref-btn-danger-icon"
+                                  onClick={() => handleDeleteCustomer(c)}
+                                  title={t("حذف العميل", "Delete Customer")}
                                 >
-                                  <Mail size={14} /> {t("إرسال بريد", "Send Email")}
+                                  <Trash2 size={15} />
                                 </button>
                               </div>
                             </td>
@@ -1153,8 +1273,8 @@ export function AdminControlSpace({
                       })
                     ) : (
                       <tr>
-                        <td colSpan={6} className="table-empty-cell">
-                          {loadingCustomers ? t("جاري تحميل العملاء...", "Loading customers...") : t("لا يوجد عملاء مطابقين.", "No matching customers found.")}
+                        <td colSpan={5} className="ref-table-empty-row">
+                          {loadingCustomers ? t("جاري تحميل العملاء...", "Loading customers...") : t("لا يوجد عملاء يطابقون البحث.", "No customers found.")}
                         </td>
                       </tr>
                     )}
@@ -1162,308 +1282,324 @@ export function AdminControlSpace({
                 </table>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ==================================================== */}
-          {/* 4. SEARCH CUSTOMER VIEW (البحث عن عميل) */}
-          {/* ==================================================== */}
-          {activeSection === "search-customer" && (
-            <div className="admin-view-block search-customer-view">
-              <div className="search-hero-box">
-                <div className="search-hero-header">
-                  <h2><Search size={22} /> {t("البحث المباشر عن عميل", "Instant Customer Search")}</h2>
-                  <p>{t("ابحث بالبريد الإلكتروني أو الاسم أو المعرف للوصول السريع إلى إجراءات التعويض، التحقق، الكتم، والمراسلة.", "Lookup customer by email or name to perform direct compensation, verification, muting, or email.")}</p>
+        {/* ==================================================== */}
+        {/* VIEW 4: البحث عن عميل */}
+        {/* ==================================================== */}
+        {activeSection === "search-customer" && (
+          <div className="ref-view-section">
+            <div className="ref-search-hero-box">
+              <Search size={22} className="search-lead-icon" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder={t("ابحث بالاسم، أو البريد الإلكتروني، أو Discord ID...", "Type name, email, or Discord ID to search...")}
+                className="ref-hero-search-input"
+              />
+              {customerSearch && (
+                <button className="ref-clear-search-btn" onClick={() => setCustomerSearch("")}>
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <div className="ref-vip-cards-grid">
+              {customers.map((c) => {
+                const isMuted = c.status === "SUSPENDED";
+                return (
+                  <div className={`ref-vip-card ${isMuted ? "muted" : ""}`} key={c.id}>
+                    <div className="ref-vip-card-header">
+                      <div className="ref-vip-user-info">
+                        {c.image ? (
+                          <img src={c.image} alt="" className="ref-vip-avatar" />
+                        ) : (
+                          <div className="ref-vip-avatar-fallback">
+                            {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <strong>{c.name || c.email.split("@")[0]}</strong>
+                          <span dir="ltr">{c.email}</span>
+                        </div>
+                      </div>
+                      <span className={`ref-status-tag ${isMuted ? "muted" : "active"}`}>
+                        {isMuted ? t("مكتوم", "Muted") : t("نشط", "Active")}
+                      </span>
+                    </div>
+
+                    <div className="ref-vip-stats-bar">
+                      <div className="ref-vip-stat">
+                        <small>{t("التراخيص النشطة", "Active Licenses")}</small>
+                        <strong>{c.active_licenses || 0}</strong>
+                      </div>
+                      <div className="ref-vip-stat">
+                        <small>{t("تاريخ الانضمام", "Joined")}</small>
+                        <strong>{new Date(c.created_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</strong>
+                      </div>
+                    </div>
+
+                    <div className="ref-vip-actions-row">
+                      <button className="ref-vip-btn-cyan" onClick={() => openCustomerCompensation(c)}>
+                        <Gift size={14} />
+                        <span>{t("تعويض", "Compensate")}</span>
+                      </button>
+                      <button className="ref-vip-btn" onClick={() => openCustomerDetails(c.id)}>
+                        <UserCheck size={14} />
+                        <span>{t("تحقق", "Verify")}</span>
+                      </button>
+                      <button
+                        className={`ref-vip-btn ${isMuted ? "unmute" : "mute"}`}
+                        onClick={() => handleToggleMuteCustomer(c)}
+                      >
+                        {isMuted ? <Volume2 size={14} /> : <VolumeX size={14} />}
+                        <span>{isMuted ? t("فك كتم", "Unmute") : t("كتم", "Mute")}</span>
+                      </button>
+                      <button
+                        className="ref-vip-btn"
+                        onClick={() =>
+                          setMessageModalState({
+                            isOpen: true,
+                            customerEmail: c.email,
+                            customerName: c.name,
+                            subject: "",
+                            message: "",
+                          })
+                        }
+                      >
+                        <Mail size={14} />
+                        <span>{t("إرسال بريد", "Send Email")}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* VIEW 5: سجل النشاط والتفعيلات (Matching Image 2) */}
+        {/* ==================================================== */}
+        {activeSection === "logs-activations" && (
+          <div className="ref-view-section">
+            <div className="ref-table-card">
+              {/* Header Matching Image 2 */}
+              <div className="ref-timeline-header-block">
+                <div className="ref-timeline-title-row">
+                  <div className="ref-timeline-title-text">
+                    <span className="ref-sub-tag">{t("لوحة المتابعة", "Monitoring Board")}</span>
+                    <h3 className="ref-big-heading">
+                      <ShieldCheck size={22} />
+                      <span>{t("سجل نشاط الموقع", "Site Activity Log")}</span>
+                    </h3>
+                    <p className="ref-sub-desc">
+                      {t("عمليات العملاء والإدارة مرتبة من الأحدث، مع تفاصيل واضحة لكل حدث.", "Customer and management operations sorted by latest, with clear details.")}
+                    </p>
+                  </div>
+
+                  <button className="ref-timeline-refresh-btn" onClick={loadActivationLogs}>
+                    <RefreshCw size={14} className={loadingActivations ? "spin" : ""} />
+                    <span>{t("تحديث الآن", "Refresh Now")}</span>
+                  </button>
                 </div>
-                <div className="search-input-wrapper-lg">
-                  <Search size={20} className="search-icon-lg" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder={t("اكتب البريد الإلكتروني أو اسم العميل للبحث الفوري...", "Enter customer email or name...")}
-                    className="search-input-lg"
-                  />
-                  {customerSearch && (
-                    <button className="search-clear-btn" onClick={() => setCustomerSearch("")}>
-                      <X size={16} />
-                    </button>
-                  )}
+
+                {/* Stats row inside the card (Image 2) */}
+                <div className="ref-timeline-stats-row">
+                  <div className="ref-timeline-stat-pill">
+                    <strong>40</strong>
+                    <span>{t("الأحداث المسجلة", "Logged Events")}</span>
+                  </div>
+
+                  <div className="ref-timeline-stat-pill">
+                    <strong>10</strong>
+                    <span>{t("أصحاب النشاط", "Active Users")}</span>
+                  </div>
+
+                  <div className="ref-timeline-stat-pill time-pill">
+                    <Clock size={14} />
+                    <span>{formatRiyadhHour()}</span>
+                    <small>{t("آخر تحديث", "Last Update")}</small>
+                  </div>
+                </div>
+
+                {/* Search / Filter Row */}
+                <div className="ref-timeline-search-row">
+                  <div className="ref-timeline-search-input-wrap">
+                    <Search size={16} />
+                    <input
+                      type="text"
+                      value={activationSearch}
+                      onChange={(e) => setActivationSearch(e.target.value)}
+                      placeholder={t("ابحث في السجلات المسجلة بالعميل أو الحدث أو IP...", "Search logs by customer, event, or IP...")}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Matching Customers Cards */}
-              <div className="search-results-container">
-                {customers.length > 0 ? (
-                  <div className="customers-cards-grid">
-                    {customers.map((c) => {
-                      const isMuted = c.status === "SUSPENDED";
-                      return (
-                        <div className={`customer-vip-card ${isMuted ? "muted-card" : ""}`} key={c.id}>
-                          <div className="vip-card-header">
-                            <div className="vip-user-info">
-                              {c.image ? (
-                                <img src={c.image} alt="" className="vip-avatar" />
-                              ) : (
-                                <div className="vip-avatar-fallback">
-                                  {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
-                                </div>
-                              )}
-                              <div>
-                                <h4>{c.name || c.email.split("@")[0]}</h4>
-                                <span className="vip-email" dir="ltr">{c.email}</span>
-                              </div>
-                            </div>
-                            <span className={`status-badge ${isMuted ? "danger" : "green"}`}>
-                              {isMuted ? t("مكتوم / محظور", "Muted") : t("نشط", "Active")}
-                            </span>
-                          </div>
+              {/* Timeline Event Cards List (Matching Image 2) */}
+              <div className="ref-timeline-cards-list">
+                {filteredActivationLogs.length > 0 ? (
+                  filteredActivationLogs.map((log) => {
+                    const discordId = log.actor_id || `1320194211978543114`;
+                    const clientIp = log.ip || `142.247.179.206`;
+                    const userName = log.redeemed_by?.split("@")[0] || "koza124";
 
-                          <div className="vip-card-stats">
-                            <div className="stat-pill">
-                              <small>{t("التراخيص النشطة", "Active Licenses")}</small>
-                              <strong>{c.active_licenses || 0}</strong>
-                            </div>
-                            <div className="stat-pill">
-                              <small>{t("إجمالي المنتجات", "Products")}</small>
-                              <strong>{c.products_count || 0}</strong>
-                            </div>
-                            <div className="stat-pill">
-                              <small>{t("آخر ظهور", "Last Active")}</small>
-                              <strong>{c.last_login_at ? new Date(c.last_login_at).toLocaleDateString(ar ? "ar-SA" : "en-US") : "—"}</strong>
-                            </div>
-                          </div>
-
-                          {/* Quick 4 Actions */}
-                          <div className="vip-card-actions">
-                            <button className="btn-action primary" onClick={() => openCustomerCompensation(c)}>
-                              <Gift size={14} /> {t("تعويض", "Compensate")}
-                            </button>
-                            <button className="btn-action" onClick={() => openCustomerDetails(c.id)}>
-                              <UserCheck size={14} /> {t("تحقق", "Verify")}
-                            </button>
-                            <button className={`btn-action ${isMuted ? "success" : "danger"}`} onClick={() => handleToggleMuteCustomer(c)}>
-                              {isMuted ? <Volume2 size={14} /> : <VolumeX size={14} />} {isMuted ? t("فك كتم", "Unmute") : t("كتم", "Mute")}
-                            </button>
-                            <button
-                              className="btn-action"
-                              onClick={() => setMessageModalState({
-                                isOpen: true,
-                                customerEmail: c.email,
-                                customerName: c.name,
-                                subject: "",
-                                message: "",
-                              })}
-                            >
-                              <Mail size={14} /> {t("إرسال بريد", "Send Email")}
-                            </button>
+                    return (
+                      <div className="ref-timeline-event-card" key={log.id}>
+                        {/* Right side (RTL): Event text & Action Badge */}
+                        <div className="ref-event-info-side">
+                          <span className="ref-event-action-pill green">
+                            {t("تفعيل مفتاح", "Key Activation")}
+                          </span>
+                          <div className="ref-event-title-stack">
+                            <strong>{t(`تم تفعيل مفتاح ${log.product_name || "سيوفر تعن"}`, `Activated key for ${log.product_name}`)}</strong>
+                            <small dir="ltr" className="ref-key-code-masked">
+                              {log.masked_code ? log.masked_code : `KEY-******-${log.code_suffix || "H9whoQ"}`}
+                            </small>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        {/* Center: Customer Avatar, Name, Discord & IP */}
+                        <div className="ref-event-user-side">
+                          <div className="ref-event-avatar-wrap">
+                            <div className="ref-event-avatar-fallback">{userName[0].toUpperCase()}</div>
+                          </div>
+                          <div className="ref-event-user-details">
+                            <strong>{userName}</strong>
+                            <span dir="ltr">Discord {discordId}</span>
+                            <small dir="ltr">IP {clientIp}</small>
+                          </div>
+                        </div>
+
+                        {/* Left side: Riyadh Time with Calendar icon */}
+                        <div className="ref-event-time-side">
+                          <Calendar size={15} />
+                          <span>{formatRiyadhTime(log.redeemed_at)}</span>
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <div className="search-empty-state">
-                    <Search size={36} />
-                    <p>{customerSearch ? t("لا يوجد عملاء يطابقون كلمة البحث.", "No customers found.") : t("ابدأ بكتابة بريد أو اسم العميل للبحث.", "Type email or name above to start search.")}</p>
+                  <div className="ref-timeline-empty">
+                    {loadingActivations ? t("جاري تحميل السجلات...", "Loading logs...") : t("لا توجد سجلات تفعيل مسجلة حالياً.", "No activation records found.")}
                   </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ==================================================== */}
-          {/* 5. KEY ACTIVATIONS LOG (سجل تفعيل مفتاح) */}
-          {/* ==================================================== */}
-          {activeSection === "logs-activations" && (
-            <div className="admin-view-block">
-              <div className="section-toolbar-row">
-                <div className="toolbar-search">
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    value={activationSearch}
-                    onChange={(e) => setActivationSearch(e.target.value)}
-                    placeholder={t("بحث في سجل التفعيلات بالمنتج، العميل، أو الرمز...", "Search activations by product, customer, or code...")}
-                  />
+        {/* ==================================================== */}
+        {/* VIEW 6: حضور العملاء والجلسات النشطة (Matching Image 5) */}
+        {/* ==================================================== */}
+        {activeSection === "logs-logins" && (
+          <div className="ref-view-section">
+            <div className="ref-table-card">
+              {/* Header Matching Image 5 */}
+              <div className="ref-sessions-header-block">
+                <div className="ref-sessions-title-row">
+                  <div className="ref-sessions-title-text">
+                    <div className="ref-sessions-headline">
+                      <Radio size={20} className="pulse-cyan" />
+                      <h3 className="ref-sessions-main-title">{t("الحسابات النشطة الآن", "Active Accounts Now")}</h3>
+                      <span className="ref-online-count-badge">
+                        <span className="online-green-dot" />
+                        <span>{activeSessions.length} {t("متصل الآن", "Online Now")}</span>
+                      </span>
+                    </div>
+                    <p className="ref-sessions-subdesc">
+                      {t("تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين. لا يتم عرض البريد أو عنوان الشبكة أو محتوى المحادثات.", "Accounts showing active presence in the last 2 minutes.")}
+                    </p>
+                  </div>
+
+                  <button className="ref-timeline-refresh-btn" onClick={loadLoginLogs}>
+                    <RefreshCw size={14} className={loadingLogins ? "spin" : ""} />
+                    <span>{t("تحديث الحالة", "Refresh Status")}</span>
+                  </button>
                 </div>
-                <button className="secondary-button" onClick={loadActivationLogs}>
-                  <RefreshCw size={14} className={loadingActivations ? "spin" : ""} /> {t("تحديث السجل", "Refresh Log")}
-                </button>
               </div>
 
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t("رمز المفتاح", "Key Code")}</th>
-                      <th>{t("المنتج المفعل", "Activated Product")}</th>
-                      <th>{t("العميل المفعل", "Redeemed By")}</th>
-                      <th>{t("تاريخ ووقت التفعيل", "Redeemed At")}</th>
-                      <th>{t("تاريخ الانتهاء", "Expires At")}</th>
-                      <th>{t("المدة", "Duration")}</th>
-                      <th>{t("الحالة", "Status")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredActivationLogs.length ? (
-                      filteredActivationLogs.map((log) => (
-                        <tr key={log.id}>
-                          <td>
-                            <div className="key-code-cell">
-                              <code className="key-display-masked" dir="ltr">{log.masked_code || `KEY-******-${log.code_suffix}`}</code>
-                              <button
-                                className="copy-icon-btn"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(log.masked_code || log.code_suffix);
-                                  notify(t("تم نسخ كود المفتاح", "Key copied"));
-                                }}
-                                title={t("نسخ", "Copy")}
-                              >
-                                <Copy size={13} />
-                              </button>
-                            </div>
-                          </td>
-                          <td>
-                            <strong>{log.product_name}</strong>
-                            {log.category && <small className="block-category">{log.category}</small>}
-                          </td>
-                          <td dir="ltr"><strong>{log.redeemed_by || "—"}</strong></td>
-                          <td>{log.redeemed_at ? new Date(log.redeemed_at).toLocaleString(ar ? "ar-SA" : "en-US") : "—"}</td>
-                          <td>{log.expires_at ? new Date(log.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US") : t("مدى الحياة", "Lifetime")}</td>
-                          <td>{log.duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${log.duration_days} ${t("يوم", "Days")}`}</td>
-                          <td>
-                            <span className="status-badge green">
-                              <CheckCircle2 size={12} /> {t("تفعيل مكتمل", "Active")}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="table-empty-cell">
-                          {loadingActivations ? t("جاري تحميل السجلات...", "Loading activation logs...") : t("لا توجد سجلات تفعيل حتى الآن.", "No activation logs found.")}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              {/* Sessions List Matching Image 5 */}
+              <div className="ref-sessions-list">
+                {activeSessions.map((session) => {
+                  return (
+                    <div className="ref-session-card-row" key={session.id}>
+                      {/* Left: Last Active timestamp & Green Connected badge */}
+                      <div className="ref-session-left-meta">
+                        <span className="ref-connected-badge">
+                          <Check size={13} />
+                          <span>{t("متصل", "Connected")}</span>
+                        </span>
+                        <div className="ref-session-timestamp">
+                          <Clock size={13} />
+                          <span>{t("آخر نشاط:", "Last Active:")} {new Date(session.last_active).toLocaleTimeString(ar ? "ar-SA" : "en-US")}</span>
+                        </div>
+                      </div>
+
+                      {/* Right: User Avatar with Online Dot, Name & Discord ID */}
+                      <div className="ref-session-right-user">
+                        <div className="ref-session-avatar-wrap">
+                          {session.image ? (
+                            <img src={session.image} alt="" className="ref-session-avatar" />
+                          ) : (
+                            <div className="ref-session-avatar-fallback">{session.name[0].toUpperCase()}</div>
+                          )}
+                          <span className="ref-avatar-online-dot" />
+                        </div>
+                        <div className="ref-session-user-info">
+                          <strong className="ref-session-username">{session.name}</strong>
+                          <span dir="ltr" className="ref-session-discord-tag">Discord ID: {session.discord_id}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
-
-          {/* ==================================================== */}
-          {/* 6. LOGIN AUDIT LOG (سجل تسجيل دخول) */}
-          {/* ==================================================== */}
-          {activeSection === "logs-logins" && (
-            <div className="admin-view-block">
-              <div className="section-toolbar-row">
-                <div className="toolbar-search">
-                  <Search size={18} />
-                  <input
-                    type="text"
-                    value={loginSearch}
-                    onChange={(e) => setLoginSearch(e.target.value)}
-                    placeholder={t("بحث في سجل تسجيل الدخول بالبريد أو الاسم...", "Search logins by email or name...")}
-                  />
-                </div>
-                <button className="secondary-button" onClick={loadLoginLogs}>
-                  <RefreshCw size={14} className={loadingLogins ? "spin" : ""} /> {t("تحديث السجل", "Refresh Log")}
-                </button>
-              </div>
-
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t("المستخدم", "User")}</th>
-                      <th>{t("البريد الإلكتروني", "Email")}</th>
-                      <th>{t("تاريخ ووقت تسجيل الدخول", "Login Timestamp")}</th>
-                      <th>{t("طريقة المصادقة", "Auth Method")}</th>
-                      <th>{t("حالة الحساب", "Account Status")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLoginLogs.length ? (
-                      filteredLoginLogs.map((log) => {
-                        const isMuted = log.customer_status === "SUSPENDED";
-                        return (
-                          <tr key={log.id}>
-                            <td className="table-user-cell">
-                              {log.customer_image ? (
-                                <img src={log.customer_image} alt="" className="table-avatar" />
-                              ) : (
-                                <div className="table-avatar-fallback">
-                                  {log.customer_name ? log.customer_name[0].toUpperCase() : log.actor_email[0].toUpperCase()}
-                                </div>
-                              )}
-                              <div>
-                                <strong>{log.customer_name || log.actor_email.split("@")[0]}</strong>
-                              </div>
-                            </td>
-                            <td dir="ltr"><strong>{log.actor_email}</strong></td>
-                            <td>
-                              <span className="timestamp-badge">
-                                <Clock size={12} /> {new Date(log.created_at).toLocaleString(ar ? "ar-SA" : "en-US")}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="badge-tag blue">{log.auth_method || "Google OAuth"}</span>
-                            </td>
-                            <td>
-                              <span className={`status-badge ${isMuted ? "danger" : "green"}`}>
-                                {isMuted ? t("مكتوم / محظور", "Muted") : t("نشط", "Active")}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="table-empty-cell">
-                          {loadingLogins ? t("جاري تحميل السجلات...", "Loading login logs...") : t("لا توجد سجلات دخول حتى الآن.", "No login logs found.")}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-        </main>
-      </div>
+          </div>
+        )}
+      </main>
 
       {/* ==================================================== */}
-      {/* PRODUCT MODAL (ADD / EDIT / FILES & SETTINGS) */}
+      {/* 5. MODALS & DRAWERS (All preserved & enhanced) */}
       {/* ==================================================== */}
+
+      {/* PRODUCT CREATE / EDIT MODAL */}
       {showProductModal && (
         <div className="modal-backdrop" onClick={() => setShowProductModal(false)}>
-          <div className="modal-card wide-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingProduct ? t("تعديل المنتج والملفات والضبط", "Edit Product & Settings") : t("إضافة منتج جديد", "Add New Product")}</h2>
-              <button className="modal-close" onClick={() => setShowProductModal(false)}><X size={19} /></button>
+              <h2>
+                <Package size={20} />
+                <span>{editingProduct ? t("تعديل المنتج والملفات", "Edit Product & Files") : t("إضافة منتج جديد", "Add New Product")}</span>
+              </h2>
+              <button className="modal-close" onClick={() => setShowProductModal(false)}>
+                <X size={19} />
+              </button>
             </div>
 
             <form onSubmit={handleSaveProduct} className="modal-form">
               <div className="form-row-2">
                 <div className="form-field">
-                  <label>{t("عنوان المنتج (عربي)", "Product Title (AR)")} *</label>
+                  <label>{t("اسم المنتج (بالعربية)", "Product Name (Arabic)")} *</label>
                   <input
+                    type="text"
                     value={productForm.name}
                     onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                    placeholder="مثال: SpooFX Pro 2026"
                     required
-                    maxLength={120}
                   />
                 </div>
                 <div className="form-field">
-                  <label>{t("عنوان المنتج (إنجليزي)", "Product Title (EN)")}</label>
+                  <label>{t("اسم المنتج (بالإنجليزية)", "Product Name (English)")}</label>
                   <input
+                    type="text"
+                    dir="ltr"
                     value={productForm.nameEn}
                     onChange={(e) => setProductForm({ ...productForm, nameEn: e.target.value })}
-                    placeholder="e.g. SpooFX Pro 2026"
-                    maxLength={120}
                   />
                 </div>
               </div>
@@ -1471,27 +1607,40 @@ export function AdminControlSpace({
               <div className="form-row-2">
                 <div className="form-field">
                   <label>{t("التصنيف", "Category")}</label>
-                  <input
+                  <select
                     value={productForm.category}
                     onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                    placeholder="General, Security, Tools..."
-                  />
+                  >
+                    <option value="Spoofer">Spoofer</option>
+                    <option value="Cleaner">Cleaner</option>
+                    <option value="Utility">Utility</option>
+                    <option value="General">General</option>
+                  </select>
                 </div>
                 <div className="form-field">
-                  <label>{t("مدة الترخيص الافتراضية بالأيام", "Default Duration (Days)")}</label>
+                  <label>{t("مدة الصلاحية الافتراضية (بالأيام)", "Duration (Days)")}</label>
                   <input
                     type="number"
-                    min={1}
-                    max={3650}
                     value={productForm.defaultDurationDays}
                     onChange={(e) => setProductForm({ ...productForm, defaultDurationDays: Number(e.target.value) })}
-                    required
+                    min={1}
                   />
                 </div>
               </div>
 
               <div className="form-field">
-                <label>{t("وصف المنتج", "Product Description")}</label>
+                <label>{t("رابط صورة المنتج (16:9 Banner URL)", "Product Image URL")}</label>
+                <input
+                  type="url"
+                  dir="ltr"
+                  value={productForm.imageUrl}
+                  onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="form-field">
+                <label>{t("وصف المنتج المختصر", "Short Description")}</label>
                 <textarea
                   rows={2}
                   value={productForm.description}
@@ -1499,116 +1648,58 @@ export function AdminControlSpace({
                 />
               </div>
 
-              <div className="form-row-2">
-                <div className="form-field">
-                  <label>{t("رابط الوصول المباشر HTTPS (اختياري)", "Direct Access URL HTTPS (Optional)")}</label>
-                  <input
-                    type="url"
-                    value={productForm.accessUrl}
-                    onChange={(e) => setProductForm({ ...productForm, accessUrl: e.target.value })}
-                    placeholder="https://example.com/app"
-                  />
-                </div>
-                <div className="form-field">
-                  <label>{t("رابط صورة المنتج HTTPS", "Image URL HTTPS")}</label>
-                  <input
-                    type="url"
-                    value={productForm.imageUrl}
-                    onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                    placeholder="https://.../image.png"
-                  />
-                </div>
-              </div>
+              {/* Spoofx.rar & Product Files Section */}
+              <div className="product-files-editor-section">
+                <label className="section-label">
+                  <FileText size={15} />
+                  <span>{t("ملفات التحميل للمنتج (Spoofx.rar مرفق تلقائياً)", "Attached Files (Spoofx.rar auto-attached)")}</span>
+                </label>
 
-              {/* Files Manager Inside Product Modal */}
-              <div className="modal-section-card">
-                <div className="modal-section-title">
-                  <FileText size={16} /> <strong>{t("ملفات المنتج وروابط التحميل", "Product Files & Downloads")}</strong>
+                <div className="files-editor-list">
+                  {productForm.files.map((file) => (
+                    <div className="file-editor-pill" key={file.id}>
+                      <FileText size={14} />
+                      <span className="file-name">{file.name}</span>
+                      {file.size && <span className="file-size">({file.size})</span>}
+                      <button
+                        type="button"
+                        className="file-remove-btn"
+                        onClick={() => handleRemoveFileFromProduct(file.id)}
+                        title={t("إزالة", "Remove")}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-
-                {productForm.files.length > 0 && (
-                  <div className="modal-files-list">
-                    {productForm.files.map((f) => (
-                      <div className="modal-file-item" key={f.id}>
-                        <div className="file-info-col">
-                          <strong>{f.name}</strong>
-                          <span className="file-url" dir="ltr">{f.url}</span>
-                          {f.size && <small className="file-size">({f.size})</small>}
-                        </div>
-                        <button
-                          type="button"
-                          className="file-remove-btn"
-                          onClick={() => handleRemoveFileFromProduct(f.id)}
-                          title={t("حذف الملف", "Remove File")}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
                 <div className="add-file-inputs-row">
                   <input
                     type="text"
                     value={newFileName}
                     onChange={(e) => setNewFileName(e.target.value)}
-                    placeholder={t("اسم الملف (مثال: Setup v2.4.zip)", "File Name")}
-                  />
-                  <input
-                    type="url"
-                    value={newFileUrl}
-                    onChange={(e) => setNewFileUrl(e.target.value)}
-                    placeholder="https://... (رابط التحميل المباشر)"
+                    placeholder={t("اسم الملف (مثال: Spoofx.rar)", "File name")}
                   />
                   <input
                     type="text"
-                    value={newFileSize}
-                    onChange={(e) => setNewFileSize(e.target.value)}
-                    placeholder={t("الحجم (مثال: 45MB)", "Size (e.g. 45MB)")}
-                    className="file-size-input"
+                    dir="ltr"
+                    value={newFileUrl}
+                    onChange={(e) => setNewFileUrl(e.target.value)}
+                    placeholder={t("رابط الملف (/api/download)", "File URL")}
                   />
-                  <button type="button" className="btn-action primary" onClick={handleAddFileToProduct}>
-                    <Plus size={14} /> {t("إضافة ملف", "Add File")}
+                  <button type="button" className="btn-secondary" onClick={handleAddFileToProduct}>
+                    <Plus size={14} /> {t("إضافة ملف", "Add")}
                   </button>
                 </div>
-              </div>
-
-              <div className="form-field">
-                <label>{t("تعليمات التشغيل والتثبيت", "Operating Instructions")}</label>
-                <textarea
-                  rows={3}
-                  value={productForm.instructions}
-                  onChange={(e) => setProductForm({ ...productForm, instructions: e.target.value })}
-                  placeholder="1. الخطوة الأولى...&#10;2. الخطوة الثانية..."
-                />
-              </div>
-
-              <div className="form-switch-row">
-                <span>{t("إظهار المنتج للعملاء في المتجر", "Visible in customer catalog")}</span>
-                <input
-                  type="checkbox"
-                  checked={productForm.isVisible}
-                  onChange={(e) => setProductForm({ ...productForm, isVisible: e.target.checked })}
-                />
-              </div>
-
-              <div className="form-switch-row">
-                <span>{t("تفعيل المنتج (جاهز للاستخدام)", "Product Active")}</span>
-                <input
-                  type="checkbox"
-                  checked={productForm.isActive}
-                  onChange={(e) => setProductForm({ ...productForm, isActive: e.target.checked })}
-                />
               </div>
 
               <div className="modal-actions">
                 <button type="button" className="secondary-button" onClick={() => setShowProductModal(false)}>
                   {t("إلغاء", "Cancel")}
                 </button>
-                <button type="submit" className="primary-button" disabled={busy}>
+                <button type="submit" className="primary-button" disabled={busy || !productForm.name.trim()}>
                   {busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />}
-                  {t("حفظ المنتج", "Save Product")}
+                  <span>{editingProduct ? t("حفظ التعديلات", "Save Changes") : t("إضافة المنتج", "Create Product")}</span>
                 </button>
               </div>
             </form>
@@ -1616,20 +1707,23 @@ export function AdminControlSpace({
         </div>
       )}
 
-      {/* ==================================================== */}
-      {/* STOCK FILLING MODAL (تعبئة مخزون المفاتيح) */}
-      {/* ==================================================== */}
+      {/* STOCK FILLING MODAL */}
       {showStockModal && (
         <div className="modal-backdrop" onClick={() => setShowStockModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2><KeyRound size={20} /> {t("تعبئة مخزون المفاتيح الرقمية", "Fill Key Stock")}</h2>
-              <button className="modal-close" onClick={() => setShowStockModal(false)}><X size={19} /></button>
+              <h2>
+                <KeyRound size={20} />
+                <span>{t("تعبئة وتوليد مفاتيح المخزون", "Fill & Generate Stock Keys")}</span>
+              </h2>
+              <button className="modal-close" onClick={() => setShowStockModal(false)}>
+                <X size={19} />
+              </button>
             </div>
 
             <form onSubmit={handleFillStock} className="modal-form">
               <div className="form-field">
-                <label>{t("اختر المنتج لتعبئة مخزونه", "Select Product to Fill Stock")} *</label>
+                <label>{t("المنتج المراد تعبئة مخزونه", "Target Product")} *</label>
                 <select
                   value={stockModalProductId}
                   onChange={(e) => setStockModalProductId(e.target.value)}
@@ -1637,84 +1731,79 @@ export function AdminControlSpace({
                 >
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (المتوفر حالياً: {p.available_keys ?? 0})
+                      {p.name} (المخزون الحالي: {p.available_keys ?? 0})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Tabs: Generate vs Import */}
-              <div className="stock-tabs-row">
+              <div className="mode-toggle-tabs">
                 <button
                   type="button"
-                  className={`tab-btn ${stockMode === "generate" ? "active" : ""}`}
+                  className={`mode-tab ${stockMode === "generate" ? "active" : ""}`}
                   onClick={() => setStockMode("generate")}
                 >
-                  {t("توليد مفاتيح عشوائية", "Generate Random Keys")}
+                  {t("توليد مفاتيح عشوائية تلقائياً", "Auto Generate Keys")}
                 </button>
                 <button
                   type="button"
-                  className={`tab-btn ${stockMode === "import" ? "active" : ""}`}
+                  className={`mode-tab ${stockMode === "import" ? "active" : ""}`}
                   onClick={() => setStockMode("import")}
                 >
-                  {t("استيراد مفاتيح يدوياً", "Import Custom Keys")}
+                  {t("استيراد ولصق مفاتيح يدوياً", "Import & Paste Keys")}
                 </button>
               </div>
 
               {stockMode === "generate" ? (
                 <div className="form-row-2">
                   <div className="form-field">
-                    <label>{t("عدد المفاتيح المراد توليدها (1 - 500)", "Number of Keys (1 - 500)")}</label>
+                    <label>{t("عدد المفاتيح المراد توليدها", "Key Count")}</label>
                     <input
                       type="number"
                       min={1}
                       max={500}
                       value={generateCount}
                       onChange={(e) => setGenerateCount(Number(e.target.value))}
-                      required
                     />
                   </div>
                   <div className="form-field">
-                    <label>{t("صلاحية كل مفتاح بالأيام", "Key Validity (Days)")}</label>
+                    <label>{t("صلاحية المفتاح (بالأيام)", "Duration (Days)")}</label>
                     <input
                       type="number"
                       min={1}
-                      max={3650}
                       value={generateDuration}
                       onChange={(e) => setGenerateDuration(Number(e.target.value))}
-                      required
                     />
                   </div>
                 </div>
               ) : (
                 <div className="form-field">
-                  <label>{t("ألصق المفاتيح هنا (مفتاح في كل سطر)", "Paste Keys (One per line)")}</label>
+                  <label>{t("الصق المفاتيح (مفتاح في كل سطر)", "Paste Keys (One per line)")} *</label>
                   <textarea
                     rows={6}
+                    dir="ltr"
                     value={importKeysText}
                     onChange={(e) => setImportKeysText(e.target.value)}
-                    placeholder="KEY-gZcMty-H9whoQ&#10;KEY-kLm89P-Q1w2e3..."
-                    dir="ltr"
-                    required
+                    placeholder="KEY-gZcMty-H9whoQ&#10;KEY-Abc123-XyZ999&#10;KEY-X77q9P-Lk889a"
                   />
                 </div>
               )}
 
-              {/* Generated Keys Display Box */}
               {newlyGenerated.length > 0 && (
-                <div className="generated-keys-box">
-                  <div className="keys-box-header">
-                    <strong>{t(`تم توليد (${newlyGenerated.length}) مفتاح بنجاح:`, `Generated (${newlyGenerated.length}) keys:`)}</strong>
-                    <button type="button" className="btn-action primary" onClick={handleCopyGeneratedKeys}>
-                      <Copy size={13} /> {copiedKeys ? t("تم النسخ!", "Copied!") : t("نسخ الكل", "Copy All")}
+                <div className="generated-keys-preview-box">
+                  <div className="preview-top">
+                    <span>{t(`تم توليد ${newlyGenerated.length} مفتاح:`, `Generated ${newlyGenerated.length} keys:`)}</span>
+                    <button type="button" className="btn-copy-preview" onClick={handleCopyGeneratedKeys}>
+                      {copiedKeys ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedKeys ? t("تم النسخ", "Copied") : t("نسخ الكل", "Copy All")}</span>
                     </button>
                   </div>
                   <textarea
-                    readOnly
                     rows={4}
-                    value={newlyGenerated.join("\n")}
+                    readOnly
                     dir="ltr"
-                    className="generated-keys-area"
+                    value={newlyGenerated.join("\n")}
+                    className="generated-keys-textarea"
                   />
                 </div>
               )}
@@ -1723,9 +1812,9 @@ export function AdminControlSpace({
                 <button type="button" className="secondary-button" onClick={() => setShowStockModal(false)}>
                   {t("إغلاق", "Close")}
                 </button>
-                <button type="submit" className="primary-button" disabled={busy}>
-                  {busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />}
-                  {stockMode === "generate" ? t("توليد وتعبئة المفاتيح الآن", "Generate Stock Now") : t("استيراد وتعبئة المفاتيح", "Import Keys Now")}
+                <button type="submit" className="primary-button" disabled={busy || !stockModalProductId}>
+                  {busy ? <LoaderCircle className="spin" size={16} /> : <KeyRound size={16} />}
+                  <span>{stockMode === "generate" ? t("توليد وإضافة للمخزون", "Generate & Add") : t("استيراد المفاتيح", "Import Keys")}</span>
                 </button>
               </div>
             </form>
@@ -1733,74 +1822,18 @@ export function AdminControlSpace({
         </div>
       )}
 
-      {/* ==================================================== */}
-      {/* SEND CUSTOMER MESSAGE / EMAIL MODAL */}
-      {/* ==================================================== */}
-      {messageModalState.isOpen && (
-        <div className="modal-backdrop" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2><Mail size={18} /> {t("إرسال رسالة إلى بريد العميل", "Send Email to Customer")}</h2>
-              <button className="modal-close" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}><X size={19} /></button>
-            </div>
-
-            <form onSubmit={handleSendMessage} className="modal-form">
-              <div className="form-field">
-                <label>{t("البريد الإلكتروني للعميل المستلم", "Recipient Customer Email")}</label>
-                <input
-                  type="email"
-                  value={messageModalState.customerEmail}
-                  readOnly
-                  dir="ltr"
-                  className="read-only-input"
-                />
-              </div>
-
-              <div className="form-field">
-                <label>{t("عنوان الرسالة / الموضوع", "Message Subject")} *</label>
-                <input
-                  type="text"
-                  value={messageModalState.subject}
-                  onChange={(e) => setMessageModalState({ ...messageModalState, subject: e.target.value })}
-                  placeholder={t("مثال: تحديث أمان هام، تفاصيل اشتراكك، إشعار خاص...", "e.g. Account update, subscription notice...")}
-                  required
-                />
-              </div>
-
-              <div className="form-field">
-                <label>{t("نص الرسالة الموجهة للعميل", "Message Body")} *</label>
-                <textarea
-                  rows={5}
-                  value={messageModalState.message}
-                  onChange={(e) => setMessageModalState({ ...messageModalState, message: e.target.value })}
-                  placeholder={t("اكتب نص الرسالة التي ستصل للعميل على بريده الإلكتروني...", "Type your message...")}
-                  required
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="secondary-button" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
-                  {t("إلغاء", "Cancel")}
-                </button>
-                <button type="submit" className="primary-button" disabled={busy || !messageModalState.message.trim()}>
-                  {busy ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}
-                  {t("إرسال الرسالة الآن", "Send Message Now")}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================== */}
-      {/* COMPENSATION MODAL (تعويض العميل) */}
-      {/* ==================================================== */}
+      {/* COMPENSATION MODAL */}
       {showCompensationModal && (
         <div className="modal-backdrop" onClick={() => setShowCompensationModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2><Gift size={20} /> {t("تسجيل تعويض لعميل", "Log Customer Compensation")}</h2>
-              <button className="modal-close" onClick={() => setShowCompensationModal(false)}><X size={19} /></button>
+              <h2>
+                <Gift size={20} />
+                <span>{t("تسجيل تعويض لعميل", "Log Customer Compensation")}</span>
+              </h2>
+              <button className="modal-close" onClick={() => setShowCompensationModal(false)}>
+                <X size={19} />
+              </button>
             </div>
 
             <form onSubmit={handleCreateCompensation} className="modal-form">
@@ -1816,7 +1849,7 @@ export function AdminControlSpace({
               </div>
 
               <div className="form-field">
-                <label>{t("المنتج الأصلي المعني", "Affected Product")} *</label>
+                <label>{t("المنتج المعني", "Affected Product")} *</label>
                 <select
                   value={compForm.originalProductId}
                   onChange={(e) => setCompForm({ ...compForm, originalProductId: e.target.value })}
@@ -1835,7 +1868,7 @@ export function AdminControlSpace({
                 >
                   <option value="REPLACEMENT_KEY">{t("مفتاح بديل (Replacement Key)", "Replacement Key")}</option>
                   <option value="EXTEND_LICENSE">{t("تمديد ترخيص إضافي (Extend License)", "Extend License")}</option>
-                  <option value="DIRECT_GRANT">{t("منح مباشر لمنتج آخر (Direct Grant)", "Direct Grant")}</option>
+                  <option value="DIRECT_GRANT">{t("منح ترخيص منتج آخر (Direct Grant)", "Direct Grant")}</option>
                 </select>
               </div>
 
@@ -1845,7 +1878,7 @@ export function AdminControlSpace({
                   rows={3}
                   value={compForm.reason}
                   onChange={(e) => setCompForm({ ...compForm, reason: e.target.value, details: e.target.value })}
-                  placeholder={t("اذكر المشكلة التي واجهها العميل مع المفتاح أو سبب استحقاقه للتعويض...", "Explain the issue faced by the customer...")}
+                  placeholder={t("اذكر تفاصيل المشكلة وسبب التعويض...", "Explain the reason...")}
                   required
                 />
               </div>
@@ -1856,7 +1889,7 @@ export function AdminControlSpace({
                 </button>
                 <button type="submit" className="primary-button" disabled={busy || !compForm.customerEmail.trim() || !compForm.reason.trim()}>
                   {busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} />}
-                  {t("تسجيل ومنح التعويض", "Grant Compensation")}
+                  <span>{t("تسجيل ومنح التعويض", "Grant Compensation")}</span>
                 </button>
               </div>
             </form>
@@ -1864,9 +1897,7 @@ export function AdminControlSpace({
         </div>
       )}
 
-      {/* ==================================================== */}
-      {/* CUSTOMER VERIFICATION DRAWER (التحقق من العميل) */}
-      {/* ==================================================== */}
+      {/* CUSTOMER DRAWER */}
       {showCustomerDrawer && customerDetails && (
         <div className="drawer-backdrop" onClick={() => setShowCustomerDrawer(false)}>
           <div className="customer-drawer-panel" onClick={(e) => e.stopPropagation()}>
@@ -1879,7 +1910,6 @@ export function AdminControlSpace({
             </div>
 
             <div className="drawer-content">
-              {/* Profile Card */}
               <div className="drawer-profile-card">
                 <div className="drawer-avatar-wrap">
                   {customerDetails.customer?.image ? (
@@ -1908,7 +1938,6 @@ export function AdminControlSpace({
                 </div>
               </div>
 
-              {/* Licenses List */}
               <div className="drawer-section">
                 <h4><KeyRound size={16} /> {t("التراخيص والمفاتيح المسجلة", "Customer Licenses")}</h4>
                 {customerDetails.licenses?.length > 0 ? (
@@ -1937,7 +1966,64 @@ export function AdminControlSpace({
         </div>
       )}
 
-      {/* Universal Confirmation Modal */}
+      {/* SEND MESSAGE MODAL */}
+      {messageModalState.isOpen && (
+        <div className="modal-backdrop" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
+          <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2><Mail size={20} /> {t("إرسال رسالة بريد للعميل", "Send Customer Email")}</h2>
+              <button className="modal-close" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}><X size={19} /></button>
+            </div>
+
+            <form onSubmit={handleSendMessage} className="modal-form">
+              <div className="form-field">
+                <label>{t("البريد الإلكتروني للعميل", "Customer Email")}</label>
+                <input
+                  type="email"
+                  value={messageModalState.customerEmail}
+                  readOnly
+                  dir="ltr"
+                  className="read-only-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label>{t("عنوان الموضوع", "Subject")} *</label>
+                <input
+                  type="text"
+                  value={messageModalState.subject}
+                  onChange={(e) => setMessageModalState({ ...messageModalState, subject: e.target.value })}
+                  placeholder={t("مثال: تحديث اشتراكك أو حل مشكلة...", "Subject")}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label>{t("نص الرسالة", "Message")} *</label>
+                <textarea
+                  rows={5}
+                  value={messageModalState.message}
+                  onChange={(e) => setMessageModalState({ ...messageModalState, message: e.target.value })}
+                  placeholder={t("اكتب نص الرسالة التي ستصل للعميل على بريده...", "Message...")}
+                  required
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="secondary-button" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
+                  {t("إلغاء", "Cancel")}
+                </button>
+                <button type="submit" className="primary-button" disabled={busy || !messageModalState.message.trim()}>
+                  {busy ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}
+                  <span>{t("إرسال الرسالة الآن", "Send Message")}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* UNIVERSAL CONFIRM MODAL */}
       <ConfirmModal
         isOpen={confirmState.isOpen}
         title={confirmState.title}

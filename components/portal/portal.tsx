@@ -250,21 +250,7 @@ export function Portal({ user }: { user: PortalUser }) {
   // If Admin tab is selected and user is admin, render the full Control Space
   if (activeTab === "admin" && data.isAdmin) {
     return (
-      <div className="portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
-        <PortalNavigation
-          activeTab={activeTab}
-          onNavigate={navigate}
-          lang={lang}
-          isDark={isDark}
-          isAdmin={data.isAdmin}
-          productCount={data.products.length}
-          mobileOpen={mobileOpen}
-          onMobileChange={setMobileOpen}
-          onToggleTheme={toggleTheme}
-          onToggleLanguage={() => setLang(ar ? "en" : "ar")}
-          onLogout={() => void signOut({ callbackUrl: "/" })}
-          user={{ name: user.name, image: user.image }}
-        />
+      <div className="portal-shell admin-immersive-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
         <AdminControlSpace
           products={data.products}
           inventory={data.inventory}
@@ -276,7 +262,9 @@ export function Portal({ user }: { user: PortalUser }) {
           lang={lang}
           isDark={isDark}
           onRefresh={refresh}
-          onExitAdmin={() => navigate("overview")}
+          onExitAdmin={() => navigate("my-products")}
+          onToggleTheme={toggleTheme}
+          onToggleLanguage={() => setLang(ar ? "en" : "ar")}
         />
       </div>
     );
