@@ -1559,76 +1559,14 @@ export function AdminControlSpace({
               <div className="ref-toolbar-text-wrap">
                 <h3 className="ref-section-title">
                   <Package size={20} />
-                  <span>{t("منتجات المتجر والمخزون المتاح", "Store Products & Available Stock")}</span>
+                  <span>{t("إدارة المنتجات والمخزون المتاح", "Products & Stock Management")}</span>
                 </h3>
                 <p className="ref-section-subtitle">
-                  {t("تحكم فوري في ظهور المنتجات، استنساخها، حذفها، وتعبئة مفاتيحها.", "Instant control over product visibility, cloning, deletion, and stock keys.")}
+                  {t("تحكم فوري في المنتجات، تعديلها، حذفها، وتعبئة مفاتيحها.", "Instant control over products, editing, deletion, and stock keys.")}
                 </p>
               </div>
 
               <div className="ref-toolbar-actions">
-                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
-                  <Plus size={16} />
-                  <span>{t("إضافة منتج جديد", "Add New Product")}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Chips Bar & Batch Powers */}
-            <div className="ref-products-filter-bar">
-              <div className="ref-filter-chips-cluster">
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "ALL" ? "active" : ""}`}
-                  onClick={() => setProductVisibilityFilter("ALL")}
-                >
-                  <Package size={14} />
-                  <span>{t("الكل", "All")}</span>
-                  <span className="ref-chip-count">{products.length}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "VISIBLE" ? "active-green" : ""}`}
-                  onClick={() => setProductVisibilityFilter("VISIBLE")}
-                >
-                  <Eye size={14} />
-                  <span>{t("الظاهرة في المتجر", "Visible in Store")}</span>
-                  <span className="ref-chip-count">{products.filter((p) => p.is_visible !== false).length}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "HIDDEN" ? "active-warning" : ""}`}
-                  onClick={() => setProductVisibilityFilter("HIDDEN")}
-                >
-                  <EyeOff size={14} />
-                  <span>{t("المخفية", "Hidden")}</span>
-                  <span className="ref-chip-count">{products.filter((p) => p.is_visible === false).length}</span>
-                </button>
-              </div>
-
-              <div className="ref-batch-actions-cluster">
-                <button
-                  type="button"
-                  className="ref-btn-batch-subtle"
-                  onClick={() => void handleBatchToggleVisibility(true)}
-                  title={t("إظهار جميع المنتجات في المتجر للعملاء", "Make all products visible")}
-                >
-                  <Eye size={14} />
-                  <span>{t("إظهار الكل", "Show All")}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="ref-btn-batch-subtle"
-                  onClick={() => void handleBatchToggleVisibility(false)}
-                  title={t("إخفاء جميع المنتجات عن المتجر", "Hide all products")}
-                >
-                  <EyeOff size={14} />
-                  <span>{t("إخفاء الكل", "Hide All")}</span>
-                </button>
-
                 {selectedProductIds.length > 0 && (
                   <button
                     type="button"
@@ -1640,6 +1578,10 @@ export function AdminControlSpace({
                     <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
                   </button>
                 )}
+                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
+                  <Plus size={16} />
+                  <span>{t("إضافة منتج جديد", "Add New Product")}</span>
+                </button>
               </div>
             </div>
 
@@ -1719,13 +1661,6 @@ export function AdminControlSpace({
                         </div>
                         <div className="ref-card-title-group">
                           <h4 className="ref-card-product-name">{p.name}</h4>
-                          <div className="ref-card-tags-row">
-                            <span className="ref-tag-pill">{p.category || "Utility"}</span>
-                            <span className="ref-tag-pill">
-                              {p.default_duration_days >= 3650 ? t("مدى الحياة", "Lifetime") : `${p.default_duration_days} ${t("يوم", "Days")}`}
-                            </span>
-                            {p.name_en && <span className="ref-tag-pill">{p.name_en}</span>}
-                          </div>
                         </div>
                       </div>
 
@@ -1765,7 +1700,7 @@ export function AdminControlSpace({
                       <button
                         className="ref-btn-icon-action"
                         onClick={() => void handleToggleVisibility(p)}
-                        title={p.is_visible !== false ? t("إخفاء عن المتجر", "Hide") : t("إظهار في المتجر", "Show")}
+                        title={p.is_visible !== false ? t("إخفاء عن العملاء", "Hide from customers") : t("إظهار للعملاء", "Show to customers")}
                       >
                         {p.is_visible !== false ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
@@ -1802,68 +1737,6 @@ export function AdminControlSpace({
               </div>
 
               <div className="ref-toolbar-actions">
-                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
-                  <Plus size={16} />
-                  <span>{t("إضافة منتج", "Add Product")}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Chips Bar & Batch Powers */}
-            <div className="ref-products-filter-bar">
-              <div className="ref-filter-chips-cluster">
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "ALL" ? "active" : ""}`}
-                  onClick={() => setProductVisibilityFilter("ALL")}
-                >
-                  <Package size={14} />
-                  <span>{t("الكل", "All")}</span>
-                  <span className="ref-chip-count">{products.length}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "VISIBLE" ? "active-green" : ""}`}
-                  onClick={() => setProductVisibilityFilter("VISIBLE")}
-                >
-                  <Eye size={14} />
-                  <span>{t("الظاهرة في المتجر", "Visible in Store")}</span>
-                  <span className="ref-chip-count">{products.filter((p) => p.is_visible !== false).length}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`ref-filter-chip ${productVisibilityFilter === "HIDDEN" ? "active-warning" : ""}`}
-                  onClick={() => setProductVisibilityFilter("HIDDEN")}
-                >
-                  <EyeOff size={14} />
-                  <span>{t("المخفية", "Hidden")}</span>
-                  <span className="ref-chip-count">{products.filter((p) => p.is_visible === false).length}</span>
-                </button>
-              </div>
-
-              <div className="ref-batch-actions-cluster">
-                <button
-                  type="button"
-                  className="ref-btn-batch-subtle"
-                  onClick={() => void handleBatchToggleVisibility(true)}
-                  title={t("إظهار جميع المنتجات في المتجر للعملاء", "Make all products visible")}
-                >
-                  <Eye size={14} />
-                  <span>{t("إظهار الكل", "Show All")}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="ref-btn-batch-subtle"
-                  onClick={() => void handleBatchToggleVisibility(false)}
-                  title={t("إخفاء جميع المنتجات عن المتجر", "Hide all products")}
-                >
-                  <EyeOff size={14} />
-                  <span>{t("إخفاء الكل", "Hide All")}</span>
-                </button>
-
                 {selectedProductIds.length > 0 && (
                   <button
                     type="button"
@@ -1875,6 +1748,10 @@ export function AdminControlSpace({
                     <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
                   </button>
                 )}
+                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
+                  <Plus size={16} />
+                  <span>{t("إضافة منتج", "Add Product")}</span>
+                </button>
               </div>
             </div>
 

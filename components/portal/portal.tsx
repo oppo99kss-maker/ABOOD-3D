@@ -246,11 +246,20 @@ export function Portal({ user }: { user: PortalUser }) {
     }
   }
 
+  useEffect(() => {
+    const handleFocus = () => void refresh();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [refresh]);
+
   function navigate(tab: PortalTab) {
     if (tab === "admin" && !data.isAdmin) return;
     setTab(tab);
     setNotice(null);
     setQuery("");
+    if (tab === "my-products" || tab === "overview") {
+      void refresh();
+    }
   }
 
   async function action(payload: Record<string, unknown>) {
