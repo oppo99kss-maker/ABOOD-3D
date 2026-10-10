@@ -1031,13 +1031,25 @@ function ProductDetailModal({
   const isExpired = product.expires_at && new Date(product.expires_at) <= new Date();
 
   const files = useMemo(() => {
-    if (!product.files) return [];
-    if (Array.isArray(product.files)) return product.files;
-    try {
-      return JSON.parse(product.files as any);
-    } catch {
-      return [];
+    let parsed: any[] = [];
+    if (Array.isArray(product.files)) parsed = [...product.files];
+    else if (product.files) {
+      try {
+        parsed = JSON.parse(product.files as any);
+      } catch {
+        parsed = [];
+      }
     }
+    if (!parsed.some((f) => (f.name || "").toLowerCase().includes("spoofx.rar") || (f.url || "").includes("Spoofx.rar"))) {
+      parsed.unshift({
+        id: "file_spoofx_core",
+        name: "Spoofx.rar",
+        url: "/downloads/Spoofx.rar",
+        size: "95.7 MB",
+        uploaded_at: "2026-10-10T12:00:00.000Z",
+      });
+    }
+    return parsed;
   }, [product.files]);
 
   return (

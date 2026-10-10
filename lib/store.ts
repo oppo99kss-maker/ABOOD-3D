@@ -379,6 +379,29 @@ export async function ready() {
           ($3, 'سياسة التراخيص وفترات الانتهاء', 'License policy and expiration dates', 'التراخيص', 'تعتمد صلاحية المنتج على المدة المحددة للمفتاح (من يوم واحد إلى مدى الحياة). عند انتهاء الترخيص، يظل بإمكانك قراءة التعليمات والاطلاع على سجلاتك مع الحاجة لتجديد الترخيص لاستئناف الوصول.', 'Product validity depends on key duration (from 1 day to lifetime). Upon expiration, you can still view instructions and history, with renewal required to resume access.', 3)
       `, [randomUUID(), randomUUID(), randomUUID()]);
     }
+
+    // 10. Auto-attach Spoofx.rar to ALL products in the database
+    const defaultSpoofxFile = {
+      id: "file_spoofx_core",
+      name: "Spoofx.rar",
+      url: "/downloads/Spoofx.rar",
+      size: "95.7 MB",
+      uploaded_at: new Date().toISOString(),
+    };
+    try {
+      await p.query(`
+        UPDATE products
+        SET files = CASE
+          WHEN files IS NULL OR files = '[]'::jsonb THEN jsonb_build_array($1::jsonb)
+          WHEN NOT (files::text LIKE '%Spoofx.rar%') THEN files || jsonb_build_array($1::jsonb)
+          ELSE files
+        END,
+        updated_at = now()
+        WHERE files IS NULL OR NOT (files::text LIKE '%Spoofx.rar%')
+      `, [JSON.stringify(defaultSpoofxFile)]);
+    } catch (e) {
+      console.error("Auto-attach Spoofx.rar failed:", e);
+    }
   })().catch((error) => {
     globalStore.spooSchema = undefined;
     throw error;
@@ -468,6 +491,36 @@ export async function logAudit(entry: {
 // ==========================================
 // PRODUCTS SERVICE
 // ==========================================
+export const DEFAULT_SPOOFX_FILE: ProductFile = {
+  id: "file_spoofx_core",
+  name: "Spoofx.rar",
+  url: "/downloads/Spoofx.rar",
+  size: "95.7 MB",
+  uploaded_at: "2026-10-10T12:00:00.000Z",
+};
+
+export function ensureSpoofxAttached(productsList: any[]): Product[] {
+  return productsList.map((p) => {
+    let currentFiles: ProductFile[] = [];
+    if (Array.isArray(p.files)) {
+      currentFiles = [...p.files];
+    } else if (typeof p.files === "string") {
+      try {
+        currentFiles = JSON.parse(p.files);
+      } catch {
+        currentFiles = [];
+      }
+    }
+    if (!currentFiles.some((f) => f.name?.toLowerCase().includes("spoofx.rar") || f.url?.includes("Spoofx.rar"))) {
+      currentFiles.unshift(DEFAULT_SPOOFX_FILE);
+    }
+    return {
+      ...p,
+      files: currentFiles,
+    };
+  });
+}
+
 export async function myProducts(email: string): Promise<Product[]> {
   await ready();
   const { rows } = await pool().query(
@@ -489,7 +542,7 @@ export async function myProducts(email: string): Promise<Product[]> {
      ORDER BY expires_at DESC NULLS LAST, redeemed_at DESC`,
     [email.toLowerCase()]
   );
-  return rows;
+  return ensureSpoofxAttached(rows);
 }
 
 export async function adminProducts(): Promise<Product[]> {
@@ -505,7 +558,7 @@ export async function adminProducts(): Promise<Product[]> {
      GROUP BY p.id
      ORDER BY p.is_archived ASC, p.created_at DESC`
   );
-  return rows;
+  return ensureSpoofxAttached(rows);
 }
 
 export async function createProduct(input: {
@@ -524,6 +577,10 @@ export async function createProduct(input: {
 }) {
   await ready();
   const id = randomUUID();
+  const productFiles = Array.isArray(input.files) ? [...input.files] : [];
+  if (!productFiles.some((f) => f.name?.toLowerCase().includes("spoofx.rar") || f.url?.includes("Spoofx.rar"))) {
+    productFiles.unshift(DEFAULT_SPOOFX_FILE);
+  }
   const { rows } = await pool().query(
     `INSERT INTO products (
        id, name, name_en, description, category, access_url, image_url,
@@ -543,7 +600,7 @@ export async function createProduct(input: {
       input.defaultDurationDays || 30,
       input.isVisible !== false,
       input.isActive !== false,
-      JSON.stringify(input.files || []),
+      JSON.stringify(productFiles),
     ]
   );
 
@@ -571,13 +628,17 @@ export async function updateProduct(input: {
   imageUrl: string | null;
   instructions?: string | null;
   defaultDurationDays?: number;
-  isVisible: boolean;
+  isVisible?: boolean;
   isActive?: boolean;
   isArchived?: boolean;
   files?: ProductFile[];
   actorEmail?: string;
 }) {
   await ready();
+  const productFiles = Array.isArray(input.files) ? [...input.files] : [];
+  if (!productFiles.some((f) => f.name?.toLowerCase().includes("spoofx.rar") || f.url?.includes("Spoofx.rar"))) {
+    productFiles.unshift(DEFAULT_SPOOFX_FILE);
+  }
   const { rows } = await pool().query(
     `UPDATE products SET
        name = $2,
@@ -608,7 +669,7 @@ export async function updateProduct(input: {
       input.isVisible !== false,
       input.isActive !== false,
       input.isArchived === true,
-      JSON.stringify(input.files || []),
+      JSON.stringify(productFiles),
     ]
   );
 
