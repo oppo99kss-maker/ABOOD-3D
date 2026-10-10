@@ -644,6 +644,38 @@ export async function archiveProduct(id: string, actorEmail: string, archive = t
   return rows[0] as Product | undefined;
 }
 
+export async function deleteProduct(id: string, actorEmail: string) {
+  await ready();
+  const p = pool();
+  await p.query("DELETE FROM licenses WHERE product_id = $1", [id]);
+  await p.query("DELETE FROM guides WHERE product_id = $1", [id]);
+  const { rowCount } = await p.query("DELETE FROM products WHERE id = $1", [id]);
+  await logAudit({
+    category: "ADMIN",
+    action: "PRODUCT_DELETED",
+    actor_email: actorEmail,
+    target_type: "product",
+    target_id: id,
+  });
+  return (rowCount ?? 0) > 0;
+}
+
+export async function toggleProductVisibility(id: string, isVisible: boolean, actorEmail: string) {
+  await ready();
+  const { rows } = await pool().query(
+    "UPDATE products SET is_visible = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    [id, isVisible]
+  );
+  await logAudit({
+    category: "ADMIN",
+    action: isVisible ? "PRODUCT_SHOWN" : "PRODUCT_HIDDEN",
+    actor_email: actorEmail,
+    target_type: "product",
+    target_id: id,
+  });
+  return rows[0] as Product | undefined;
+}
+
 // ==========================================
 // INVENTORY & KEYS SERVICE
 // ==========================================
@@ -1527,6 +1559,53 @@ export async function getAuditLogs(category?: string, limit = 50, offset = 0) {
     [category || null, limit, offset]
   );
   return rows as AuditLog[];
+}
+
+export async function getKeyActivationLogs(limit = 100) {
+  await ready();
+  const { rows } = await pool().query(
+    `SELECT l.id, l.code_suffix, l.masked_code, l.status, l.duration_days, l.redeemed_by, l.redeemed_at, l.expires_at,
+            p.name as product_name, p.name_en as product_name_en, p.category
+     FROM licenses l
+     JOIN products p ON p.id = l.product_id
+     WHERE l.redeemed_by IS NOT NULL OR l.status = 'REDEEMED'
+     ORDER BY l.redeemed_at DESC NULLS LAST, l.created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return rows;
+}
+
+export async function getLoginLogs(limit = 100) {
+  await ready();
+  const { rows } = await pool().query(
+    `SELECT c.id, c.email as actor_email, c.name as customer_name, c.image as customer_image,
+            c.status as customer_status, c.last_login_at as created_at, 'Google OAuth' as auth_method
+     FROM customers c
+     WHERE c.last_login_at IS NOT NULL
+     ORDER BY c.last_login_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return rows;
+}
+
+export async function sendCustomerMessage(
+  customerEmail: string,
+  subject: string,
+  message: string,
+  actorEmail: string
+) {
+  await ready();
+  await logAudit({
+    category: "CUSTOMER",
+    action: "CUSTOMER_MESSAGE_SENT",
+    actor_email: actorEmail,
+    target_type: "customer",
+    target_id: customerEmail,
+    details: { subject, messageLength: message.length },
+  });
+  return { ok: true, delivered: true };
 }
 
 export async function getDashboardStats() {

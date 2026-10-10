@@ -9,6 +9,7 @@ import {
   createOrder,
   createProduct,
   deleteGuide,
+  deleteProduct,
   extendLicense,
   generateKeys,
   getAuditLogs,
@@ -17,6 +18,8 @@ import {
   getCompensations,
   getDashboardStats,
   getGuides,
+  getKeyActivationLogs,
+  getLoginLogs,
   getOrders,
   getProductInventory,
   getSystemSettings,
@@ -27,7 +30,9 @@ import {
   recordCustomerLogin,
   redeemKey,
   saveGuide,
+  sendCustomerMessage,
   suspendLicense,
+  toggleProductVisibility,
   updateCustomerStatus,
   updateProduct,
   updateSystemSettings,
@@ -104,6 +109,16 @@ export async function GET(request: NextRequest) {
     if (view === "admin-compensations" && admin) {
       const compensations = await getCompensations();
       return json({ compensations });
+    }
+
+    if (view === "admin-activations" && admin) {
+      const logs = await getKeyActivationLogs();
+      return json({ logs });
+    }
+
+    if (view === "admin-logins" && admin) {
+      const logs = await getLoginLogs();
+      return json({ logs });
     }
 
     // Default portal load
@@ -408,6 +423,34 @@ export async function POST(request: NextRequest) {
       if (!customerEmail) return json({ error: "MISSING_EMAIL" }, 400);
 
       const res = await updateCustomerStatus(customerEmail, status, notes, email);
+      return json(res);
+    }
+
+    // 17. Admin: Delete Product
+    if (data.action === "deleteProduct") {
+      const id = typeof data.id === "string" ? data.id : "";
+      if (!id) return json({ error: "MISSING_ID" }, 400);
+      await deleteProduct(id, email);
+      return json({ ok: true });
+    }
+
+    // 18. Admin: Toggle Product Visibility
+    if (data.action === "toggleProductVisibility") {
+      const id = typeof data.id === "string" ? data.id : "";
+      const isVisible = Boolean(data.isVisible);
+      if (!id) return json({ error: "MISSING_ID" }, 400);
+      const product = await toggleProductVisibility(id, isVisible, email);
+      return json({ ok: true, product });
+    }
+
+    // 19. Admin: Send Customer Message
+    if (data.action === "sendCustomerMessage") {
+      const customerEmail = typeof data.customerEmail === "string" ? data.customerEmail.trim() : "";
+      const subject = typeof data.subject === "string" ? data.subject.trim() : "";
+      const message = typeof data.message === "string" ? data.message.trim() : "";
+      if (!customerEmail || !message) return json({ error: "INVALID_MESSAGE", message: "البريد ونص الرسالة مطلوبان" }, 400);
+
+      const res = await sendCustomerMessage(customerEmail, subject || "رسالة من إدارة SpooFX", message, email);
       return json(res);
     }
 
