@@ -638,11 +638,16 @@ export function PortalNavigation({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={css.drawerTop}>
-              <div className={css.brandTitlesWrap}>
-                <strong className={css.brandMainTitle}>SpooFX</strong>
-                <span className={css.brandSubtitle}>
-                  {ar ? "تسليم ذاتي" : "Instant Delivery"}
-                </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className={css.brandLogoFrame}>
+                  <Image src="/logo.png" width={34} height={34} alt="SpooFX" priority style={{ objectFit: "contain", borderRadius: 8 }} />
+                </div>
+                <div className={css.brandTitlesWrap}>
+                  <strong className={css.brandMainTitle}>SpooFX</strong>
+                  <span className={css.brandSubtitle}>
+                    {ar ? "تسليم ذاتي" : "Instant Delivery"}
+                  </span>
+                </div>
               </div>
               <button
                 ref={close}

@@ -5,7 +5,14 @@ import { ToastContainer } from "@/components/ui/toast-container";
 export const metadata: Metadata = {
   title: "SpooFX | حسابك ومنتجاتك ومفاتيحك",
   description: "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك عبر SpooFX",
-  icons: { icon: "/logo.png", apple: "/logo.png" },
+  icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon.ico" }
+    ],
+    apple: "/logo.png",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
