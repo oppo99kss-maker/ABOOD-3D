@@ -7,17 +7,14 @@ import {
   Box,
   ChevronLeft,
   ChevronRight,
-  Globe2,
   House,
   KeyRound,
   LifeBuoy,
   LogOut,
   Menu,
-  Moon,
   PanelRightClose,
   ShieldCheck,
   ShoppingBag,
-  Sun,
   UserRound,
   X,
   type LucideIcon,
@@ -63,12 +60,10 @@ export function PortalNavigation({
 }: Props) {
   const ar = lang === "ar";
   const [collapsed, setCollapsed] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLDivElement>(null);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
   const userCardRef = useRef<HTMLButtonElement>(null);
 
   // Four clean groups specified by user: عام, الدعم, الحساب, الإدارة
@@ -176,36 +171,9 @@ export function PortalNavigation({
     };
   }, [mobileOpen, onMobileChange]);
 
-  // Click-outside and Escape listener for the Account Popover
-  useEffect(() => {
-    if (!accountMenuOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        accountMenuRef.current &&
-        !accountMenuRef.current.contains(e.target as Node) &&
-        userCardRef.current &&
-        !userCardRef.current.contains(e.target as Node)
-      ) {
-        setAccountMenuOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setAccountMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [accountMenuOpen]);
-
   const navigate = (tab: PortalTab) => {
     onNavigate(tab);
     onMobileChange(false);
-    setAccountMenuOpen(false);
   };
 
   const ArrowIcon = ar ? ChevronLeft : ChevronRight;
@@ -384,170 +352,67 @@ export function PortalNavigation({
         {/* Dedicated Admin Control Panel (independent at bottom with title) */}
         {renderAdminSection(false)}
 
-        {/* Footer Area: Luxury Account Card + Popover */}
+        {/* Footer Area: Unified Luxury Account Box */}
         <div className={css.sidebarFooterBlock}>
-          {/* User Account Card Button */}
-          <button
-            ref={userCardRef}
-            type="button"
-            className={`${css.userProfileRow} ${accountMenuOpen ? css.userProfileRowActive : ""}`}
-            onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-            aria-haspopup="menu"
-            aria-expanded={accountMenuOpen}
-            aria-label={ar ? "حساب المستخدم والإعدادات" : "User Account & Settings"}
-          >
-            <div className={css.userAvatarImgWrap}>
-              {user.image ? (
-                <img
-                  className={css.userAvatarImg}
-                  src={user.image}
-                  width={36}
-                  height={36}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className={css.userAvatarFallback}>
-                  {user.name ? user.name[0].toUpperCase() : "U"}
-                </div>
-              )}
-            </div>
-
-            {!collapsed && (
-              <>
-                <div className={css.userTextInfo}>
-                  <strong className={css.userDisplayName}>{user.name}</strong>
-                  <div className={css.userConnectedStatus}>
-                    <span className={css.greenPulseDot} />
-                    <span>{ar ? "حسابك متصل" : "Connected"}</span>
+          <div className={css.userProfileBox}>
+            <button
+              ref={userCardRef}
+              type="button"
+              className={css.userProfileTop}
+              onClick={() => navigate("profile")}
+              aria-label={ar ? "الملف الشخصي" : "Profile"}
+              title={ar ? "الملف الشخصي" : "Profile"}
+            >
+              <div className={css.userAvatarImgWrap}>
+                {user.image ? (
+                  <img
+                    className={css.userAvatarImg}
+                    src={user.image}
+                    width={36}
+                    height={36}
+                    alt={user.name}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className={css.userAvatarFallback}>
+                    {user.name ? user.name[0].toUpperCase() : "U"}
                   </div>
-                </div>
-                <ArrowIcon size={14} className={css.userChevron} />
-              </>
-            )}
+                )}
+              </div>
 
-            {collapsed && (
-              <span className={css.collapsedTooltip}>
-                {user.name} ({ar ? "الإعدادات والحساب" : "Account & Settings"})
-              </span>
-            )}
-          </button>
+              {!collapsed && (
+                <>
+                  <div className={css.userTextInfo}>
+                    <strong className={css.userDisplayName}>{user.name}</strong>
+                    <div className={css.userConnectedStatus}>
+                      <span className={css.greenPulseDot} />
+                      <span>{ar ? "حسابك متصل" : "Connected"}</span>
+                    </div>
+                  </div>
+                  <ArrowIcon size={14} className={css.userChevron} />
+                </>
+              )}
 
-          {!collapsed && (
+              {collapsed && (
+                <span className={css.collapsedTooltip}>
+                  {user.name} ({ar ? "الملف الشخصي" : "Profile"})
+                </span>
+              )}
+            </button>
+
+            <div className={css.userBoxDivider} />
+
             <button
               type="button"
-              className={css.directLogoutBtn}
+              className={css.userBoxLogoutBtn}
               onClick={onLogout}
               aria-label={ar ? "تسجيل الخروج" : "Sign Out"}
+              title={ar ? "تسجيل الخروج" : "Sign Out"}
             >
-              <span>{ar ? "تسجيل الخروج" : "Sign Out"}</span>
-              <LogOut size={14} className={ar ? "rotate-180" : ""} />
+              <LogOut size={15} className={ar ? "rotate-180" : ""} />
+              {!collapsed && <span>{ar ? "تسجيل الخروج" : "Sign Out"}</span>}
             </button>
-          )}
-
-          {/* Luxury Account Popover Menu */}
-          {accountMenuOpen && (
-            <div
-              ref={accountMenuRef}
-              className={css.accountPopover}
-              role="menu"
-              aria-label={ar ? "قائمة الحساب" : "Account Menu"}
-            >
-              <div className={css.popoverHeader}>
-                <div className={css.popoverAvatarWrap}>
-                  {user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className={css.popoverAvatar}
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className={css.popoverAvatarFallback}>
-                      {user.name ? user.name[0].toUpperCase() : "U"}
-                    </div>
-                  )}
-                </div>
-                <div className={css.popoverUserMeta}>
-                  <strong className={css.popoverUserName}>{user.name}</strong>
-                  <span className={css.popoverUserEmail}>
-                    {user.email || (ar ? "حساب موثق" : "Verified Account")}
-                  </span>
-                </div>
-              </div>
-
-              <div className={css.popoverDivider} />
-
-              <div className={css.popoverActionsList}>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={css.popoverItemBtn}
-                  onClick={() => navigate("profile")}
-                >
-                  <UserRound size={16} />
-                  <span>{ar ? "الملف الشخصي" : "Profile"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={css.popoverItemBtn}
-                  onClick={onToggleTheme}
-                >
-                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
-                  <span>
-                    {isDark
-                      ? ar
-                        ? "الوضع المضيء"
-                        : "Light Mode"
-                      : ar
-                        ? "الوضع الداكن"
-                        : "Dark Mode"}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={css.popoverItemBtn}
-                  onClick={onToggleLanguage}
-                >
-                  <Globe2 size={16} />
-                  <span>{ar ? "English" : "العربية"}</span>
-                </button>
-
-                <div className={css.popoverDivider} />
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={`${css.popoverItemBtn} ${css.popoverLogoutBtn}`}
-                  onClick={() => {
-                    setAccountMenuOpen(false);
-                    onLogout();
-                  }}
-                >
-                  <LogOut size={16} />
-                  <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Sign Out row when sidebar is expanded */}
-          {!collapsed && (
-            <button
-              type="button"
-              className={css.logoutButtonRow}
-              onClick={onLogout}
-              title={ar ? "تسجيل الخروج" : "Sign out"}
-            >
-              <LogOut size={16} />
-              <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>
-            </button>
-          )}
-
+          </div>
         </div>
       </aside>
 
@@ -573,22 +438,6 @@ export function PortalNavigation({
         </button>
 
         <div className={css.mobileHeaderActions}>
-          <button
-            className={css.toolIconBtn}
-            type="button"
-            onClick={onToggleLanguage}
-            title={ar ? "Switch to English" : "التبديل إلى العربية"}
-          >
-            <Globe2 size={15} />
-          </button>
-          <button
-            className={css.toolIconBtn}
-            type="button"
-            onClick={onToggleTheme}
-            title={ar ? "تبديل المظهر" : "Toggle theme"}
-          >
-            {isDark ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
           <button
             ref={trigger}
             className={css.mobileMenuToggle}
@@ -646,40 +495,57 @@ export function PortalNavigation({
             </div>
 
             <div className={css.drawerFooter}>
-              <button
-                type="button"
-                className={css.userProfileRow}
-                onClick={() => navigate("profile")}
-              >
-                <div className={css.userAvatarImgWrap}>
-                  {user.image ? (
-                    <img
-                      className={css.userAvatarImg}
-                      src={user.image}
-                      width={34}
-                      height={34}
-                      alt={user.name}
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className={css.userAvatarFallback}>
-                      {user.name ? user.name[0].toUpperCase() : "U"}
-                    </div>
-                  )}
-                </div>
-                <div className={css.userTextInfo}>
-                  <strong className={css.userDisplayName}>{user.name}</strong>
-                  <div className={css.userConnectedStatus}>
-                    <span className={css.greenPulseDot} />
-                    <span>{ar ? "حسابك متصل" : "Connected"}</span>
+              <div className={css.userProfileBox}>
+                <button
+                  type="button"
+                  className={css.userProfileTop}
+                  onClick={() => {
+                    onMobileChange(false);
+                    navigate("profile");
+                  }}
+                  aria-label={ar ? "الملف الشخصي" : "Profile"}
+                >
+                  <div className={css.userAvatarImgWrap}>
+                    {user.image ? (
+                      <img
+                        className={css.userAvatarImg}
+                        src={user.image}
+                        width={34}
+                        height={34}
+                        alt={user.name}
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className={css.userAvatarFallback}>
+                        {user.name ? user.name[0].toUpperCase() : "U"}
+                      </div>
+                    )}
                   </div>
-                </div>
-              </button>
+                  <div className={css.userTextInfo}>
+                    <strong className={css.userDisplayName}>{user.name}</strong>
+                    <div className={css.userConnectedStatus}>
+                      <span className={css.greenPulseDot} />
+                      <span>{ar ? "حسابك متصل" : "Connected"}</span>
+                    </div>
+                  </div>
+                  <ArrowIcon size={14} className={css.userChevron} />
+                </button>
 
-              <button className={css.drawerLogoutBtn} onClick={onLogout}>
-                <LogOut size={16} />
-                <span>{ar ? "تسجيل الخروج" : "Sign out"}</span>
-              </button>
+                <div className={css.userBoxDivider} />
+
+                <button
+                  type="button"
+                  className={css.userBoxLogoutBtn}
+                  onClick={() => {
+                    onMobileChange(false);
+                    onLogout();
+                  }}
+                  aria-label={ar ? "تسجيل الخروج" : "Sign Out"}
+                >
+                  <LogOut size={15} className={ar ? "rotate-180" : ""} />
+                  <span>{ar ? "تسجيل الخروج" : "Sign Out"}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
