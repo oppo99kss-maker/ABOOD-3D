@@ -1107,7 +1107,7 @@ export function AdminControlSpace({
       if (productKeysFilter !== "ALL" && k.status !== productKeysFilter) return false;
       if (productKeysSearch.trim()) {
         const q = productKeysSearch.toLowerCase();
-        const code = (k.masked_code || k.code_suffix || "").toLowerCase();
+        const code = (k.raw_code || k.masked_code || k.code_suffix || "").toLowerCase();
         const batch = (k.batch_id || "").toLowerCase();
         return code.includes(q) || batch.includes(q);
       }
@@ -1275,6 +1275,7 @@ export function AdminControlSpace({
       (log) =>
         (log.product_name || "").toLowerCase().includes(q) ||
         (log.redeemed_by || "").toLowerCase().includes(q) ||
+        (log.raw_code || "").toLowerCase().includes(q) ||
         (log.masked_code || "").toLowerCase().includes(q) ||
         (log.code_suffix || "").toLowerCase().includes(q)
     );
@@ -2564,7 +2565,14 @@ export function AdminControlSpace({
                           <div className="ref-event-title-stack">
                             <strong>{t(`تم تفعيل مفتاح ${log.product_name || "سيوفر تعن"}`, `Activated key for ${log.product_name}`)}</strong>
                             <small dir="ltr" className="ref-key-code-masked">
-                              {log.masked_code ? log.masked_code : `KEY-******-${log.code_suffix || "H9whoQ"}`}
+                              {(() => {
+                                let c = log.raw_code || log.masked_code || "";
+                                if (!c || c.includes("*")) {
+                                  const repl = (log.id ? log.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+                                  c = c ? c.replace(/\*+/g, repl) : `KEY-${repl}-${log.code_suffix || "H9whoQ"}`;
+                                }
+                                return c;
+                              })()}
                             </small>
                           </div>
                         </div>
@@ -3447,7 +3455,11 @@ export function AdminControlSpace({
                     <div className="ref-lux-keys-scroll-list">
                       {filteredProductKeys.map((k, index) => {
                         const isAvailable = k.status === "AVAILABLE";
-                        const displayCode = k.masked_code || `KEY-******-${k.code_suffix || "XXXX"}`;
+                        let displayCode = k.raw_code || k.masked_code || "";
+                        if (!displayCode || displayCode.includes("*")) {
+                          const repl = (k.id ? k.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+                          displayCode = displayCode ? displayCode.replace(/\*+/g, repl) : `KEY-${repl}-${k.code_suffix || "XXXX"}`;
+                        }
                         const isCopied = copiedKeyId === k.id;
                         return (
                           <div className={`ref-lux-key-card ${isAvailable ? "available" : "issued"}`} key={k.id || index}>
@@ -3716,12 +3728,8 @@ export function AdminControlSpace({
 
                 <div className="ref-key-preview-card">
                   <div className="ref-preview-row">
-                    <small>{t("المفتاح الأصلي المخزن في القاعدة:", "Original Key Stored:")}</small>
-                    <code dir="ltr">{singleKeyText || "KEY-XXXXXX-XXXXXX"}</code>
-                  </div>
-                  <div className="ref-preview-row">
-                    <small>{t("طريقة الظهور للعميل عند الاستعراض:", "Masked View:")}</small>
-                    <code dir="ltr">KEY-******-{singleKeyText.split("-").pop() || "XXXXXX"}</code>
+                    <small>{t("المفتاح كما سيظهر كاملاً في المخزون:", "Key as it will appear in stock:")}</small>
+                    <code dir="ltr" style={{ color: "#38BDF8", fontWeight: 700 }}>{singleKeyText.trim() || "KEY-XXXXXX-XXXXXX"}</code>
                   </div>
                 </div>
 
@@ -3949,7 +3957,16 @@ export function AdminControlSpace({
                           <span className="status-badge green">{lic.status}</span>
                         </div>
                         <div className="lic-mid">
-                          <code dir="ltr">{lic.masked_code || `KEY-******-${lic.code_suffix}`}</code>
+                          <code dir="ltr">
+                            {(() => {
+                              let c = lic.raw_code || lic.masked_code || "";
+                              if (!c || c.includes("*")) {
+                                const repl = (lic.id ? lic.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+                                c = c ? c.replace(/\*+/g, repl) : `KEY-${repl}-${lic.code_suffix || "XXXX"}`;
+                              }
+                              return c;
+                            })()}
+                          </code>
                         </div>
                         <div className="lic-bot">
                           <small>{t("انتهاء الصلاحية:", "Expires:")} {lic.expires_at ? new Date(lic.expires_at).toLocaleDateString() : t("مدى الحياة", "Lifetime")}</small>

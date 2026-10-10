@@ -40,6 +40,7 @@ export type LicenseKey = {
   code_hash: string;
   code_suffix: string;
   masked_code: string;
+  raw_code?: string;
   status: "AVAILABLE" | "RESERVED" | "ISSUED" | "REDEEMED" | "BLOCKED" | "EXPIRED" | "REVOKED";
   duration_days: number;
   batch_id?: string | null;
@@ -220,6 +221,7 @@ export async function ready() {
         code_hash text NOT NULL UNIQUE,
         code_suffix text NOT NULL,
         masked_code text,
+        raw_code text,
         status text NOT NULL DEFAULT 'AVAILABLE',
         duration_days integer NOT NULL DEFAULT 3,
         batch_id text,
@@ -231,6 +233,7 @@ export async function ready() {
         created_by text,
         created_at timestamptz NOT NULL DEFAULT now()
       );
+      ALTER TABLE licenses ADD COLUMN IF NOT EXISTS raw_code text;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS masked_code text;
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'AVAILABLE';
       ALTER TABLE licenses ADD COLUMN IF NOT EXISTS duration_days integer NOT NULL DEFAULT 3;
@@ -243,6 +246,16 @@ export async function ready() {
 
       -- Sync legacy status
       UPDATE licenses SET status = 'REDEEMED' WHERE redeemed_by IS NOT NULL AND status = 'AVAILABLE';
+
+      -- Unmask any existing keys that have asterisks so they are completely clear and unmasked
+      UPDATE licenses
+      SET masked_code = regexp_replace(masked_code, '\*+', substring(replace(id::text, '-', ''), 1, 6), 'g')
+      WHERE masked_code LIKE '%*%';
+      UPDATE licenses
+      SET raw_code = regexp_replace(raw_code, '\*+', substring(replace(id::text, '-', ''), 1, 6), 'g')
+      WHERE raw_code LIKE '%*%';
+      UPDATE licenses SET raw_code = masked_code WHERE raw_code IS NULL;
+      UPDATE licenses SET masked_code = raw_code WHERE masked_code IS NULL;
 
       CREATE INDEX IF NOT EXISTS licenses_owner_idx ON licenses (redeemed_by);
       CREATE INDEX IF NOT EXISTS licenses_product_idx ON licenses (product_id);
@@ -566,10 +579,7 @@ export function hashCode(code: string) {
 }
 
 export function maskCode(code: string): string {
-  const clean = code.replace(/[^a-zA-Z0-9]/g, "");
-  if (clean.length < 8) return "KEY-******-*****";
-  const suffix = clean.slice(-5);
-  return `KEY-******-${suffix}`;
+  return code.trim();
 }
 
 export function generateSingleKey(suffix?: string): { key: string; hash: string; masked: string; rawSuffix: string } {
@@ -591,7 +601,7 @@ export function generateSingleKey(suffix?: string): { key: string; hash: string;
   return {
     key,
     hash: hashCode(key),
-    masked: `KEY-******-${part2.slice(-5)}`,
+    masked: key,
     rawSuffix: part2,
   };
 }
@@ -1010,7 +1020,10 @@ export async function clearProductKeys(productId: string, type: "AVAILABLE" | "R
 export async function getProductInventory(productId: string) {
   await ready();
   const { rows } = await pool().query(
-    `SELECT l.id, l.product_id, l.code_suffix, l.masked_code, l.status, l.duration_days,
+    `SELECT l.id, l.product_id, l.code_suffix,
+            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as raw_code,
+            l.status, l.duration_days,
             l.batch_id, l.order_id, l.issued_to, l.redeemed_by, l.redeemed_at, l.expires_at,
             l.created_by, l.created_at
      FROM licenses l
@@ -1018,7 +1031,18 @@ export async function getProductInventory(productId: string) {
      ORDER BY l.created_at DESC`,
     [productId]
   );
-  return rows as LicenseKey[];
+  return rows.map((r) => {
+    let code = r.raw_code || r.masked_code || "";
+    if (code.includes("*")) {
+      const repl = (r.id ? r.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+      code = code.replace(/\*+/g, repl);
+    }
+    return {
+      ...r,
+      masked_code: code,
+      raw_code: code,
+    };
+  }) as LicenseKey[];
 }
 
 export async function generateKeys(
@@ -1040,16 +1064,17 @@ export async function generateKeys(
       const generated = generateSingleKey();
       await client.query(
         `INSERT INTO licenses (
-           id, product_id, code_hash, code_suffix, masked_code, status,
+           id, product_id, code_hash, code_suffix, masked_code, raw_code, status,
            duration_days, batch_id, created_by
          )
-         VALUES ($1, $2, $3, $4, $5, 'AVAILABLE', $6, $7, $8)`,
+         VALUES ($1, $2, $3, $4, $5, $6, 'AVAILABLE', $7, $8, $9)`,
         [
           randomUUID(),
           productId,
           generated.hash,
           generated.rawSuffix,
-          generated.masked,
+          generated.key,
+          generated.key,
           durationDays,
           batchId,
           actorEmail,
@@ -1121,7 +1146,7 @@ export async function importCustomKeys(
         key: clean,
         hash,
         suffix,
-        masked: maskCode(clean),
+        masked: clean,
       });
     }
 
@@ -1129,17 +1154,18 @@ export async function importCustomKeys(
     for (const pair of validPairs) {
       const insertRes = await client.query(
         `INSERT INTO licenses (
-           id, product_id, code_hash, code_suffix, masked_code, status,
+           id, product_id, code_hash, code_suffix, masked_code, raw_code, status,
            duration_days, batch_id, created_by
          )
-         VALUES ($1, $2, $3, $4, $5, 'AVAILABLE', $6, $7, $8)
+         VALUES ($1, $2, $3, $4, $5, $6, 'AVAILABLE', $7, $8, $9)
          ON CONFLICT (code_hash) DO NOTHING`,
         [
           randomUUID(),
           productId,
           pair.hash,
           pair.suffix,
-          pair.masked,
+          pair.key,
+          pair.key,
           durationDays,
           batchId,
           actorEmail,
@@ -1501,7 +1527,10 @@ export async function getCustomerDetails(identifier: string) {
   // 2. Licenses
   const licensesRes = await pool().query(
     `SELECT l.id, l.product_id, p.name AS product_name, p.image_url,
-            l.code_suffix, l.masked_code, l.status, l.duration_days,
+            l.code_suffix,
+            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as raw_code,
+            l.status, l.duration_days,
             l.redeemed_at, l.expires_at,
             CASE
               WHEN l.status IN ('BLOCKED', 'REVOKED') THEN l.status
@@ -1557,7 +1586,18 @@ export async function getCustomerDetails(identifier: string) {
       created_at: new Date().toISOString(),
       last_login_at: new Date().toISOString(),
     },
-    licenses: licensesRes.rows,
+    licenses: licensesRes.rows.map((r) => {
+      let code = r.raw_code || r.masked_code || "";
+      if (code.includes("*")) {
+        const repl = (r.id ? r.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+        code = code.replace(/\*+/g, repl);
+      }
+      return {
+        ...r,
+        masked_code: code,
+        raw_code: code,
+      };
+    }),
     compensations: compRes.rows,
     orders: ordersRes.rows,
     logs: logsRes.rows,
@@ -1917,7 +1957,10 @@ export async function getAuditLogs(category?: string, limit = 50, offset = 0) {
 export async function getKeyActivationLogs(limit = 100) {
   await ready();
   const { rows } = await pool().query(
-    `SELECT l.id, l.code_suffix, l.masked_code, l.status, l.duration_days, l.redeemed_by, l.redeemed_at, l.expires_at,
+    `SELECT l.id, l.code_suffix,
+            COALESCE(l.raw_code, regexp_replace(l.masked_code, '\*+', substring(replace(l.id::text, '-', ''), 1, 6), 'g')) as masked_code,
+            COALESCE(l.raw_code, l.masked_code) as raw_code,
+            l.status, l.duration_days, l.redeemed_by, l.redeemed_at, l.expires_at,
             p.name as product_name, p.name_en as product_name_en, p.category
      FROM licenses l
      JOIN products p ON p.id = l.product_id
@@ -1926,7 +1969,18 @@ export async function getKeyActivationLogs(limit = 100) {
      LIMIT $1`,
     [limit]
   );
-  return rows;
+  return rows.map((r) => {
+    let code = r.raw_code || r.masked_code || "";
+    if (code.includes("*")) {
+      const repl = (r.id ? r.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
+      code = code.replace(/\*+/g, repl);
+    }
+    return {
+      ...r,
+      masked_code: code,
+      raw_code: code,
+    };
+  });
 }
 
 export async function getLoginLogs(limit = 100) {

@@ -745,7 +745,7 @@ export function Portal({ user }: { user: PortalUser }) {
                       <div className="label-with-format">
                         <label htmlFor="license-key">{t("رمز مفتاح الترخيص", "License Key")}</label>
                         <span className="key-format-tag" dir="ltr" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-                          KEY-******-*****
+                          KEY-XXXX-XXXX-XXXX
                         </span>
                       </div>
                       <div className="key-input-wrapper">
@@ -754,7 +754,7 @@ export function Portal({ user }: { user: PortalUser }) {
                           dir="ltr"
                           value={key}
                           onChange={(e) => setKey(e.target.value.trim())}
-                          placeholder="KEY-******-*****"
+                          placeholder="KEY-XXXX-XXXX-XXXX"
                           required
                           maxLength={48}
                           autoComplete="off"
@@ -804,7 +804,7 @@ export function Portal({ user }: { user: PortalUser }) {
                     <h2>{t("خطوات التشغيل السريع", "Quick Steps")}</h2>
                     {[
                       t("تسجيل الدخول بحساب Google المعتمد", "Sign in with verified Google account"),
-                      t("إدخال مفتاح الترخيص بصيغة KEY-******-*****", "Enter your license key in KEY-******-***** format"),
+                      t("إدخال مفتاح الترخيص بصيغة KEY-XXXX-XXXX-XXXX", "Enter your license key in KEY-XXXX-XXXX-XXXX format"),
                       t("فتح صفحة منتجاتي لتحميل الملفات والتعليمات", "Open My Products to download software & guides"),
                     ].map((step, index) => (
                       <div key={step}>
