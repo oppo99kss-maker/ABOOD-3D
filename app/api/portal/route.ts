@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
   const view = searchParams.get("view");
 
   try {
-    if (view === "admin-inventory" && admin) {
+    if ((view === "admin-inventory" || view === "inventory") && admin) {
       const productId = searchParams.get("productId");
       if (!productId) return json({ error: "MISSING_PRODUCT_ID" }, 400);
       const keys = await getProductInventory(productId);
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     // 1. Customer: Redeem key
     if (data.action === "redeem") {
       const code = typeof data.code === "string" ? data.code.trim() : "";
-      if (!code || code.length < 10) return json({ error: "INVALID_KEY", message: "صيغة المفتاح غير صحيحة" }, 400);
+      if (!code || code.length < 4) return json({ error: "INVALID_KEY", message: "صيغة المفتاح غير صحيحة" }, 400);
 
       const result = await redeemKey(email, code, clientIp);
       return json(result, result.success ? 200 : 400);

@@ -837,9 +837,9 @@ export async function importCustomKeys(
     for (const raw of rawKeys) {
       const trimmed = raw.trim();
       if (!trimmed) continue;
-      // Allow SPFX- format or any alphanumeric clean key
-      const clean = trimmed.replace(/[^a-zA-Z0-9-]/g, "").toUpperCase();
-      if (clean.length < 10) {
+      // Allow standard license formats (alphanumeric, hyphens, underscores) with minimum 4 chars
+      const clean = trimmed.replace(/[^a-zA-Z0-9-_]/g, "").toUpperCase();
+      if (clean.length < 4) {
         invalidKeys.push(trimmed);
         continue;
       }
@@ -850,7 +850,8 @@ export async function importCustomKeys(
       seenInInput.add(clean);
 
       const hash = hashCode(clean);
-      const suffix = clean.replace(/-/g, "").slice(-6);
+      const cleanSuffix = clean.replace(/[-_]/g, "");
+      const suffix = cleanSuffix.slice(-6) || clean.slice(-4);
       validPairs.push({
         key: clean,
         hash,
@@ -859,20 +860,15 @@ export async function importCustomKeys(
       });
     }
 
-    // Check DB duplicates
+    // Fast batch insertion with ON CONFLICT (code_hash) DO NOTHING
     for (const pair of validPairs) {
-      const existing = await client.query("SELECT id FROM licenses WHERE code_hash = $1", [pair.hash]);
-      if (existing.rowCount && existing.rowCount > 0) {
-        duplicateKeys.push(pair.key);
-        continue;
-      }
-
-      await client.query(
+      const insertRes = await client.query(
         `INSERT INTO licenses (
            id, product_id, code_hash, code_suffix, masked_code, status,
            duration_days, batch_id, created_by
          )
-         VALUES ($1, $2, $3, $4, $5, 'AVAILABLE', $6, $7, $8)`,
+         VALUES ($1, $2, $3, $4, $5, 'AVAILABLE', $6, $7, $8)
+         ON CONFLICT (code_hash) DO NOTHING`,
         [
           randomUUID(),
           productId,
@@ -884,7 +880,12 @@ export async function importCustomKeys(
           actorEmail,
         ]
       );
-      importedCount++;
+
+      if (insertRes.rowCount && insertRes.rowCount > 0) {
+        importedCount++;
+      } else {
+        duplicateKeys.push(pair.key);
+      }
     }
 
     await logAudit({

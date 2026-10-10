@@ -4644,6 +4644,19 @@ a.button:active,
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  z-index: 2;
+}
+
+.ref-card-corner-stock-badge:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38BDF8;
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
 }
 
 .ref-card-body {
@@ -5839,8 +5852,9 @@ a.button:active,
 
 /* Images 2 & 3: Product Edit Modal Shell */
 .ref-product-edit-modal-card {
-  width: min(920px, 95vw) !important;
-  max-height: 90vh !important;
+  width: min(1080px, 96vw) !important;
+  max-width: 1080px !important;
+  max-height: 92vh !important;
   background: #090C12 !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 18px !important;
@@ -6343,13 +6357,13 @@ a.button:active,
    ========================================================================== */
 
 .ref-stock-modal-card {
-  width: min(780px, 94vw) !important;
-  max-width: 780px !important;
-  max-height: 90vh;
+  width: min(960px, 96vw) !important;
+  max-width: 960px !important;
+  max-height: 92vh;
   overflow-y: auto;
   background: #0B0F17 !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px !important;
+  border-radius: 18px !important;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
@@ -7259,8 +7273,8 @@ a.button:active,
 .ref-lux-keys-scroll-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 380px;
+  gap: 10px;
+  max-height: 520px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -7479,5 +7493,149 @@ a.button:active,
   background: #00ACC1 !important;
   box-shadow: 0 6px 18px rgba(0, 188, 212, 0.5) !important;
 }
+
+/* ==========================================================================
+   FAST STOCK OPERATIONS & CLIPBOARD TOOLS
+   ========================================================================== */
+
+.ref-btn-paste-clipboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(95, 213, 255, 0.1);
+  border: 1px solid rgba(95, 213, 255, 0.28);
+  color: #5FD5FF;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.ref-btn-paste-clipboard:hover {
+  background: rgba(95, 213, 255, 0.2);
+  border-color: #5FD5FF;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(95, 213, 255, 0.25);
+}
+
+.ref-btn-clear-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #F87171;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-btn-clear-input:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+}
+
+.ref-bulk-header-actions,
+.ref-key-action-chips,
+.ref-inline-tools-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ref-salla-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;
+}
+
+.ref-salla-title-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+.ref-salla-quick-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Products Table Stock Badge Button */
+.ref-table-stock-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  background: #111724;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  white-space: nowrap;
+}
+
+.ref-table-stock-badge-btn.in-stock {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34D399;
+}
+
+.ref-table-stock-badge-btn.in-stock:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
+.ref-table-stock-badge-btn.out-of-stock {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #F87171;
+}
+
+.ref-table-stock-badge-btn.out-of-stock:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+}
+
+/* Quick Stock Button in Actions Column */
+.ref-btn-stock-quick {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(95, 213, 255, 0.1);
+  border: 1px solid rgba(95, 213, 255, 0.28);
+  color: #5FD5FF;
+  border-radius: 6px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.ref-btn-stock-quick:hover {
+  background: rgba(95, 213, 255, 0.22);
+  border-color: #5FD5FF;
+  box-shadow: 0 2px 10px rgba(95, 213, 255, 0.28);
+  transform: translateY(-1px);
+}
+
 
 

@@ -9,6 +9,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ClipboardPaste,
   Clock,
   Copy,
   ExternalLink,
@@ -509,9 +510,25 @@ export function AdminControlSpace({
     });
   }
 
-  function openEditProduct(p: Product) {
+  async function handlePasteFromClipboard(setter: (val: string) => void, fieldLabel: string) {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          setter(text.trim());
+          notify(t(`تم اللصق من الحافظة (${fieldLabel})`, `Pasted from clipboard (${fieldLabel})`));
+          return;
+        }
+      }
+      notify(t("الحافظة فارغة أو يرجى منح إذن القراءة", "Clipboard is empty or access not allowed"), "error");
+    } catch {
+      notify(t("يرجى استخدام الاختصار Ctrl+V للصق مباشرة في الحقل", "Please press Ctrl+V to paste"), "error");
+    }
+  }
+
+  function openEditProduct(p: Product, initialTab: "details" | "custom_fields" | "keys" = "details") {
     setEditingProduct(p);
-    setProductModalTab("details");
+    setProductModalTab(initialTab);
 
     let sku = `prod-${p.id.slice(0, 8)}`;
     let version = "v4.1.0";
@@ -796,22 +813,26 @@ export function AdminControlSpace({
     e.preventDefault();
     if (!stockModalProductId) return;
     const keyToAdd = singleKeyText.trim();
-    if (!keyToAdd || keyToAdd.length < 5) {
-      notify(t("يرجى إدخال رمز مفتاح صالح", "Please enter a valid key code"), "error");
+    if (!keyToAdd || keyToAdd.length < 4) {
+      notify(t("يرجى إدخال رمز مفتاح صالح (4 أحرف على الأقل)", "Please enter a valid key code (at least 4 characters)"), "error");
       return;
     }
 
     try {
-      await apiAction({
+      const res = await apiAction({
         action: "importKeys",
         rawKeys: [keyToAdd],
         productId: stockModalProductId,
         durationDays: singleKeyDuration,
       });
-      notify(t(`تمت إضافة المفتاح (${keyToAdd}) إلى المخزون بنجاح!`, `Key added to stock successfully!`));
-      setSingleKeyText(generateRandomKeyCode());
-      setShowStockModal(false);
-      await onRefresh();
+      if (res?.duplicates && res.duplicates.length > 0) {
+        notify(t("هذا المفتاح موجود مسبقاً في المخزون!", "This key already exists in stock!"), "error");
+      } else {
+        notify(t(`تمت إضافة المفتاح (${keyToAdd}) إلى المخزون بنجاح!`, `Key added to stock successfully!`));
+        setSingleKeyText(generateRandomKeyCode());
+        setShowStockModal(false);
+        await onRefresh();
+      }
     } catch (err: any) {
       notify(err.message || t("فشلت إضافة المفتاح", "Failed to add key"), "error");
     }
@@ -823,7 +844,7 @@ export function AdminControlSpace({
     const keyList = bulkKeysText
       .split("\n")
       .map((k) => k.trim())
-      .filter((k) => k.length >= 5);
+      .filter((k) => k.length >= 4);
 
     if (!keyList.length) {
       notify(t("يرجى إدخال أو لصق مفتاح واحد على الأقل", "Please enter at least one key"), "error");
@@ -837,7 +858,14 @@ export function AdminControlSpace({
         productId: stockModalProductId,
         durationDays: bulkDuration,
       });
-      notify(t(`تمت إضافة ${res.importedCount ?? keyList.length} مفاتيح دفعة واحدة إلى المخزون بنجاح!`, `Imported ${res.importedCount ?? keyList.length} keys in bulk!`));
+      const imported = res?.importedCount ?? keyList.length;
+      const dupes = res?.duplicates?.length || 0;
+      notify(
+        t(
+          `تمت إضافة ${imported} مفتاحاً للمخزون بنجاح! ${dupes > 0 ? `(${dupes} مكرر تم تجاهله)` : ""}`,
+          `Imported ${imported} keys successfully! ${dupes > 0 ? `(${dupes} duplicates skipped)` : ""}`
+        )
+      );
       setBulkKeysText("");
       setShowStockModal(false);
       await onRefresh();
@@ -890,7 +918,7 @@ export function AdminControlSpace({
     if (!productId) return;
     setLoadingProductKeys(true);
     try {
-      const res = await fetch(`/api/portal?view=inventory&productId=${productId}`);
+      const res = await fetch(`/api/portal?view=admin-inventory&productId=${productId}`);
       if (res.ok) {
         const data = await res.json();
         setProductInventoryKeys(Array.isArray(data.keys) ? data.keys : []);
@@ -1370,10 +1398,19 @@ export function AdminControlSpace({
                           <Package size={48} />
                         </div>
                       )}
-                      {/* Corner Stock Badge */}
-                      <div className="ref-card-corner-stock-badge">
+                      {/* Corner Stock Badge: Clickable to jump straight into keys management */}
+                      <button
+                        type="button"
+                        className="ref-card-corner-stock-badge"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditProduct(p, "keys");
+                        }}
+                        title={t("عرض وإدارة مخزون ومفاتيح هذا المنتج", "View & manage keys for this product")}
+                      >
+                        <span className="hero-pulse-dot" />
                         <span>{t(`المخزون المتاح: ${stockCount}`, `Stock: ${stockCount}`)}</span>
-                      </div>
+                      </button>
                     </div>
 
                     {/* Card Body */}
@@ -1456,15 +1493,17 @@ export function AdminControlSpace({
                   <tr>
                     <th>{t("المنتج الحالي", "Current Product")}</th>
                     <th>{t("العنوان والترجمة", "Title & Translation")}</th>
+                    <th>{t("المخزون والأكواد", "Stock & Keys")}</th>
                     <th>{t("الملفات المرفقة (Spoofx.rar)", "Attached Files")}</th>
                     <th>{t("الظهور في المتجر", "Store Visibility")}</th>
                     <th>{t("الحالة", "Status")}</th>
-                    <th>{t("الضبط والحذف", "Manage & Delete")}</th>
+                    <th>{t("الضبط والمخزون", "Manage & Stock")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProducts.map((p) => {
                     const hasFiles = Array.isArray(p.files) && p.files.length > 0;
+                    const stockNum = p.available_keys ?? 0;
                     return (
                       <tr key={p.id}>
                         <td className="ref-product-col">
@@ -1486,6 +1525,18 @@ export function AdminControlSpace({
                             <span className="title-primary">{p.name}</span>
                             <span className="title-secondary">{p.name_en || "—"}</span>
                           </div>
+                        </td>
+
+                        <td>
+                          <button
+                            type="button"
+                            className={`ref-table-stock-badge-btn ${stockNum > 0 ? "in-stock" : "out-of-stock"}`}
+                            onClick={() => openEditProduct(p, "keys")}
+                            title={t("إدارة أكواد ومخزون هذا المنتج", "Manage stock and keys")}
+                          >
+                            <KeyRound size={13} />
+                            <span>{stockNum} {t("مفتاح متاح", "keys available")}</span>
+                          </button>
                         </td>
 
                         <td>
@@ -1526,12 +1577,22 @@ export function AdminControlSpace({
                         <td>
                           <div className="ref-row-actions-cluster">
                             <button
+                              type="button"
+                              className="ref-btn-stock-quick"
+                              onClick={() => openEditProduct(p, "keys")}
+                              title={t("إدارة مفاتيح ومخزون هذا المنتج مباشرة", "Manage keys & inventory")}
+                            >
+                              <KeyRound size={13} />
+                              <span>{t("المخزون", "Stock")}</span>
+                            </button>
+
+                            <button
                               className="ref-btn-edit-action"
                               onClick={() => openEditProduct(p)}
                               title={t("تعديل العنوان والملفات والضبط", "Edit product & files")}
                             >
                               <Sliders size={14} />
-                              <span>{t("تعديل الضبط", "Settings")}</span>
+                              <span>{t("الضبط", "Settings")}</span>
                             </button>
 
                             <button
@@ -2245,12 +2306,42 @@ export function AdminControlSpace({
 
                 {/* 2. Salla-Style Codes Box (Exact Match to media_1791638322700_294b52b2.png) */}
                 <div className="ref-salla-codes-card">
+                  <div className="ref-salla-header-row">
+                    <span className="ref-salla-title-label">
+                      {t("لصق الأكواد دفعة واحدة (مفتاح في كل سطر):", "Paste Codes in Bulk (One per line):")}
+                    </span>
+                    <div className="ref-salla-quick-tools">
+                      <button
+                        type="button"
+                        className="ref-btn-paste-clipboard"
+                        onClick={() => handlePasteFromClipboard((txt) => {
+                          setSallaKeysInput((prev) => (prev ? `${prev}\n${txt}` : txt));
+                        }, t("قائمة المفاتيح", "Keys List"))}
+                        title={t("لصق الأكواد من الحافظة مباشرة", "Paste keys from clipboard")}
+                      >
+                        <ClipboardPaste size={13} />
+                        <span>{t("لصق من الحافظة", "Paste Clipboard")}</span>
+                      </button>
+                      {sallaKeysInput && (
+                        <button
+                          type="button"
+                          className="ref-btn-clear-input"
+                          onClick={() => setSallaKeysInput("")}
+                          title={t("مسح الحقل", "Clear")}
+                        >
+                          <Trash2 size={12} />
+                          <span>{t("مسح", "Clear")}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <textarea
                     rows={5}
                     dir="ltr"
                     value={sallaKeysInput}
                     onChange={(e) => setSallaKeysInput(e.target.value)}
-                    placeholder="قم بنسخ الأكواد ولصقها هنا، علماً أن كل سطر يجب أن يحتوي على كود واحد فقط"
+                    placeholder={t("قم بنسخ الأكواد ولصقها هنا، علماً أن كل سطر يجب أن يحتوي على كود واحد فقط", "Paste keys here, one code per line")}
                     className="ref-salla-codes-textarea"
                   />
 
@@ -2286,7 +2377,7 @@ export function AdminControlSpace({
                       onClick={handleInsertSallaKeys}
                     >
                       {busy ? <LoaderCircle className="spin" size={15} /> : null}
-                      <span>{t("إدراج", "Insert")}</span>
+                      <span>{t("إدراج للمخزون", "Insert to Stock")}</span>
                     </button>
                   </div>
                 </div>
@@ -2314,14 +2405,25 @@ export function AdminControlSpace({
                         <KeyRound size={15} />
                         <span>{t("إضافة كود مفرد للمخزون", "Add Single Code to Stock")}</span>
                       </div>
-                      <button
-                        type="button"
-                        className="ref-btn-dice-random"
-                        onClick={() => setSingleInlineKey(generateRandomKeyCode())}
-                      >
-                        <span>🎲</span>
-                        <span>{t("كود عشوائي جديد", "New Random Code")}</span>
-                      </button>
+                      <div className="ref-inline-tools-cluster">
+                        <button
+                          type="button"
+                          className="ref-btn-paste-clipboard"
+                          onClick={() => handlePasteFromClipboard((txt) => setSingleInlineKey(txt), t("الكود المفرد", "Single Key"))}
+                          title={t("لصق الكود من الحافظة", "Paste from clipboard")}
+                        >
+                          <ClipboardPaste size={12} />
+                          <span>{t("لصق من الحافظة", "Paste")}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="ref-btn-dice-random"
+                          onClick={() => setSingleInlineKey(generateRandomKeyCode())}
+                        >
+                          <span>🎲</span>
+                          <span>{t("كود عشوائي جديد", "New Random Code")}</span>
+                        </button>
+                      </div>
                     </div>
 
                     <div className="ref-inline-key-inputs">
@@ -2610,15 +2712,26 @@ export function AdminControlSpace({
                 <div className="ref-stock-input-group">
                   <div className="ref-label-row">
                     <label>{t("كود المفتاح المراد إضافته للمخزون", "Key Code to Add")} *</label>
-                    <button
-                      type="button"
-                      className="ref-btn-dice-random"
-                      onClick={() => setSingleKeyText(generateRandomKeyCode())}
-                      title={t("توليد كود عشوائي جديد", "Generate new random code")}
-                    >
-                      <span>🎲</span>
-                      <span>{t("كود عشوائي جديد", "New Random Code")}</span>
-                    </button>
+                    <div className="ref-inline-tools-cluster">
+                      <button
+                        type="button"
+                        className="ref-btn-paste-clipboard"
+                        onClick={() => handlePasteFromClipboard((txt) => setSingleKeyText(txt), t("كود المفتاح", "Key Code"))}
+                        title={t("لصق الكود من الحافظة", "Paste from clipboard")}
+                      >
+                        <ClipboardPaste size={12} />
+                        <span>{t("لصق من الحافظة", "Paste Clipboard")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="ref-btn-dice-random"
+                        onClick={() => setSingleKeyText(generateRandomKeyCode())}
+                        title={t("توليد كود عشوائي جديد", "Generate new random code")}
+                      >
+                        <span>🎲</span>
+                        <span>{t("كود عشوائي جديد", "New Random Code")}</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="ref-single-key-input-wrap">
                     <input
@@ -2685,9 +2798,33 @@ export function AdminControlSpace({
                 <div className="ref-stock-input-group">
                   <div className="ref-label-row">
                     <label>{t("الصق قائمة المفاتيح (مفتاح في كل سطر)", "Paste Keys List (One per line)")} *</label>
-                    <span className={`ref-detected-counter ${bulkKeysDetectedCount > 0 ? "active" : ""}`}>
-                      {t(`تم اكتشاف ${bulkKeysDetectedCount} مفاتيح جاهزة للإضافة`, `${bulkKeysDetectedCount} keys detected`)}
-                    </span>
+                    <div className="ref-bulk-header-actions">
+                      <button
+                        type="button"
+                        className="ref-btn-paste-clipboard"
+                        onClick={() => handlePasteFromClipboard((txt) => {
+                          setBulkKeysText((prev) => (prev ? `${prev}\n${txt}` : txt));
+                        }, t("قائمة المفاتيح", "Keys List"))}
+                        title={t("لصق قائمة المفاتيح من الحافظة", "Paste keys list from clipboard")}
+                      >
+                        <ClipboardPaste size={13} />
+                        <span>{t("لصق من الحافظة", "Paste Clipboard")}</span>
+                      </button>
+                      {bulkKeysText && (
+                        <button
+                          type="button"
+                          className="ref-btn-clear-input"
+                          onClick={() => setBulkKeysText("")}
+                          title={t("مسح الحقل", "Clear")}
+                        >
+                          <Trash2 size={12} />
+                          <span>{t("مسح", "Clear")}</span>
+                        </button>
+                      )}
+                      <span className={`ref-detected-counter ${bulkKeysDetectedCount > 0 ? "active" : ""}`}>
+                        {t(`تم اكتشاف ${bulkKeysDetectedCount} مفاتيح جاهزة للإضافة`, `${bulkKeysDetectedCount} keys detected`)}
+                      </span>
+                    </div>
                   </div>
                   <textarea
                     rows={7}
@@ -2742,7 +2879,7 @@ export function AdminControlSpace({
                   <div className="ref-field-box">
                     <label>{t("العدد المراد توليده تلقائياً", "Number of Keys to Generate")}</label>
                     <div className="ref-quick-count-chips">
-                      {[10, 25, 50, 100, 200].map((num) => (
+                      {[10, 25, 50, 100, 200, 500].map((num) => (
                         <button
                           type="button"
                           key={num}
