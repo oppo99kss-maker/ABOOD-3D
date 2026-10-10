@@ -463,16 +463,30 @@ svg {
 .portal-shell {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
   background: var(--background-primary);
   color: var(--text-primary);
 }
 
+@media (min-width: 900px) {
+  .portal-shell:not(.admin-immersive-shell) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 899px) {
+  .portal-shell {
+    flex-direction: column;
+  }
+}
+
 .portal-body {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.04), transparent 50%), var(--background-primary);
+  overflow-x: hidden;
 }
 
 .portal-main {
@@ -480,7 +494,8 @@ svg {
   width: 100%;
   max-width: 1380px;
   margin: 0 auto;
-  padding: 32px clamp(16px, 3.5vw, 48px) 56px;
+  padding: 32px clamp(16px, 3vw, 44px) 56px;
+  box-sizing: border-box;
 }
 
 .global-announcement-banner {

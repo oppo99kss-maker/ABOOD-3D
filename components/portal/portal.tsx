@@ -284,7 +284,7 @@ export function Portal({ user }: { user: PortalUser }) {
         onToggleTheme={toggleTheme}
         onToggleLanguage={() => setLang(ar ? "en" : "ar")}
         onLogout={() => void signOut({ callbackUrl: "/" })}
-        user={{ name: user.name, image: user.image }}
+        user={{ name: user.name, email: user.email, image: user.image }}
       />
 
       <div className="portal-body">
