@@ -731,7 +731,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
                   {/* Copyright Footer */}
                   <footer className="ref-overview-copyright">
-                    <p>{t("جميع الحقوق محفوظة © 2026 SpooFX", "All rights reserved © 2026 SpooFX")}</p>
+                    <p>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</p>
                   </footer>
                 </div>
               )}
@@ -1205,10 +1205,10 @@ export function Portal({ user }: { user: PortalUser }) {
 
         <footer className="portal-footer">
           <div className="footer-left">
-            <span>© {new Date().getFullYear()} SpooFX. All rights reserved.</span>
+            <span>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</span>
           </div>
           <div className="footer-right">
-            <span>{t("بوابة التراخيص الرقمية وإدارة العملاء", "Digital Licensing & Customer Portal")}</span>
+            <span>{t("تسليم ذاتي فوري وتراخيص رقمية معتمدة", "Instant self-delivery & verified digital licensing")}</span>
           </div>
         </footer>
       </>

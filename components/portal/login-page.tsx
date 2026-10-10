@@ -203,13 +203,14 @@ export function LoginPage() {
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <p className={styles.copyrightText}>
-            {ar ? "جميع الحقوق محفوظة" : "All rights reserved"}{" "}
-            <span dir="ltr">© {new Date().getFullYear()} SpooFX</span>
+            {ar
+              ? "سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل"
+              : "SpooFX — Your premier destination with guaranteed & best products"}
           </p>
           <span className={styles.taglineText}>
             {ar
-              ? "حسابك ومنتجاتك ومفاتيحك، في مكان واحد."
-              : "Your account, products, and keys in one place."}
+              ? "تسليم ذاتي فوري وتراخيص رقمية معتمدة"
+              : "Instant self-delivery & verified digital licensing"}
           </span>
         </div>
       </footer>
