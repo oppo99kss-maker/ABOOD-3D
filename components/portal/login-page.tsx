@@ -4,20 +4,17 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
   AlertCircle,
-  Globe2,
   LoaderCircle,
   Lock,
   LogIn,
-  Moon,
   ShieldCheck,
-  Sun,
   Zap,
 } from "lucide-react";
 import { usePreferences } from "./use-preferences";
 import styles from "./login-page.module.css";
 
 export function LoginPage() {
-  const { lang, isDark, setLang, toggleTheme } = usePreferences();
+  const { lang, isDark } = usePreferences();
   const ar = lang === "ar";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
@@ -74,30 +71,10 @@ export function LoginPage() {
                 Spoo<span className={styles.brandAccent}>FX</span>
               </strong>
               <span className={styles.brandTagline}>
-                {ar ? "بوابتك إلى حسابك" : "Your Account Portal"}
+                {ar ? "تسليم ذاتي" : "Instant Delivery"}
               </span>
             </div>
           </Link>
-
-          <div className={styles.tools}>
-            <button
-              type="button"
-              className={styles.control}
-              onClick={() => setLang(ar ? "en" : "ar")}
-              aria-label={ar ? "Switch to English" : "التبديل إلى العربية"}
-            >
-              <Globe2 size={15} />
-              <span>{ar ? "English" : "العربية"}</span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.control} ${styles.theme}`}
-              onClick={toggleTheme}
-              aria-label={ar ? "تبديل المظهر" : "Toggle theme"}
-            >
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          </div>
         </div>
       </header>
 

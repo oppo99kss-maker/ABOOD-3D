@@ -548,28 +548,6 @@ export function PortalNavigation({
             </button>
           )}
 
-          {/* Compact Quick Language & Theme Controls when expanded */}
-          {!collapsed && (
-            <div className={css.compactToolsRow}>
-              <button
-                type="button"
-                className={css.toolPillBtn}
-                onClick={onToggleLanguage}
-                title={ar ? "Switch to English" : "التبديل إلى العربية"}
-              >
-                <Globe2 size={13} />
-                <span>{ar ? "English" : "العربية"}</span>
-              </button>
-              <button
-                type="button"
-                className={css.toolIconBtn}
-                onClick={onToggleTheme}
-                title={ar ? "تبديل المظهر" : "Toggle theme"}
-              >
-                {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-            </div>
-          )}
         </div>
       </aside>
 
@@ -697,26 +675,6 @@ export function PortalNavigation({
                   </div>
                 </div>
               </button>
-
-              <div className={css.compactToolsRow}>
-                <button
-                  type="button"
-                  className={css.toolPillBtn}
-                  onClick={onToggleLanguage}
-                  title={ar ? "Switch to English" : "التبديل إلى العربية"}
-                >
-                  <Globe2 size={13} />
-                  <span>{ar ? "English" : "العربية"}</span>
-                </button>
-                <button
-                  type="button"
-                  className={css.toolIconBtn}
-                  onClick={onToggleTheme}
-                  title={ar ? "تبديل المظهر" : "Toggle theme"}
-                >
-                  {isDark ? <Sun size={14} /> : <Moon size={14} />}
-                </button>
-              </div>
 
               <button className={css.drawerLogoutBtn} onClick={onLogout}>
                 <LogOut size={16} />

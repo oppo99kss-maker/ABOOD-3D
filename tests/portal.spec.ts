@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("login is clear when Google is not configured; preferences persist", async ({ page }) => {
+test("login is clear when Google is not configured", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
@@ -8,13 +8,6 @@ test("login is clear when Google is not configured; preferences persist", async 
   await expect(page.getByRole("link", { name: "معاينة البوابة" })).toHaveCount(0);
   await page.getByRole("button", { name: "تسجيل الدخول" }).click();
   await expect(page.locator(".auth-error")).toContainText("غير متاح");
-  await page.getByRole("button", { name: "Switch to English" }).click();
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-  await page.getByRole("button", { name: "Toggle theme" }).click();
-  await expect(page.locator("[data-theme]")).toHaveAttribute("data-theme", "light");
-  await page.reload();
-  await expect(page.locator("[data-theme]")).toHaveAttribute("data-theme", "light");
-  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
   expect(errors).toEqual([]);
 });
 
