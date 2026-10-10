@@ -89,12 +89,12 @@
 
 .brandLogoFrame {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   flex: none;
-  border-radius: 10px;
-  background: #101623;
-  border: 1px solid #243247;
+  border-radius: 12px;
+  background: #0E1624;
+  border: 1px solid #1F2D40;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,16 +110,16 @@
 }
 
 .brandMainTitle {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: #EEF4FF;
   line-height: 1.1;
   letter-spacing: -0.2px;
 }
 
 .brandSubtitle {
-  font-size: 10.5px;
-  color: #A5B4C9;
+  font-size: 11px;
+  color: #8DA2BA;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -129,13 +129,13 @@
 .collapseSidebarToggle {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   flex: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #243247;
-  color: #A5B4C9;
+  border-radius: 10px;
+  background: #0E1624;
+  border: 1px solid #1F2D40;
+  color: #8DA2BA;
   cursor: pointer;
   position: relative;
   transition: all 0.15s ease;
@@ -169,12 +169,11 @@
 }
 
 .sectionHeaderTitle {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  color: #6C7D93;
-  padding: 8px 10px 4px;
-  letter-spacing: 0.5px;
+  color: #5A6E85;
+  padding: 12px 10px 4px;
+  letter-spacing: 0.3px;
 }
 
 .sectionItemsList {
@@ -189,17 +188,17 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  height: 42px;
+  height: 44px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #A5B4C9;
+  color: #8DA2BA;
   background: transparent;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   text-align: start;
 }
@@ -212,36 +211,36 @@
 .navItemBtn:hover {
   background: rgba(255, 255, 255, 0.035);
   color: #EEF4FF;
-  border-color: rgba(36, 50, 71, 0.5);
 }
 
 .navItemBtn:active {
   transform: scale(0.98);
 }
 
-/* Active State: Dark cyan background, luminous border, glowing side bar */
+/* Active State: matching screenshot with glowing cyan border and background */
 .navItemBtn[data-active="true"] {
-  border: 1px solid rgba(95, 213, 255, 0.35);
-  background: rgba(95, 213, 255, 0.08);
+  border: 1.5px solid #38BDF8;
+  background: rgba(14, 28, 44, 0.85);
   color: #EEF4FF;
-  font-weight: 600;
-  box-shadow: 0 0 16px rgba(95, 213, 255, 0.08);
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.22), inset 0 0 8px rgba(56, 189, 248, 0.05);
 }
 
 .navItemBtn[data-active="true"]::before {
   content: "";
   position: absolute;
-  inset-inline-start: -1px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
+  inset-inline-start: -2px;
+  top: 10px;
+  bottom: 10px;
+  width: 3.5px;
   border-radius: 4px;
-  background: #5FD5FF;
-  box-shadow: 0 0 10px rgba(95, 213, 255, 0.7);
+  background: #38BDF8;
+  box-shadow: 0 0 12px #38BDF8;
 }
 
 .navItemBtn[data-active="true"] .itemIconWrap {
-  color: #5FD5FF;
+  color: #38BDF8;
 }
 
 .itemIconWrap {
@@ -264,35 +263,39 @@
 .countBadgePill {
   font-size: 11px;
   font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 5px;
-  background: #101623;
-  border: 1px solid #243247;
-  color: #A5B4C9;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #141D2B;
+  border: 1px solid #1F2D40;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-inline-start: auto;
 }
 
 .navItemBtn[data-active="true"] .countBadgePill {
-  background: rgba(95, 213, 255, 0.15);
-  border-color: rgba(95, 213, 255, 0.4);
-  color: #5FD5FF;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38BDF8;
 }
 
 .activeChevron {
   margin-inline-start: auto;
-  color: #5FD5FF;
+  color: #38BDF8;
   flex: none;
 }
 
 .externalArrow {
   margin-inline-start: auto;
-  color: #6C7D93;
+  color: #5A6E85;
   flex: none;
   transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .navItemBtn:hover .externalArrow {
-  color: #5FD5FF;
+  color: #38BDF8;
   transform: translate(-1px, -1px);
 }
 
@@ -350,7 +353,7 @@
 .sidebarFooterBlock {
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(36, 50, 71, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -360,12 +363,12 @@
 .userProfileRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #101623;
-  border: 1px solid #243247;
+  padding: 8px 6px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   text-align: start;
   transition: all 0.15s ease;
@@ -380,40 +383,40 @@
 
 .userProfileRow:hover,
 .userProfileRowActive {
-  background: #151E30;
-  border-color: rgba(95, 213, 255, 0.35);
-  box-shadow: 0 0 16px rgba(95, 213, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .userAvatarImgWrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   overflow: hidden;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0E1624;
 }
 
 .userAvatarImg {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   object-fit: cover;
 }
 
 .userAvatarFallback {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #1A2436, #101623);
-  border: 1px solid #243247;
-  color: #5FD5FF;
+  color: #38BDF8;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .userTextInfo {
@@ -425,8 +428,8 @@
 }
 
 .userDisplayName {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #EEF4FF;
   white-space: nowrap;
   overflow: hidden;
@@ -436,24 +439,24 @@
 .userConnectedStatus {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #A5B4C9;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #8DA2BA;
 }
 
 .greenPulseDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #34D399;
-  box-shadow: 0 0 6px #34D399;
+  background: #00E5FF;
+  box-shadow: 0 0 8px #00E5FF;
   display: inline-block;
   flex: none;
 }
 
 .userChevron {
+  color: #64748B;
   margin-inline-start: auto;
-  color: #A5B4C9;
   flex: none;
 }
 
@@ -851,18 +854,19 @@
 .directLogoutBtn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: transparent;
   border: none;
-  color: #64748B;
-  font-size: 12px;
+  color: #8DA2BA;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   transition: all 0.15s ease;
-  width: fit-content;
-  margin-top: 4px;
+  width: 100%;
+  margin-top: 6px;
 }
 
 .directLogoutBtn:hover {

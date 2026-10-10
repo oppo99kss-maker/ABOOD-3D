@@ -68,9 +68,13 @@ function isAdmin(email: string) {
   return admins.includes(clean);
 }
 
-async function currentUser() {
+async function currentSession() {
   if (!isAuthConfigured()) return null;
-  const session = await getServerSession(authOptions);
+  return await getServerSession(authOptions);
+}
+
+async function currentUser() {
+  const session = await currentSession();
   return session?.user?.email?.toLowerCase() || null;
 }
 
@@ -80,8 +84,15 @@ function json(data: unknown, status = 200) {
 }
 
 export async function GET(request: NextRequest) {
-  const email = await currentUser();
+  const session = await currentSession();
+  const email = session?.user?.email?.toLowerCase() || null;
   if (!email) return json({ error: "UNAUTHORIZED" }, 401);
+
+  try {
+    await recordCustomerLogin(email, session?.user?.name, session?.user?.image);
+  } catch {
+    // silent
+  }
 
   const admin = isAdmin(email);
   const searchParams = request.nextUrl.searchParams;

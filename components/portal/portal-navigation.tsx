@@ -105,7 +105,7 @@ export function PortalNavigation({
       ],
     },
     {
-      title: { ar: "الدعم", en: "Support" },
+      title: { ar: "المساعدة", en: "Support" },
       items: [
         {
           tab: "tickets",
@@ -413,8 +413,8 @@ export function PortalNavigation({
               onClick={onLogout}
               aria-label={ar ? "تسجيل الخروج" : "Sign Out"}
             >
-              <LogOut size={13} className={ar ? "rotate-180" : ""} />
               <span>{ar ? "تسجيل الخروج" : "Sign Out"}</span>
+              <LogOut size={14} className={ar ? "rotate-180" : ""} />
             </button>
           )}
 
