@@ -350,7 +350,11 @@ export async function POST(request: NextRequest) {
     // 6. Admin: Import custom keys
     if (data.action === "importKeys") {
       const productId = typeof data.productId === "string" ? data.productId : "";
-      const rawKeys = Array.isArray(data.rawKeys) ? data.rawKeys : [];
+      const rawKeys = Array.isArray(data.rawKeys)
+        ? data.rawKeys
+        : typeof data.rawKeys === "string"
+        ? [data.rawKeys]
+        : [];
       const durationDays = Number(data.durationDays || 3);
 
       if (!productId || !rawKeys.length) {

@@ -572,8 +572,10 @@ export async function checkDatabase() {
 
 export function hashCode(code: string) {
   const secret = process.env.NEXTAUTH_SECRET || "spfx-fallback-secret-2026";
+  const alphanumericOnly = code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  const toHash = alphanumericOnly.length > 0 ? alphanumericOnly : code.trim().toUpperCase();
   return createHmac("sha256", `SpooFX-license-v1:${secret}`)
-    .update(code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())
+    .update(toHash)
     .digest("hex");
 }
 
@@ -1044,6 +1046,9 @@ export async function getProductInventory(productId: string) {
   }) as LicenseKey[];
 }
 
+import { parseRawKeyList } from "./key-utils";
+export { parseRawKeyList };
+
 export async function generateKeys(
   productId: string,
   count: number,
@@ -1082,13 +1087,19 @@ export async function generateKeys(
       keys.push(generated.key);
     }
 
+    const stockRes = await client.query(
+      `SELECT count(id)::int AS available_stock FROM licenses WHERE product_id = $1 AND status = 'AVAILABLE'`,
+      [productId]
+    );
+    const availableStock = stockRes.rows[0]?.available_stock ?? keys.length;
+
     await logAudit({
       category: "INVENTORY",
       action: "KEYS_GENERATED",
       actor_email: actorEmail,
       target_type: "product",
       target_id: productId,
-      details: { count, durationDays, batchId, productName: productRes.rows[0].name },
+      details: { count, durationDays, batchId, availableStock, productName: productRes.rows[0].name },
     }, client);
 
     await client.query("COMMIT");
@@ -1111,6 +1122,7 @@ export async function importCustomKeys(
   const client = await pool().connect();
   const batchId = `IMPORT-${Date.now()}`;
   let importedCount = 0;
+  let reassignedCount = 0;
   const duplicateKeys: string[] = [];
   const invalidKeys: string[] = [];
 
@@ -1119,37 +1131,35 @@ export async function importCustomKeys(
     const productRes = await client.query("SELECT id, name FROM products WHERE id = $1", [productId]);
     if (!productRes.rowCount) throw new Error("PRODUCT_NOT_FOUND");
 
-    // Clean and validate keys
+    // Clean and validate keys using robust parser
+    const parsedKeys = parseRawKeyList(rawKeys);
     const seenInInput = new Set<string>();
     const validPairs: { key: string; hash: string; suffix: string; masked: string }[] = [];
 
-    for (const raw of rawKeys) {
+    for (const raw of parsedKeys) {
       const trimmed = raw.trim();
-      if (!trimmed) continue;
-      // Allow standard license formats (alphanumeric, hyphens, underscores) with minimum 4 chars
-      const clean = trimmed.replace(/[^a-zA-Z0-9-_]/g, "").toUpperCase();
-      if (clean.length < 4) {
+      if (!trimmed || trimmed.length < 2) {
         invalidKeys.push(trimmed);
         continue;
       }
-      if (seenInInput.has(clean)) {
+      const hash = hashCode(trimmed);
+      if (seenInInput.has(hash)) {
         duplicateKeys.push(trimmed);
         continue;
       }
-      seenInInput.add(clean);
+      seenInInput.add(hash);
 
-      const hash = hashCode(clean);
-      const cleanSuffix = clean.replace(/[-_]/g, "");
-      const suffix = cleanSuffix.slice(-6) || clean.slice(-4);
+      const cleanSuffix = trimmed.replace(/[^a-zA-Z0-9]/g, "");
+      const suffix = cleanSuffix.slice(-6) || trimmed.slice(-4);
       validPairs.push({
-        key: clean,
+        key: trimmed,
         hash,
         suffix,
-        masked: clean,
+        masked: trimmed,
       });
     }
 
-    // Fast batch insertion with ON CONFLICT (code_hash) DO NOTHING
+    // Insert new keys or transfer unredeemed/available existing keys to this product
     for (const pair of validPairs) {
       const insertRes = await client.query(
         `INSERT INTO licenses (
@@ -1157,7 +1167,15 @@ export async function importCustomKeys(
            duration_days, batch_id, created_by
          )
          VALUES ($1, $2, $3, $4, $5, $6, 'AVAILABLE', $7, $8, $9)
-         ON CONFLICT (code_hash) DO NOTHING`,
+         ON CONFLICT (code_hash) DO UPDATE
+         SET product_id = EXCLUDED.product_id,
+             status = 'AVAILABLE',
+             duration_days = EXCLUDED.duration_days,
+             raw_code = COALESCE(EXCLUDED.raw_code, licenses.raw_code),
+             masked_code = COALESCE(EXCLUDED.masked_code, licenses.masked_code),
+             batch_id = EXCLUDED.batch_id
+         WHERE licenses.order_id IS NULL AND licenses.redeemed_by IS NULL
+         RETURNING id, (xmax = 0) AS is_inserted`,
         [
           randomUUID(),
           productId,
@@ -1173,10 +1191,21 @@ export async function importCustomKeys(
 
       if (insertRes.rowCount && insertRes.rowCount > 0) {
         importedCount++;
+        if (!insertRes.rows[0]?.is_inserted) {
+          reassignedCount++;
+        }
       } else {
+        // Genuinely already redeemed by an active customer order
         duplicateKeys.push(pair.key);
       }
     }
+
+    // Get live available stock count for this product
+    const stockRes = await client.query(
+      `SELECT count(id)::int AS available_stock FROM licenses WHERE product_id = $1 AND status = 'AVAILABLE'`,
+      [productId]
+    );
+    const availableStock = stockRes.rows[0]?.available_stock ?? 0;
 
     await logAudit({
       category: "INVENTORY",
@@ -1186,6 +1215,8 @@ export async function importCustomKeys(
       target_id: productId,
       details: {
         importedCount,
+        reassignedCount,
+        availableStock,
         duplicates: duplicateKeys.length,
         invalid: invalidKeys.length,
         durationDays,
@@ -1195,6 +1226,8 @@ export async function importCustomKeys(
     await client.query("COMMIT");
     return {
       importedCount,
+      reassignedCount,
+      availableStock,
       duplicates: duplicateKeys,
       invalid: invalidKeys,
     };

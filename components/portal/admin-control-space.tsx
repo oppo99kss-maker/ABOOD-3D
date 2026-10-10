@@ -60,6 +60,7 @@ import type {
   ProductFile,
   KeyResetRequest,
 } from "@/lib/store";
+import { parseRawKeyList } from "@/lib/key-utils";
 import { notify as notifyMgr } from "@/lib/notify";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 
@@ -427,6 +428,16 @@ export function AdminControlSpace({
   const [productModalTab, setProductModalTab] = useState<"details" | "custom_fields" | "keys">("details");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Synchronize editingProduct with latest products state whenever products refresh
+  useEffect(() => {
+    if (editingProduct?.id) {
+      const live = products.find((prod) => prod.id === editingProduct.id);
+      if (live) {
+        setEditingProduct((prev) => (prev ? { ...prev, ...live } : live));
+      }
+    }
+  }, [products]);
 
   const [productForm, setProductForm] = useState<{
     name: string;
@@ -963,7 +974,7 @@ export function AdminControlSpace({
   // ====================================================
   const [showStockModal, setShowStockModal] = useState(false);
   const [stockModalProductId, setStockModalProductId] = useState<string>(products[0]?.id || "");
-  const [stockMode, setStockMode] = useState<"single" | "bulk">("bulk");
+  const [stockMode, setStockMode] = useState<"single" | "bulk" | "generate">("bulk");
   const [singleKeyText, setSingleKeyText] = useState("");
   const [singleKeyDuration, setSingleKeyDuration] = useState(3);
   const [bulkKeysText, setBulkKeysText] = useState("");
@@ -977,17 +988,14 @@ export function AdminControlSpace({
   }
 
   const bulkKeysDetectedCount = useMemo(() => {
-    return bulkKeysText
-      .split("\n")
-      .map((k) => k.trim())
-      .filter((k) => k.length >= 4).length;
+    return parseRawKeyList(bulkKeysText).length;
   }, [bulkKeysText]);
 
   const selectedStockProduct = useMemo(() => {
     return products.find((p) => p.id === stockModalProductId) || products[0];
   }, [products, stockModalProductId]);
 
-  function openStockModal(productId?: string, initialMode: "single" | "bulk" = "bulk") {
+  function openStockModal(productId?: string, initialMode: "single" | "bulk" | "generate" = "bulk") {
     if (productId) setStockModalProductId(productId);
     else if (!stockModalProductId && products[0]) setStockModalProductId(products[0].id);
     setSingleKeyText(generateRandomKeyCode());
@@ -1000,11 +1008,12 @@ export function AdminControlSpace({
     e.preventDefault();
     if (!stockModalProductId) return;
     const keyToAdd = singleKeyText.trim();
-    if (!keyToAdd || keyToAdd.length < 4) {
-      notify(t("يرجى إدخال رمز مفتاح صالح (4 أحرف على الأقل)", "Please enter a valid key code (at least 4 characters)"), "error");
+    if (!keyToAdd || keyToAdd.length < 2) {
+      notify(t("يرجى إدخال رمز مفتاح صالح", "Please enter a valid key code"), "error");
       return;
     }
 
+    setBusy(true);
     try {
       const res = await apiAction({
         action: "importKeys",
@@ -1012,8 +1021,8 @@ export function AdminControlSpace({
         productId: stockModalProductId,
         durationDays: singleKeyDuration,
       });
-      if (res?.duplicates && res.duplicates.length > 0) {
-        notify(t("هذا المفتاح موجود مسبقاً في المخزون!", "This key already exists in stock!"), "error");
+      if (res?.importedCount === 0 && res?.duplicates?.length > 0) {
+        notify(t("هذا المفتاح مستخدم ومباع مسبقاً لعميل في النظام!", "This key already exists or is assigned to a customer!"), "error");
       } else {
         notify(t(`تمت إضافة المفتاح (${keyToAdd}) إلى المخزون بنجاح!`, `Key added to stock successfully!`));
         setSingleKeyText(generateRandomKeyCode());
@@ -1022,22 +1031,22 @@ export function AdminControlSpace({
       }
     } catch (err: any) {
       notify(err.message || t("فشلت إضافة المفتاح", "Failed to add key"), "error");
+    } finally {
+      setBusy(false);
     }
   }
 
   async function handleAddBulkKeys(e: FormEvent) {
     e.preventDefault();
     if (!stockModalProductId) return;
-    const keyList = bulkKeysText
-      .split("\n")
-      .map((k) => k.trim())
-      .filter((k) => k.length >= 4);
+    const keyList = parseRawKeyList(bulkKeysText);
 
     if (!keyList.length) {
       notify(t("يرجى إدخال أو لصق مفتاح واحد على الأقل", "Please enter at least one key"), "error");
       return;
     }
 
+    setBusy(true);
     try {
       const res = await apiAction({
         action: "importKeys",
@@ -1045,19 +1054,59 @@ export function AdminControlSpace({
         productId: stockModalProductId,
         durationDays: bulkDuration,
       });
-      const imported = res?.importedCount ?? keyList.length;
-      const dupes = res?.duplicates?.length || 0;
+      const imported = Number(res?.importedCount ?? 0);
+      const reassigned = Number(res?.reassignedCount ?? 0);
+      const dupes = Array.isArray(res?.duplicates) ? res.duplicates.length : 0;
+      if (imported === 0 && dupes > 0) {
+        notify(
+          t(
+            `لم تتم الإضافة: جميع المفاتيح المدخلة (${dupes}) مستخدمة ومباعة مسبقاً لعملاء آخرين!`,
+            `Failed: All entered keys (${dupes}) are already assigned/redeemed!`
+          ),
+          "error"
+        );
+      } else {
+        const extra = reassigned > 0 ? ` (تم استعادة ${reassigned} كود مسبقاً)` : "";
+        const skipped = dupes > 0 ? ` (${dupes} مستخدم تم تخطيه)` : "";
+        notify(
+          t(
+            `تمت إضافة ${imported} مفتاحاً للمخزون بنجاح!${extra}${skipped}`,
+            `Imported ${imported} keys successfully!${extra}${skipped}`
+          )
+        );
+        setBulkKeysText("");
+        setShowStockModal(false);
+        await onRefresh();
+      }
+    } catch (err: any) {
+      notify(err.message || t("فشلت إضافة المفاتيح", "Failed to import keys"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleQuickStockGenerate(count: number) {
+    if (!stockModalProductId) return;
+    setBusy(true);
+    try {
+      const res = await apiAction({
+        action: "generateKeys",
+        productId: stockModalProductId,
+        count,
+        durationDays: bulkDuration,
+      });
       notify(
         t(
-          `تمت إضافة ${imported} مفتاحاً للمخزون بنجاح! ${dupes > 0 ? `(${dupes} مكرر تم تجاهله)` : ""}`,
-          `Imported ${imported} keys successfully! ${dupes > 0 ? `(${dupes} duplicates skipped)` : ""}`
+          `تم توليد وإضافة ${res?.count ?? count} مفتاحاً للمخزون بنجاح!`,
+          `Generated and added ${res?.count ?? count} keys to stock!`
         )
       );
-      setBulkKeysText("");
       setShowStockModal(false);
       await onRefresh();
     } catch (err: any) {
-      notify(err.message || t("فشلت إضافة المفاتيح", "Failed to import keys"), "error");
+      notify(err.message || t("فشل توليد المفاتيح", "Failed to generate keys"), "error");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -1086,11 +1135,15 @@ export function AdminControlSpace({
   }
 
   const detectedKeysCount = useMemo(() => {
-    return sallaKeysInput
-      .split("\n")
-      .map((k) => k.trim())
-      .filter((k) => k.length >= 3).length;
+    return parseRawKeyList(sallaKeysInput).length;
   }, [sallaKeysInput]);
+
+  const availableKeysCount = useMemo(() => {
+    if (productInventoryKeys.length > 0) {
+      return productInventoryKeys.filter((k) => k.status === "AVAILABLE").length;
+    }
+    return Number(editingProduct?.available_keys ?? 0);
+  }, [productInventoryKeys, editingProduct?.available_keys]);
 
   const fetchProductKeys = useCallback(async (productId: string) => {
     if (!productId) return;
@@ -1188,10 +1241,7 @@ export function AdminControlSpace({
 
   async function handleInsertSallaKeys() {
     if (!editingProduct?.id) return;
-    const rawList = sallaKeysInput
-      .split("\n")
-      .map((k) => k.trim())
-      .filter((k) => k.length >= 3);
+    const rawList = parseRawKeyList(sallaKeysInput);
     if (!rawList.length) {
       notify(t("يرجى لصق كود واحد على الأقل", "Please enter at least one key code"), "error");
       return;
@@ -1204,12 +1254,77 @@ export function AdminControlSpace({
         rawKeys: rawList,
         durationDays: sallaDuration,
       });
-      notify(t(`تم إدراج ${res?.importedCount ?? rawList.length} مفتاحاً بنجاح في المخزون!`, `Imported ${res?.importedCount ?? rawList.length} keys successfully!`));
-      setSallaKeysInput("");
+
+      const imported = Number(res?.importedCount ?? 0);
+      const reassigned = Number(res?.reassignedCount ?? 0);
+      const dupes = Array.isArray(res?.duplicates) ? res.duplicates.length : 0;
+      const invalid = Array.isArray(res?.invalid) ? res.invalid.length : 0;
+      const currentStock = res?.availableStock !== undefined ? Number(res.availableStock) : undefined;
+
+      if (imported === 0) {
+        if (dupes > 0) {
+          notify(
+            t(
+              `تنبيه: جميع المفاتيح المدخلة (${dupes}) مستخدمة ومباعة مسبقاً لعملاء آخرين في النظام!`,
+              `All entered keys (${dupes}) are already assigned/redeemed by customers!`
+            ),
+            "error"
+          );
+        } else if (invalid > 0) {
+          notify(
+            t("صيغة الأكواد المدخلة غير صالحة. يرجى التأكد من كتابة كود صالح.", "Invalid key format"),
+            "error"
+          );
+        } else {
+          notify(t("لم يتم إدراج أي مفاتيح، يرجى مراجعة الأكواد المدخلة", "No keys imported"), "error");
+        }
+      } else {
+        const extraNote = reassigned > 0 ? ` (تم استعادة ${reassigned} كود مسبقاً للمخزون)` : "";
+        const skippedNote = dupes > 0 ? ` (تم تخطي ${dupes} كود مستخدم)` : "";
+        notify(
+          t(
+            `تم إدراج ${imported} مفتاحاً بنجاح في المخزون!${extraNote}${skippedNote}`,
+            `Imported ${imported} keys successfully into stock!${extraNote}${skippedNote}`
+          )
+        );
+        setSallaKeysInput("");
+        if (currentStock !== undefined) {
+          setEditingProduct((prev) => (prev ? { ...prev, available_keys: currentStock } : prev));
+        }
+        await fetchProductKeys(editingProduct.id);
+        await onRefresh();
+      }
+    } catch (err: any) {
+      notify(err.message || t("فشل إدراج الأكواد", "Failed to insert keys"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleQuickGenerateKeys(count: number, durationDays = 3) {
+    if (!editingProduct?.id) return;
+    setBusy(true);
+    try {
+      const res = await apiAction({
+        action: "generateKeys",
+        productId: editingProduct.id,
+        count,
+        durationDays,
+      });
+      const generatedCount = res?.count ?? count;
+      notify(
+        t(
+          `تم توليد ${generatedCount} مفتاحاً وإضافتها للمخزون فوراً!`,
+          `Generated and added ${generatedCount} keys to stock!`
+        )
+      );
+      if (res?.availableStock !== undefined) {
+        setEditingProduct((prev) => (prev ? { ...prev, available_keys: res.availableStock } : prev));
+      }
       await fetchProductKeys(editingProduct.id);
       await onRefresh();
     } catch (err: any) {
-      notify(err.message || t("فشل إدراج الأكواد", "Failed to insert keys"), "error");
+      notify(err.message || t("فشل توليد المفاتيح", "Failed to generate keys"), "error");
     } finally {
       setBusy(false);
     }
@@ -1220,17 +1335,24 @@ export function AdminControlSpace({
     const keyToAdd = singleInlineKey.trim() || generateRandomKeyCode();
     setBusy(true);
     try {
-      await apiAction({
+      const res = await apiAction({
         action: "importKeys",
         productId: editingProduct.id,
         rawKeys: [keyToAdd],
         durationDays: singleInlineDuration,
       });
-      notify(t(`تمت إضافة المفتاح (${keyToAdd}) بنجاح للمخزون!`, "Key added successfully!"));
-      setSingleInlineKey("");
-      setShowSingleKeyInline(false);
-      await fetchProductKeys(editingProduct.id);
-      await onRefresh();
+      if (res?.importedCount === 0 && res?.duplicates?.length > 0) {
+        notify(t("هذا المفتاح مستخدم ومباع مسبقاً لعميل في النظام!", "Key is already assigned/redeemed"), "error");
+      } else {
+        notify(t(`تمت إضافة المفتاح (${keyToAdd}) بنجاح للمخزون!`, "Key added successfully!"));
+        setSingleInlineKey("");
+        setShowSingleKeyInline(false);
+        if (res?.availableStock !== undefined) {
+          setEditingProduct((prev) => (prev ? { ...prev, available_keys: res.availableStock } : prev));
+        }
+        await fetchProductKeys(editingProduct.id);
+        await onRefresh();
+      }
     } catch (err: any) {
       notify(err.message || t("فشل إضافة المفتاح", "Failed to add key"), "error");
     } finally {
@@ -2552,7 +2674,7 @@ export function AdminControlSpace({
                   <KeyRound size={15} />
                   <span>{t("الأكواد المتاحة", "Available Codes")}</span>
                   <span className="ref-tab-counter-badge">
-                    {productInventoryKeys.length || editingProduct?.available_keys || 0}
+                    {availableKeysCount}
                   </span>
                 </button>
 
@@ -2810,7 +2932,10 @@ export function AdminControlSpace({
                   <div className="ref-keys-add-header">
                     <div className="ref-keys-add-title">
                       <Sparkles size={16} />
-                      <span>{t("إضافة الأكواد للمخزون", "Add Codes to Inventory")}</span>
+                      <span>{t("الأكواد والمفاتيح المتاحة لهذا المنتج", "Available Codes & Keys for this Product")}</span>
+                      <span className="ref-keys-status-badge available" style={{ marginInlineStart: "10px", fontSize: "11px", padding: "2px 8px", borderRadius: "6px" }}>
+                        {availableKeysCount} {t("متاح للبيع", "Available")}
+                      </span>
                     </div>
 
                     <div className="ref-keys-duration-row">
@@ -2835,21 +2960,54 @@ export function AdminControlSpace({
                     value={sallaKeysInput}
                     onChange={(e) => setSallaKeysInput(e.target.value)}
                     placeholder={t(
-                      "...أدخل الأكواد هنا (كود واحد في كل سطر) ... مثال: KEY-ABC123-DEF456",
-                      "Enter codes here (one per line) ... e.g. KEY-ABC123-DEF456"
+                      "...أدخل الأكواد هنا (كود واحد في كل سطر أو مفصولة بفواصل) ... مثال: KEY-ABC123-DEF456",
+                      "Enter codes here (one per line or comma-separated) ... e.g. KEY-ABC123-DEF456"
                     )}
                     className="ref-keys-bulk-textarea"
                   />
 
-                  <button
-                    type="button"
-                    className="ref-btn-add-keys-submit"
-                    disabled={busy || detectedKeysCount === 0}
-                    onClick={handleInsertSallaKeys}
-                  >
-                    {busy ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
-                    <span>{t(`إضافة الأكواد للمخزون (${detectedKeysCount}) ✓`, `Add Codes to Inventory (${detectedKeysCount}) ✓`)}</span>
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", marginTop: "4px" }}>
+                    <button
+                      type="button"
+                      className="ref-btn-add-keys-submit"
+                      disabled={busy || detectedKeysCount === 0}
+                      onClick={handleInsertSallaKeys}
+                      style={{ margin: 0 }}
+                    >
+                      {busy ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
+                      <span>{t(`إضافة الأكواد للمخزون (${detectedKeysCount}) ✓`, `Add Codes to Inventory (${detectedKeysCount}) ✓`)}</span>
+                    </button>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "12px", color: "#94a3b8" }}>{t("أو تعبئة تلقائية:", "Or Auto-Fill:")}</span>
+                      {[5, 10, 20, 50].map((qty) => (
+                        <button
+                          key={qty}
+                          type="button"
+                          className="ref-btn-quick-qty"
+                          disabled={busy}
+                          onClick={() => void handleQuickGenerateKeys(qty, sallaDuration)}
+                          style={{
+                            padding: "6px 12px",
+                            background: "rgba(56, 189, 248, 0.12)",
+                            border: "1px solid rgba(56, 189, 248, 0.3)",
+                            borderRadius: "8px",
+                            color: "#38bdf8",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title={t(`توليد ${qty} مفتاحاً وإضافتها فوراً للمخزون`, `Generate ${qty} keys`)}
+                        >
+                          <Plus size={12} />
+                          <span>+{qty} {t("مفتاح", "Keys")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* 2. Filter & Search Toolbar (Image 1) */}
@@ -3231,7 +3389,7 @@ export function AdminControlSpace({
               </div>
             </div>
 
-            {/* 2 Clear Segmented Mode Tabs (Manual Stock Filling) */}
+            {/* 3 Clear Segmented Mode Tabs */}
             <div className="ref-stock-mode-tabs-bar">
               <button
                 type="button"
@@ -3240,6 +3398,15 @@ export function AdminControlSpace({
               >
                 <Package size={16} />
                 <span>{t("إضافة مفاتيح دفعة واحدة (لصق مجمّع)", "Bulk Keys")}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`ref-stock-tab-btn ${stockMode === "generate" ? "active" : ""}`}
+                onClick={() => setStockMode("generate")}
+              >
+                <Sparkles size={16} />
+                <span>{t("توليد مفاتيح تلقائياً (تعبئة سريعة)", "Auto-Generate")}</span>
               </button>
 
               <button
@@ -3412,6 +3579,73 @@ export function AdminControlSpace({
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* TAB 3: GENERATE KEYS (توليد مفاتيح تلقائياً) */}
+            {stockMode === "generate" && (
+              <div className="ref-stock-tab-body">
+                <div className="ref-stock-duration-group">
+                  <label>{t("مدة صلاحية المفاتيح المنشأة", "Generated Keys Duration")}</label>
+                  <div className="ref-duration-pills-row">
+                    {[
+                      { days: 1, label: t("يوم واحد", "1 Day") },
+                      { days: 3, label: t("3 أيام (افتراضي)", "3 Days (Default)") },
+                      { days: 7, label: t("أسبوع (7 أيام)", "7 Days") },
+                      { days: 30, label: t("شهر (30 يوماً)", "30 Days") },
+                      { days: 90, label: t("3 أشهر (90 يوماً)", "90 Days") },
+                      { days: 3650, label: t("مدى الحياة", "Lifetime") },
+                    ].map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.days}
+                        className={`ref-duration-pill ${bulkDuration === opt.days ? "active" : ""}`}
+                        onClick={() => setBulkDuration(opt.days)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "10px", fontWeight: 600, color: "#f8fafc" }}>
+                    {t("اختر عدد المفاتيح لتوليدها فوراً في المخزون:", "Select quantity to generate instantly:")}
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
+                    {[5, 10, 25, 50].map((qty) => (
+                      <button
+                        key={qty}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void handleQuickStockGenerate(qty)}
+                        style={{
+                          padding: "14px 10px",
+                          background: "rgba(56, 189, 248, 0.12)",
+                          border: "1px solid rgba(56, 189, 248, 0.35)",
+                          borderRadius: "10px",
+                          color: "#38bdf8",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {busy ? <LoaderCircle className="spin" size={18} /> : <Sparkles size={18} />}
+                        <span>+{qty} {t("مفتاح", "Keys")}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ref-stock-footer-actions" style={{ marginTop: "24px" }}>
+                  <button type="button" className="ref-btn-cancel-modal" onClick={() => setShowStockModal(false)}>
+                    {t("إلغاء", "Cancel")}
+                  </button>
+                </div>
+              </div>
             )}
 
 

@@ -83,3 +83,23 @@ test("Google OAuth request uses the site's own callback and PKCE", async ({ play
     expect(data.status()).toBe(401);
   } finally { await request.dispose(); }
 });
+
+test("parseRawKeyList correctly parses multiline, comma, numbered, and prefixed keys", async () => {
+  const { parseRawKeyList } = await import("../lib/key-utils");
+  const input = `
+    1- KEY-AAAA-1111
+    2. KEY-BBBB-2222, KEY-CCCC-3333; KEY-DDDD-4444
+    كود: KEY-EEEE-5555
+    "KEY-FFFF-6666"
+  `;
+  const result = parseRawKeyList(input);
+  expect(result).toEqual([
+    "KEY-AAAA-1111",
+    "KEY-BBBB-2222",
+    "KEY-CCCC-3333",
+    "KEY-DDDD-4444",
+    "KEY-EEEE-5555",
+    "KEY-FFFF-6666",
+  ]);
+});
+
