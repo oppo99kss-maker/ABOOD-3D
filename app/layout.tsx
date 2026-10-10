@@ -5,7 +5,7 @@ import { ToastContainer } from "@/components/ui/toast-container";
 export const metadata: Metadata = {
   title: "SpooFX | حسابك ومنتجاتك ومفاتيحك",
   description: "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك عبر SpooFX",
-  icons: { icon: "/brand.svg" },
+  icons: { icon: "/logo.png", apple: "/logo.png" },
 };
 
 export default function RootLayout({

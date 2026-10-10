@@ -711,7 +711,7 @@ export function Portal({ user }: { user: PortalUser }) {
                   <section className="ref-bottom-brand-banner">
                     <div className="ref-brand-banner-lead">
                       <div className="ref-brand-banner-icon">
-                        <Image src="/brand.svg" width={30} height={30} alt="SpooFX" />
+                        <Image src="/logo.png" width={32} height={32} alt="SpooFX" style={{ objectFit: "contain", borderRadius: 8 }} />
                       </div>
                       <div className="ref-brand-banner-meta">
                         <strong className="ref-brand-banner-name">SpooFX</strong>

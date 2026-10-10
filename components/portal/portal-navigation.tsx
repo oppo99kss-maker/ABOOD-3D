@@ -319,7 +319,7 @@ export function PortalNavigation({
             aria-label={ar ? "الرئيسية" : "Home"}
           >
             <div className={css.brandLogoFrame}>
-              <Image src="/brand.svg" width={36} height={36} alt="SpooFX" priority />
+              <Image src="/logo.png" width={38} height={38} alt="SpooFX" priority style={{ objectFit: "contain", borderRadius: 8 }} />
             </div>
             {!collapsed && (
               <div className={css.brandTitlesWrap}>
@@ -557,7 +557,7 @@ export function PortalNavigation({
           aria-label="SpooFX"
         >
           <div className={css.brandLogoFrame}>
-            <Image src="/brand.svg" width={32} height={32} alt="SpooFX" priority />
+            <Image src="/logo.png" width={34} height={34} alt="SpooFX" priority style={{ objectFit: "contain", borderRadius: 8 }} />
           </div>
           <div className={css.brandTitlesWrap}>
             <strong className={css.brandMainTitle}>SpooFX</strong>

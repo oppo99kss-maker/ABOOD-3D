@@ -61,7 +61,13 @@ export function LoginPage() {
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand} aria-label="SpooFX">
             <div className={styles.brandLogoWrap}>
-              <img src="/brand.svg" width={38} height={38} alt="SpooFX" />
+              <img
+                src="/logo.png"
+                width={42}
+                height={42}
+                alt="SpooFX"
+                className={styles.brandLogoImg}
+              />
             </div>
             <div className={styles.brandTextWrap}>
               <strong className={styles.brandName} dir="ltr">
@@ -151,7 +157,13 @@ export function LoginPage() {
         {/* Login Card Column */}
         <section className={styles.card} aria-labelledby="sign-in-title">
           <div className={styles.cardLogo}>
-            <img src="/brand.svg" width={48} height={48} alt="SpooFX" />
+            <img
+              src="/logo.png"
+              width={96}
+              height={96}
+              alt="SpooFX Cyber Security"
+              className={styles.cardLogoImg}
+            />
           </div>
 
           <h2 id="sign-in-title" className={styles.cardTitle}>
