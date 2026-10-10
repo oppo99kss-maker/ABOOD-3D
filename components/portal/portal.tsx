@@ -371,14 +371,6 @@ export function Portal({ user }: { user: PortalUser }) {
       />
 
       <div className="portal-body">
-        {/* Announcement / Maintenance Banner if set */}
-        {(data.settings.maintenance_mode || data.settings.maintenance_message) && (
-          <div className="global-announcement-banner">
-            <Info size={16} />
-            <span>{data.settings.maintenance_message || (ar ? "النظام في وضع الصيانة حالياً" : "System is currently in maintenance mode")}</span>
-          </div>
-        )}
-
         {activeTab === "admin" && data.isAdmin ? (
           <AdminControlSpace
             products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}

@@ -65,7 +65,6 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 export type AdminSection =
   | "products"
-  | "products-current"
   | "reset-requests"
   | "customers"
   | "search-customer"
@@ -250,12 +249,7 @@ export function AdminControlSpace({
     }
   }
 
-  // ====================================================
-  // 1. STATS CALCULATIONS
-  // ====================================================
-  const totalAvailableKeys = useMemo(() => {
-    return products.reduce((acc, p) => acc + (Number(p.available_keys) || 0), 0);
-  }, [products]);
+
 
   // ====================================================
   // 2. CUSTOMERS MANAGEMENT & SEARCH ENGINE
@@ -428,7 +422,6 @@ export function AdminControlSpace({
   // 3. PRODUCTS STATE & ACTIONS (MATCHING IMAGES 2 & 3)
   // ====================================================
   const [productSearch, setProductSearch] = useState("");
-  const [productVisibilityFilter, setProductVisibilityFilter] = useState<"ALL" | "VISIBLE" | "HIDDEN">("ALL");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [showProductModal, setShowProductModal] = useState(false);
   const [productModalTab, setProductModalTab] = useState<"details" | "custom_fields" | "keys">("details");
@@ -1425,13 +1418,10 @@ export function AdminControlSpace({
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchesSearch = (p.name + (p.name_en || "") + (p.description || "") + (p.category || "")).toLowerCase().includes(productSearch.toLowerCase());
-      if (!matchesSearch) return false;
-      if (productVisibilityFilter === "VISIBLE") return p.is_visible !== false;
-      if (productVisibilityFilter === "HIDDEN") return p.is_visible === false;
-      return true;
+      if (!productSearch.trim()) return true;
+      return (p.name + (p.name_en || "") + (p.description || "") + (p.category || "")).toLowerCase().includes(productSearch.toLowerCase());
     });
-  }, [products, productSearch, productVisibilityFilter]);
+  }, [products, productSearch]);
 
   const navItems = [
     {
@@ -1440,13 +1430,6 @@ export function AdminControlSpace({
       ar: "المنتجات والمخزون",
       en: "Products & Stock",
       badge: products.length,
-    },
-    {
-      id: "products-current" as AdminSection,
-      icon: Sliders,
-      ar: "المنتجات الحالية",
-      en: "Current Products",
-      badge: products.filter((p) => !p.is_archived).length,
     },
     {
       id: "reset-requests" as AdminSection,
@@ -1490,111 +1473,9 @@ export function AdminControlSpace({
     },
   ];
 
-  const totalRegisteredCount = customerTotalCount || customers.length || 122;
-
   return (
     <div className="admin-reference-container" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
-      {/* 1. TOP HEADER (لوحة الإدارة + Controls) */}
-      <header className="admin-ref-topbar">
-        <div className="admin-ref-title-wrap">
-          <h1 className="admin-ref-main-title">{t("لوحة الإدارة", "Admin Dashboard")}</h1>
-        </div>
-
-        <div className="admin-ref-actions-wrap">
-          {onToggleTheme && (
-            <button
-              className="admin-ref-icon-pill"
-              onClick={onToggleTheme}
-              title={isDark ? t("الوضع المضيء", "Light Mode") : t("الوضع الليلي", "Dark Mode")}
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-          )}
-
-          {onToggleLanguage && (
-            <button
-              className="admin-ref-icon-pill admin-ref-lang-btn"
-              onClick={onToggleLanguage}
-              title={t("تغيير اللغة", "Switch Language")}
-            >
-              <span>🌐</span>
-              <span>{ar ? "EN" : "عربي"}</span>
-            </button>
-          )}
-
-          <button
-            className="admin-ref-back-btn"
-            onClick={onExitAdmin}
-            title={t("العودة لبوابة العملاء", "Client Portal")}
-          >
-            <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
-            <span>{t("بوابة العملاء", "Client Portal")}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* 2. PLATFORM KPI HERO BANNER (إدارة المنصة - matching reference images 2-5) */}
-      <section className="admin-ref-hero-banner">
-        <div className="hero-text-side">
-          <span className="hero-kicker-tag">{t("إدارة المنصة", "Platform Management")}</span>
-          <div className="hero-headline-row">
-            <div className="hero-icon-cube">
-              {activeSection === "products" && <Package size={26} />}
-              {activeSection === "products-current" && <Sliders size={26} />}
-              {activeSection === "reset-requests" && <RotateCcw size={26} />}
-              {activeSection === "customers" && <Users size={26} />}
-              {activeSection === "search-customer" && <Search size={26} />}
-              {activeSection === "logs-activations" && <KeyRound size={26} />}
-              {activeSection === "logs-logins" && <ShieldCheck size={26} />}
-              {activeSection === "settings" && <Settings size={26} />}
-            </div>
-            <div>
-              <h2 className="hero-main-title">
-                {activeSection === "products" && t("إدارة المنتجات والمخزون", "Products & Inventory Management")}
-                {activeSection === "products-current" && t("إدارة المنتجات الحالية", "Current Products Management")}
-                {activeSection === "reset-requests" && t("طلبات رستات المفاتيح (HWID)", "Key Reset Requests (HWID)")}
-                {activeSection === "customers" && t("إدارة العملاء", "Customer Management")}
-                {activeSection === "search-customer" && t("البحث عن عميل", "Customer Search Engine")}
-                {activeSection === "logs-activations" && t("مركز النشاط", "Activity Center")}
-                {activeSection === "logs-logins" && t("حضور العملاء والجلسات", "Active Sessions & Audit")}
-                {activeSection === "settings" && t("ضبط لوحة الإدارة وإعدادات المتجر", "Admin Space & Store Settings")}
-              </h2>
-              <p className="hero-subtext">
-                {activeSection === "products" && t("تحكم كامل في إعدادات المنتجات وإضافة المفاتيح اليدوية.", "Full control over product settings and manual license keys.")}
-                {activeSection === "products-current" && t("التحكم في ظهور المنتجات وتعديل الملفات والعناوين وحذفها.", "Control product visibility, edit files, titles, and delete.")}
-                {activeSection === "reset-requests" && t("مراجعة طلبات إعادة تعيين المفاتيح للعملاء، الموافقة أو الرفض الفوري وتوثيق الملاحظات.", "Review customer key reset requests, approve or reject instantly with admin notes.")}
-                {activeSection === "customers" && t("استعراض بيانات العملاء، حظر، ومراجعة أنشطتهم.", "Review customer accounts, mute/suspend, and monitor their licenses.")}
-                {activeSection === "search-customer" && t("البحث الفوري عن بيانات أي عميل والتحقق من حساباته وتراخيصه.", "Instant lookup for customer profiles, devices, and licenses.")}
-                {activeSection === "logs-activations" && t("مراقبة حية لجميع حركات دخول وخروج وتفعيلات الموقع.", "Live monitoring of all activations and account events.")}
-                {activeSection === "logs-logins" && t("تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين.", "Accounts active and verified within the platform.")}
-                {activeSection === "settings" && t("التحكم الشامل في وضع الصيانة، صلاحيات التفعيل، الإجراءات الجماعية وهوية المتجر.", "Comprehensive control over maintenance mode, activations, batch actions, and store branding.")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-stats-side">
-          <div className="hero-stat-pill">
-            <span>{totalRegisteredCount} {t("عميل مسجل", "Registered Customers")}</span>
-          </div>
-
-          <div className="hero-stat-pill with-pulse">
-            <span className="hero-pulse-dot" />
-            <span>{totalAvailableKeys} {t("مفتاح متاح", "Available Keys")}</span>
-          </div>
-
-          <button
-            className="hero-refresh-action-btn"
-            onClick={() => onRefresh()}
-            title={t("تحديث البيانات", "Refresh Data")}
-          >
-            <RefreshCw size={15} className={busy ? "spin" : ""} />
-            <span>{t("تحديث", "Refresh")}</span>
-          </button>
-        </div>
-      </section>
-
-      {/* 3. HORIZONTAL GLOWING PILL NAVIGATION BAR */}
+      {/* NAVIGATION BAR WITH CLEAN EXIT PILL */}
       <nav className="admin-ref-nav-bar">
         <div className="admin-ref-nav-track">
           {navItems.map((item) => {
@@ -1622,6 +1503,21 @@ export function AdminControlSpace({
               </button>
             );
           })}
+
+          <button
+            type="button"
+            className="admin-ref-nav-pill"
+            style={{
+              marginInlineStart: "auto",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              background: "rgba(255, 255, 255, 0.04)",
+            }}
+            onClick={onExitAdmin}
+            title={t("العودة لبوابة العملاء", "Client Portal")}
+          >
+            <ArrowRight size={14} className={ar ? "rotate-180" : ""} />
+            <span>{t("بوابة العملاء", "Client Portal")}</span>
+          </button>
         </div>
       </nav>
 
@@ -1739,200 +1635,7 @@ export function AdminControlSpace({
           </div>
         )}
 
-        {/* ==================================================== */}
-        {/* VIEW 2: المنتجات الحالية */}
-        {/* ==================================================== */}
-        {activeSection === "products-current" && (
-          <div className="ref-view-section">
-            <div className="ref-section-toolbar">
-              <div className="ref-toolbar-text-wrap">
-                <h3 className="ref-section-title">
-                  <Sliders size={20} />
-                  <span>{t("إدارة المنتجات الحالية", "Current Products Management")}</span>
-                </h3>
-                <p className="ref-section-subtitle">
-                  {t("التحكم في ظهور المنتجات، تعديل الملفات والعناوين، وحذف المنتجات وضبطها.", "Manage product visibility, edit files, titles, and configuration.")}
-                </p>
-              </div>
 
-              <div className="ref-toolbar-actions">
-                {selectedProductIds.length > 0 && (
-                  <button
-                    type="button"
-                    className="ref-btn-batch-danger"
-                    onClick={handleBulkDelete}
-                    title={t("حذف المنتجات المحددة نهائياً", "Delete selected products")}
-                  >
-                    <Trash2 size={14} />
-                    <span>{t(`حذف المحددة (${selectedProductIds.length})`, `Delete (${selectedProductIds.length})`)}</span>
-                  </button>
-                )}
-                <button className="ref-btn-primary-gradient" onClick={openAddProduct}>
-                  <Plus size={16} />
-                  <span>{t("إضافة منتج", "Add Product")}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="ref-table-card">
-              <table className="ref-data-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: "42px" }}>
-                      <button
-                        type="button"
-                        className="ref-th-checkbox"
-                        onClick={toggleSelectAllProducts}
-                        title={selectedProductIds.length === filteredProducts.length ? t("إلغاء تحديد الكل", "Deselect All") : t("تحديد الكل", "Select All")}
-                      >
-                        {selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0 ? (
-                          <CheckSquare size={16} />
-                        ) : (
-                          <Square size={16} />
-                        )}
-                      </button>
-                    </th>
-                    <th>{t("المنتج الحالي", "Current Product")}</th>
-                    <th>{t("العنوان والترجمة", "Title & Translation")}</th>
-                    <th>{t("المخزون والأكواد", "Stock & Keys")}</th>
-                    <th>{t("الملفات المرفقة (Spoofx.rar)", "Attached Files")}</th>
-                    <th>{t("الظهور في المتجر", "Store Visibility")}</th>
-                    <th>{t("الحالة", "Status")}</th>
-                    <th>{t("الضبط والمخزون", "Manage & Stock")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((p) => {
-                    const hasFiles = Array.isArray(p.files) && p.files.length > 0;
-                    const stockNum = p.available_keys ?? 0;
-                    const isSelected = selectedProductIds.includes(p.id);
-                    return (
-                      <tr key={p.id} className={isSelected ? "selected-row" : ""}>
-                        <td>
-                          <button
-                            type="button"
-                            className="ref-td-checkbox"
-                            onClick={() => toggleSelectProduct(p.id)}
-                            title={isSelected ? t("إلغاء التحديد", "Deselect") : t("تحديد", "Select")}
-                          >
-                            {isSelected ? <CheckSquare size={16} /> : <Square size={16} />}
-                          </button>
-                        </td>
-
-                        <td className="ref-product-col">
-                          <div className="ref-thumb-wrap">
-                            {p.image_url ? (
-                              <img src={p.image_url} alt="" className="ref-table-thumb" />
-                            ) : (
-                              <div className="ref-table-thumb-fallback"><Package size={18} /></div>
-                            )}
-                            <div>
-                              <strong>{p.name}</strong>
-                              <small>{p.category || "General"}</small>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="ref-title-stack">
-                            <span className="title-primary">{p.name}</span>
-                            <span className="title-secondary">{p.name_en || "—"}</span>
-                          </div>
-                        </td>
-
-                        <td>
-                          <button
-                            type="button"
-                            className={`ref-table-stock-badge-btn ${stockNum > 0 ? "in-stock" : "out-of-stock"}`}
-                            onClick={() => openEditProduct(p, "keys")}
-                            title={t("إدارة أكواد ومخزون هذا المنتج", "Manage stock and keys")}
-                          >
-                            <KeyRound size={13} />
-                            <span>{stockNum} {t("مفتاح متاح", "keys available")}</span>
-                          </button>
-                        </td>
-
-                        <td>
-                          <div className="ref-files-badge">
-                            <FileText size={13} />
-                            <span>
-                              {hasFiles ? `${p.files?.length ?? 1} ملفات (Spoofx.rar)` : "Spoofx.rar"}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td>
-                          <button
-                            className={`ref-visibility-pill ${p.is_visible !== false ? "visible" : "hidden"}`}
-                            onClick={() => void handleToggleVisibility(p)}
-                            title={p.is_visible !== false ? t("انقر للإخفاء عن المتجر", "Click to hide") : t("انقر للإظهار في المتجر", "Click to show")}
-                          >
-                            {p.is_visible !== false ? (
-                              <>
-                                <Eye size={13} />
-                                <span>{t("ظاهر للعملاء", "Visible")}</span>
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff size={13} />
-                                <span>{t("مخفي عن المتجر", "Hidden")}</span>
-                              </>
-                            )}
-                          </button>
-                        </td>
-
-                        <td>
-                          <span className={`ref-status-dot-badge ${p.is_active ? "active" : "inactive"}`}>
-                            {p.is_active ? t("نشط", "Active") : t("معطل", "Disabled")}
-                          </span>
-                        </td>
-
-                        <td>
-                          <div className="ref-row-actions-cluster">
-                            <button
-                              type="button"
-                              className="ref-btn-stock-quick"
-                              onClick={() => openEditProduct(p, "keys")}
-                              title={t("إدارة مفاتيح ومخزون هذا المنتج مباشرة", "Manage keys & inventory")}
-                            >
-                              <KeyRound size={13} />
-                              <span>{t("المخزون", "Stock")}</span>
-                            </button>
-
-                            <button
-                              className="ref-btn-edit-action"
-                              onClick={() => openEditProduct(p)}
-                              title={t("تعديل العنوان والملفات والضبط", "Edit product & files")}
-                            >
-                              <Sliders size={14} />
-                              <span>{t("الضبط", "Settings")}</span>
-                            </button>
-
-                            <button
-                              className="ref-btn-icon-action"
-                              onClick={() => void handleDuplicateProduct(p)}
-                              title={t("استنساخ هذا المنتج", "Duplicate product")}
-                            >
-                              <CopyPlus size={14} />
-                            </button>
-
-                            <button
-                              className="ref-btn-danger-icon"
-                              onClick={() => handleDeleteProduct(p)}
-                              title={t("حذف المنتج نهائياً", "Delete permanently")}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
         {/* ==================================================== */}
         {/* VIEW 2B: طلبات رستات المفاتيح (Key Reset Requests) */}

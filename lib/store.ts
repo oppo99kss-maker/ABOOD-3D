@@ -393,7 +393,7 @@ export async function ready() {
         ('site_name', '"SpooFX Control Space"'::jsonb),
         ('description', '"بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص"'::jsonb),
         ('maintenance_mode', 'false'::jsonb),
-        ('maintenance_message', '"الموقع تحت الصيانة الدورية حالياً وسيعود للعمل قريباً."'::jsonb),
+        ('maintenance_message', '""'::jsonb),
         ('allow_new_activations', 'true'::jsonb),
         ('low_stock_threshold', '5'::jsonb)
       ON CONFLICT (key) DO NOTHING;
@@ -2192,7 +2192,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
     site_name: (settings.site_name as string) || "SpooFX Control Space",
     description: (settings.description as string) || "بوابتك الرقمية المتكاملة لإدارة المنتجات والمفاتيح والتراخيص",
     maintenance_mode: Boolean(settings.maintenance_mode),
-    maintenance_message: (settings.maintenance_message as string) || "الموقع تحت الصيانة الدورية حالياً.",
+    maintenance_message: (settings.maintenance_message as string) || "",
     allow_new_activations: settings.allow_new_activations !== false,
     low_stock_threshold: Number(settings.low_stock_threshold) || 5,
   };
