@@ -1565,21 +1565,6 @@ export function AdminControlSpace({
               </button>
             );
           })}
-
-          <button
-            type="button"
-            className="admin-ref-nav-pill"
-            style={{
-              marginInlineStart: "auto",
-              border: "1px solid rgba(255, 255, 255, 0.14)",
-              background: "rgba(255, 255, 255, 0.04)",
-            }}
-            onClick={onExitAdmin}
-            title={t("العودة لبوابة العملاء", "Client Portal")}
-          >
-            <ArrowRight size={14} className={ar ? "rotate-180" : ""} />
-            <span>{t("بوابة العملاء", "Client Portal")}</span>
-          </button>
         </div>
       </nav>
 

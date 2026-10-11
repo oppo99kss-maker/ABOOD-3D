@@ -334,6 +334,54 @@ export function Portal({ user }: { user: PortalUser }) {
   if (activeTab === "admin" && data.isAdmin) {
     return (
       <div className="portal-admin-wrapper" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+        <div className="image2-container" style={{ padding: "0 24px" }}>
+          <header className="image2-header-row" style={{ paddingBottom: "16px" }}>
+            <div className="image2-header-title-wrap">
+              <button
+                type="button"
+                className="image2-back-home-btn"
+                onClick={() => navigate("overview")}
+                title={t("العودة للرئيسية", "Back to Home")}
+              >
+                {ar ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
+                <span>{t("الرئيسية", "Home")}</span>
+              </button>
+              <span className="image2-breadcrumb-sep">/</span>
+              <h1 className="image2-header-title">{t("لوحة الإدارة", "Admin Dashboard")}</h1>
+            </div>
+
+            <div className="image2-header-controls">
+              <button
+                type="button"
+                className="image2-ctrl-btn icon-only"
+                onClick={toggleTheme}
+                title={isDark ? t("الوضع الفاتح", "Light Mode") : t("الوضع الداكن", "Dark Mode")}
+                aria-label="Toggle theme"
+              >
+                {isDark ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <button
+                type="button"
+                className="image2-ctrl-btn lang-pill"
+                onClick={() => setLang(ar ? "en" : "ar")}
+                title={t("تغيير اللغة", "Switch Language")}
+              >
+                <span>{ar ? "EN" : "عربي"}</span>
+                <Globe size={14} />
+              </button>
+              <button
+                type="button"
+                className="image2-ctrl-btn icon-only logout-btn"
+                onClick={() => void signOut({ callbackUrl: "/" })}
+                title={t("تسجيل الخروج", "Sign Out")}
+                aria-label="Sign Out"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          </header>
+          <hr className="image2-divider" style={{ marginBottom: "20px" }} />
+        </div>
         <AdminControlSpace
           products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}
           inventory={data.inventory}
