@@ -31,6 +31,7 @@ export type Product = {
   expires_at?: string | null;
   license_status?: "ACTIVE" | "EXPIRED" | "SUSPENDED" | "REVOKED";
   duration_days?: number;
+  license_key?: string | null;
 };
 
 export type LicenseKey = {
@@ -665,7 +666,10 @@ export function ensureSpoofxAttached(productsList: any[]): Product[] {
         currentFiles = [];
       }
     }
-    if (!currentFiles.some((f) => f.name?.toLowerCase().includes("spoofx.rar") || f.url?.includes("Spoofx.rar"))) {
+    if (
+      p.name?.toLowerCase().includes("spoofx") &&
+      !currentFiles.some((f) => f.name?.toLowerCase().includes("spoofx.rar") || f.url?.includes("Spoofx.rar"))
+    ) {
       currentFiles.unshift(DEFAULT_SPOOFX_FILE);
     }
     return {
@@ -684,6 +688,7 @@ export async function myProducts(email: string): Promise<Product[]> {
             max(l.redeemed_at) AS redeemed_at,
             max(l.expires_at) AS expires_at,
             max(l.duration_days) AS duration_days,
+            coalesce(max(l.raw_code), max(l.masked_code), max(l.code_suffix)) AS license_key,
             CASE
               WHEN max(l.expires_at) IS NULL THEN 'ACTIVE'
               WHEN max(l.expires_at) > now() THEN 'ACTIVE'

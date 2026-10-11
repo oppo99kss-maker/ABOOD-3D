@@ -48,6 +48,9 @@ import {
   VolumeX,
   Wrench,
   X,
+  LayoutDashboard,
+  Database,
+  BarChart3,
 } from "lucide-react";
 import type {
   Product,
@@ -67,8 +70,11 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 export type AdminSection =
   | "overview"
   | "products"
-  | "reset-requests"
+  | "inventory"
   | "customers"
+  | "orders"
+  | "logs"
+  | "reset-requests"
   | "search-customer"
   | "logs-activations"
   | "logs-logins"
@@ -127,6 +133,7 @@ export function AdminControlSpace({
   const [resetSearch, setResetSearch] = useState("");
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [logsTab, setLogsTab] = useState<"activations" | "sessions">("activations");
 
   useEffect(() => {
     if (initialResetRequests) {
@@ -463,53 +470,23 @@ export function AdminControlSpace({
   }>({
     name: "",
     nameEn: "",
-    sku: "prod-fortnite",
+    sku: "",
     stockType: "digital_keys",
     status: "ACTIVE",
     visibility: "VISIBLE",
     sortOrder: 1,
-    version: "v4.1.0",
-    fileSize: "95.7 MB",
+    version: "",
+    fileSize: "",
     description: "",
     category: "General",
-    accessUrl: "/api/download",
+    accessUrl: "",
     imageUrl: "",
     instructions: "",
     defaultDurationDays: 3,
     isVisible: true,
     isActive: true,
-    files: [
-      {
-        id: "file_spoofx_default",
-        name: "Spoofx.rar",
-        url: "/api/download",
-        size: "95.7 MB",
-        uploaded_at: new Date().toISOString(),
-      },
-    ],
-    customFields: [
-      {
-        id: "cf_video",
-        name: "رابط الشرح / فيديو",
-        key: "videoUrl",
-        type: "TEXT",
-        value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
-      },
-      {
-        id: "cf_guide",
-        name: "رابط دليل الاستخدام",
-        key: "guideUrl",
-        type: "TEXT",
-        value: "/portal",
-      },
-      {
-        id: "cf_file",
-        name: "رابط تحميل الملف",
-        key: "fileUrl",
-        type: "TEXT",
-        value: "/api/download",
-      },
-    ],
+    files: [],
+    customFields: [],
   });
 
   // Local Image Upload Handler
@@ -604,8 +581,8 @@ export function AdminControlSpace({
     setProductModalTab(initialTab);
 
     let sku = `prod-${p.id.slice(0, 8)}`;
-    let version = "v4.1.0";
-    let fileSize = "95.7 MB";
+    let version = "";
+    let fileSize = "";
     let sortOrder = 1;
     let customFields: CustomField[] = [];
 
@@ -622,45 +599,7 @@ export function AdminControlSpace({
       }
     } catch {}
 
-    if (!customFields.length) {
-      customFields = [
-        {
-          id: "cf_video",
-          name: "رابط الشرح / فيديو",
-          key: "videoUrl",
-          type: "TEXT",
-          value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
-        },
-        {
-          id: "cf_guide",
-          name: "رابط دليل الاستخدام",
-          key: "guideUrl",
-          type: "TEXT",
-          value: "/portal",
-        },
-        {
-          id: "cf_file",
-          name: "رابط تحميل الملف",
-          key: "fileUrl",
-          type: "TEXT",
-          value: p.access_url || "/api/download",
-        },
-      ];
-    }
-
-    let currentFiles: ProductFile[] = Array.isArray(p.files) && p.files.length > 0 ? p.files : [];
-    if (!currentFiles.some((f) => f.name.toLowerCase().includes("spoofx"))) {
-      currentFiles = [
-        ...currentFiles,
-        {
-          id: "file_spoofx_rar",
-          name: "Spoofx.rar",
-          url: "/api/download",
-          size: "95.7 MB",
-          uploaded_at: new Date().toISOString(),
-        },
-      ];
-    }
+    const currentFiles: ProductFile[] = Array.isArray(p.files) && p.files.length > 0 ? p.files : [];
 
     setProductForm({
       name: p.name,
@@ -674,7 +613,7 @@ export function AdminControlSpace({
       fileSize: fileSize,
       description: p.description || "",
       category: p.category || "General",
-      accessUrl: p.access_url || "/api/download",
+      accessUrl: p.access_url || "",
       imageUrl: p.image_url || "",
       instructions: p.instructions || "",
       defaultDurationDays: p.default_duration_days || 3,
@@ -697,48 +636,18 @@ export function AdminControlSpace({
       status: "ACTIVE",
       visibility: "VISIBLE",
       sortOrder: products.length + 1,
-      version: "v1.0.0",
-      fileSize: "95.7 MB",
+      version: "",
+      fileSize: "",
       description: "",
       category: "General",
-      accessUrl: "/api/download",
+      accessUrl: "",
       imageUrl: "",
       instructions: "",
       defaultDurationDays: 3,
       isVisible: true,
       isActive: true,
-      files: [
-        {
-          id: "file_spoofx_default",
-          name: "Spoofx.rar",
-          url: "/api/download",
-          size: "95.7 MB",
-          uploaded_at: new Date().toISOString(),
-        },
-      ],
-      customFields: [
-        {
-          id: "cf_video",
-          name: "رابط الشرح / فيديو",
-          key: "videoUrl",
-          type: "TEXT",
-          value: "https://drive.google.com/file/d/1Qu9YkX1JVbF-kglE6hhpe5nk9Q10FKvJ/view?usp=sharing",
-        },
-        {
-          id: "cf_guide",
-          name: "رابط دليل الاستخدام",
-          key: "guideUrl",
-          type: "TEXT",
-          value: "/portal",
-        },
-        {
-          id: "cf_file",
-          name: "رابط تحميل الملف",
-          key: "fileUrl",
-          type: "TEXT",
-          value: "/api/download",
-        },
-      ],
+      files: [],
+      customFields: [],
     });
     setShowProductModal(true);
   }
@@ -1508,12 +1417,25 @@ export function AdminControlSpace({
           email: log.actor_email,
           image: log.customer_image,
           auth_provider: "Google",
-          last_active: log.created_at || null,
+          last_active: log.created_at || new Date().toISOString(),
           ip: log.ip || null,
           status: log.customer_status || "ACTIVE",
         });
       }
     });
+
+    if (map.size === 0 && currentUser) {
+      map.set(currentUser, {
+        id: "curr_admin",
+        name: currentUser.split("@")[0],
+        email: currentUser,
+        image: null,
+        auth_provider: "Google",
+        last_active: new Date().toISOString(),
+        ip: null,
+        status: "ACTIVE",
+      });
+    }
 
     return Array.from(map.values());
   }, [loginLogs, currentUser]);
@@ -1533,59 +1455,80 @@ export function AdminControlSpace({
     });
   }, [products, productSearch]);
 
+  function handleOpenKeysTabForProduct(product: Product) {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      nameEn: product.name_en || "",
+      sku: `prod-${product.id.slice(0, 8)}`,
+      stockType: "digital_keys",
+      status: product.is_active !== false ? "ACTIVE" : "INACTIVE",
+      visibility: product.is_visible !== false ? "VISIBLE" : "HIDDEN",
+      sortOrder: 1,
+      version: "",
+      fileSize: "",
+      description: product.description || "",
+      category: product.category || "General",
+      accessUrl: product.access_url || "",
+      imageUrl: product.image_url || "",
+      instructions: product.instructions || "",
+      defaultDurationDays: product.default_duration_days || 30,
+      isVisible: product.is_visible !== false,
+      isActive: product.is_active !== false,
+      files: Array.isArray(product.files) ? product.files : [],
+      customFields: [],
+    });
+    setProductModalTab("keys");
+    setShowProductModal(true);
+    fetchProductKeys(product.id);
+  }
+
   const navItems = [
     {
       id: "overview" as AdminSection,
-      icon: Layers,
+      icon: LayoutDashboard,
       ar: "نظرة عامة",
       en: "Overview",
     },
     {
       id: "products" as AdminSection,
       icon: Package,
-      ar: "المنتجات والمخزون",
-      en: "Products & Stock",
+      ar: "المنتجات",
+      en: "Products",
       badge: products.length,
     },
     {
-      id: "reset-requests" as AdminSection,
-      icon: RotateCcw,
-      ar: "طلبات رستات المفاتيح",
-      en: "Key Reset Requests",
-      badge: resetRequestsList.filter((r) => r.status === "PENDING").length,
+      id: "inventory" as AdminSection,
+      icon: KeyRound,
+      ar: "المخزون",
+      en: "Inventory",
+      badge: dashboardStats?.keys?.available_keys !== undefined ? dashboardStats.keys.available_keys : undefined,
     },
     {
       id: "customers" as AdminSection,
       icon: Users,
-      ar: "إدارة العملاء",
+      ar: "العملاء",
       en: "Customers",
-      badge: customerTotalCount || customers.length,
+      badge: customerTotalCount || customers.length || undefined,
     },
     {
-      id: "search-customer" as AdminSection,
-      icon: Search,
-      ar: "البحث عن عميل",
-      en: "Search Customer",
+      id: "orders" as AdminSection,
+      icon: RotateCcw,
+      ar: "الطلبات",
+      en: "Orders & Resets",
+      badge: resetRequestsList.filter((r) => r.status === "PENDING").length || undefined,
     },
     {
-      id: "logs-activations" as AdminSection,
-      icon: KeyRound,
-      ar: "سجل النشاط والتفعيلات",
-      en: "Activity & Activations",
-      badge: activationLogs.length,
-    },
-    {
-      id: "logs-logins" as AdminSection,
+      id: "logs" as AdminSection,
       icon: ShieldCheck,
-      ar: "حضور العملاء والجلسات",
-      en: "Active Sessions",
-      badge: activeSessions.length,
+      ar: "السجلات",
+      en: "Logs",
     },
     {
       id: "settings" as AdminSection,
       icon: Settings,
-      ar: "ضبط لوحة الإدارة والمتجر",
-      en: "Admin & Store Settings",
+      ar: "الإعدادات",
+      en: "Settings",
     },
   ];
 
@@ -1596,18 +1539,21 @@ export function AdminControlSpace({
         <div className="admin-ref-nav-track">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activeSection === item.id;
+            const active = activeSection === item.id ||
+              (item.id === "orders" && activeSection === "reset-requests") ||
+              (item.id === "logs" && (activeSection === "logs-activations" || activeSection === "logs-logins")) ||
+              (item.id === "customers" && activeSection === "search-customer");
             return (
               <button
                 key={item.id}
                 className={`admin-ref-nav-pill ${active ? "active" : ""}`}
                 onClick={() => {
                   setActiveSection(item.id);
-                  if (item.id === "search-customer") {
-                    setTimeout(() => searchInputRef.current?.focus(), 150);
-                  }
                   if (item.id === "customers") {
                     loadCustomers(customerSearch, customerStatusFilter, customerPage);
+                  } else if (item.id === "logs") {
+                    void loadActivationLogs();
+                    void loadLoginLogs();
                   }
                 }}
               >
@@ -1639,31 +1585,340 @@ export function AdminControlSpace({
 
       {/* 4. DYNAMIC VIEW CONTENT */}
       <main className="admin-ref-main-view">
+        {/* ==================================================== */}
+        {/* VIEW 0: نظرة عامة على قاعدة البيانات (Live DB Stats) */}
+        {/* ==================================================== */}
         {activeSection === "overview" && (
-          <section className="admin-overview">
-            <div className="admin-overview-heading">
-              <div>
-                <span className="admin-overview-kicker">{t("إدارة المنصة", "Platform management")}</span>
-                <h1>{t("نظرة عامة", "Overview")}</h1>
-                <p>{t("إحصاءات مباشرة من بيانات المنتجات والتراخيص والعملاء.", "Current figures from products, licenses, and customers.")}</p>
+          <div className="ref-view-section">
+            <div className="ref-overview-admin-header">
+              <div className="ref-admin-hero-title">
+                <div className="ref-admin-live-pulse-badge">
+                  <span className="pulse-green-dot" />
+                  <span>{t("قاعدة البيانات متصلة ومباشرة", "Live Database Connected")}</span>
+                </div>
+                <h2>{t("نظرة عامة على النظام وقاعدة البيانات", "System & Database Overview")}</h2>
+                <p className="ref-admin-hero-desc">
+                  {t(
+                    "إحصاءات حقيقية مباشرة مستخرجة من قاعدة البيانات للتحكم بالمنتجات والمخزون والعملاء والطلبات.",
+                    "Live database metrics for products, stock inventory, customers, and operations."
+                  )}
+                </p>
               </div>
-              <button type="button" className="secondary-button" onClick={() => void onRefresh()}><RefreshCw size={15} />{t("تحديث", "Refresh")}</button>
+
+              <div className="ref-admin-hero-actions">
+                <button
+                  type="button"
+                  className="ref-btn-create-product"
+                  onClick={openAddProduct}
+                >
+                  <Plus size={15} />
+                  <span>{t("إضافة منتج جديد", "Add New Product")}</span>
+                </button>
+              </div>
             </div>
-            <div className="admin-overview-stats">
-              {[
-                { label: t("المنتجات النشطة", "Active products"), value: dashboardStats?.products?.active_products, icon: Package },
-                { label: t("المفاتيح المتاحة", "Available keys"), value: dashboardStats?.keys?.available_keys, icon: KeyRound },
-                { label: t("العملاء", "Customers"), value: dashboardStats?.customers?.total_customers, icon: Users },
-                { label: t("تفعيلات اليوم", "Activations today"), value: dashboardStats?.activationsToday, icon: CheckCircle2 },
-              ].map((item) => { const Icon = item.icon; return <div className="admin-overview-stat" key={item.label}><Icon size={20} /><span>{item.label}</span><strong>{item.value ?? "—"}</strong></div>; })}
+
+            {/* Live Database Metrics Grid (6 Real Cards) */}
+            <div className="ref-admin-stats-grid">
+              {/* Stat 1: Total Products */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap blue">
+                  <Package size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("إجمالي المنتجات", "Total Products")}</span>
+                  <strong className="ref-stat-number">
+                    {dashboardStats?.products?.total_products ?? products.length}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t(
+                      `منها ${dashboardStats?.products?.active_products ?? products.filter((p) => p.is_active).length} منتج نشط`,
+                      `${dashboardStats?.products?.active_products ?? products.filter((p) => p.is_active).length} active products`
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 2: Stock Available Keys */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap cyan">
+                  <KeyRound size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("المفاتيح المتوفرة بالمخزون", "Available Stock Keys")}</span>
+                  <strong className="ref-stat-number text-cyan">
+                    {dashboardStats?.keys?.available_keys ?? 0}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t(
+                      `من إجمالي ${dashboardStats?.keys?.total_keys ?? 0} مفتاح`,
+                      `out of ${dashboardStats?.keys?.total_keys ?? 0} total keys`
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 3: Redeemed Keys */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap green">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("المفاتيح المفعلة", "Redeemed Keys")}</span>
+                  <strong className="ref-stat-number text-success">
+                    {dashboardStats?.keys?.redeemed_keys ?? 0}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t("تراخيص مرتبطة بحسابات العملاء", "Active linked licenses")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 4: Registered Customers */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap purple">
+                  <Users size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("العملاء المسجلون", "Total Customers")}</span>
+                  <strong className="ref-stat-number">
+                    {dashboardStats?.customers?.total_customers ?? customerTotalCount ?? customers.length}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t("حسابات حقيقية مسجلة بالنظام", "Real registered accounts")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 5: Activations Today */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap orange">
+                  <Clock size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("تفعيلات اليوم", "Today's Activations")}</span>
+                  <strong className="ref-stat-number">
+                    {dashboardStats?.activationsToday ?? 0}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t("تفعيلات خلال الـ 24 ساعة الماضية", "Activations last 24h")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Stat 6: Pending Reset Requests */}
+              <div className="ref-stat-card">
+                <div className="ref-stat-icon-wrap yellow">
+                  <RotateCcw size={20} />
+                </div>
+                <div className="ref-stat-data">
+                  <span className="ref-stat-label">{t("طلبات الرستات المعلقة", "Pending Key Resets")}</span>
+                  <strong className="ref-stat-number text-warning">
+                    {resetRequestsList.filter((r) => r.status === "PENDING").length}
+                  </strong>
+                  <span className="ref-stat-sub">
+                    {t("طلبات تبديل HWID بانتظار التدقيق", "Awaiting review")}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="admin-overview-actions">
-              <button type="button" onClick={() => setActiveSection("products")}><Package size={19} />{t("إدارة المنتجات والمخزون", "Manage products and stock")}<ArrowRight size={16} /></button>
-              <button type="button" onClick={() => setActiveSection("reset-requests")}><RotateCcw size={19} />{t("مراجعة طلبات المفاتيح", "Review key requests")}<ArrowRight size={16} /></button>
-              <button type="button" onClick={() => { setActiveSection("customers"); void loadCustomers(customerSearch, customerStatusFilter, customerPage); }}><Users size={19} />{t("عرض العملاء", "View customers")}<ArrowRight size={16} /></button>
+
+            {/* Quick Navigation Shortcuts */}
+            <div className="ref-admin-shortcuts-grid">
+              <button
+                type="button"
+                className="ref-admin-shortcut-card"
+                onClick={() => setActiveSection("products")}
+              >
+                <div className="shortcut-icon-box blue"><Package size={18} /></div>
+                <div className="shortcut-info">
+                  <strong>{t("إدارة المنتجات", "Manage Products")}</strong>
+                  <span>{t("تعديل وإضافة باقات المنتجات والملفات والشروحات", "Create, edit and manage packages")}</span>
+                </div>
+                <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+              </button>
+
+              <button
+                type="button"
+                className="ref-admin-shortcut-card"
+                onClick={() => setActiveSection("inventory")}
+              >
+                <div className="shortcut-icon-box cyan"><KeyRound size={18} /></div>
+                <div className="shortcut-info">
+                  <strong>{t("المخزون والمفاتيح", "Manage Inventory")}</strong>
+                  <span>{t("فحص أرصدة المخزون وتوليد واستيراد المفاتيح", "Generate, import and monitor keys")}</span>
+                </div>
+                <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+              </button>
+
+              <button
+                type="button"
+                className="ref-admin-shortcut-card"
+                onClick={() => {
+                  setActiveSection("customers");
+                  loadCustomers(customerSearch, customerStatusFilter, customerPage);
+                }}
+              >
+                <div className="shortcut-icon-box purple"><Users size={18} /></div>
+                <div className="shortcut-info">
+                  <strong>{t("إدارة العملاء", "Manage Customers")}</strong>
+                  <span>{t("فحص التراخيص والبحث وتعديل حالات الحسابات", "Inspect licenses and manage users")}</span>
+                </div>
+                <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+              </button>
+
+              <button
+                type="button"
+                className="ref-admin-shortcut-card"
+                onClick={() => setActiveSection("orders")}
+              >
+                <div className="shortcut-icon-box yellow"><RotateCcw size={18} /></div>
+                <div className="shortcut-info">
+                  <strong>{t("الطلبات ورستات المفاتيح", "Orders & Key Resets")}</strong>
+                  <span>{t("مراجعة وقبول أو رفض طلبات تبديل HWID", "Review HWID reset requests")}</span>
+                </div>
+                <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+              </button>
+
+              <button
+                type="button"
+                className="ref-admin-shortcut-card"
+                onClick={() => {
+                  setActiveSection("logs");
+                  void loadActivationLogs();
+                  void loadLoginLogs();
+                }}
+              >
+                <div className="shortcut-icon-box green"><ShieldCheck size={18} /></div>
+                <div className="shortcut-info">
+                  <strong>{t("السجلات والنشاط", "Logs & Audit")}</strong>
+                  <span>{t("سجل التفعيلات الحقيقية والجلسات النشطة", "Real activations and active sessions")}</span>
+                </div>
+                <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
+              </button>
             </div>
-          </section>
+
+            {/* Recent Live Activity Feed from Database */}
+            <div className="ref-admin-recent-box">
+              <div className="ref-admin-recent-header">
+                <div className="recent-title-cluster">
+                  <ShieldCheck size={18} className="text-cyan" />
+                  <h3>{t("آخر العمليات المسجلة في قاعدة البيانات", "Recent Database Activity")}</h3>
+                </div>
+                <button
+                  type="button"
+                  className="ref-timeline-refresh-btn"
+                  onClick={() => {
+                    setActiveSection("logs");
+                    void loadActivationLogs();
+                    void loadLoginLogs();
+                  }}
+                >
+                  <span>{t("عرض جميع السجلات", "View All Logs")}</span>
+                  <ArrowRight size={14} className={ar ? "rotate-180" : ""} />
+                </button>
+              </div>
+
+              {dashboardStats?.recentActivity && dashboardStats.recentActivity.length > 0 ? (
+                <div className="ref-recent-logs-list">
+                  {dashboardStats.recentActivity.map((log: any) => (
+                    <div className="ref-recent-log-row" key={log.id}>
+                      <div className="recent-log-badge">
+                        <span className={`badge-pill ${log.category?.toLowerCase() || "system"}`}>
+                          {log.action || log.category}
+                        </span>
+                      </div>
+                      <div className="recent-log-desc">
+                        <strong dir="ltr">{log.actor_email}</strong>
+                        <span>{typeof log.details === "object" ? JSON.stringify(log.details) : String(log.details || "")}</span>
+                      </div>
+                      <div className="recent-log-time">
+                        <Clock size={12} />
+                        <time>{new Date(log.created_at).toLocaleTimeString(ar ? "ar-SA" : "en-US")}</time>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="ref-empty-admin-state">
+                  <Database size={24} />
+                  <span>{t("لا توجد عمليات مسجلة حديثاً في قاعدة البيانات.", "No recent recorded operations.")}</span>
+                </div>
+              )}
+            </div>
+          </div>
         )}
+
+        {/* ==================================================== */}
+        {/* VIEW 0B: إدارة المخزون (Stock & Inventory) */}
+        {/* ==================================================== */}
+        {activeSection === "inventory" && (
+          <div className="ref-view-section">
+            <div className="ref-products-header-clean">
+              <div className="ref-toolbar-text-wrap">
+                <h3 className="ref-section-title">
+                  <KeyRound size={20} />
+                  <span>{t("إدارة المخزون والمفاتيح", "Stock & License Keys")}</span>
+                </h3>
+                <p className="ref-section-subtitle">
+                  {t(
+                    "توليد واستيراد الأكواد، فحص الأرصدة المتاحة لكل منتج، والتحكم بمفاتيح التراخيص.",
+                    "Manage key stock, bulk generate or import keys for products."
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="ref-inventory-product-cards-grid">
+              {products.map((p) => {
+                const avail = p.available_keys ?? 0;
+                const redeemed = p.redeemed_keys ?? 0;
+                const isLow = avail < (settingsForm?.low_stock_threshold || initialSettings?.low_stock_threshold || 5);
+
+                return (
+                  <div className="ref-inventory-product-card" key={p.id}>
+                    <div className="ref-inv-card-top">
+                      <div className="ref-inv-art">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt="" />
+                        ) : (
+                          <Package size={24} />
+                        )}
+                      </div>
+                      <div className="ref-inv-meta">
+                        <strong>{p.name}</strong>
+                        <span className="ref-inv-category">{p.category || "SpooFX"}</span>
+                      </div>
+                      <span className={`ref-stock-pill ${isLow ? "low" : "ok"}`}>
+                        {avail} {t("متاح", "Available")}
+                      </span>
+                    </div>
+
+                    <div className="ref-inv-stats-row">
+                      <div className="inv-stat-item">
+                        <span>{t("المتوفر:", "Available:")}</span>
+                        <strong className="text-cyan">{avail}</strong>
+                      </div>
+                      <div className="inv-stat-item">
+                        <span>{t("المفعل:", "Redeemed:")}</span>
+                        <strong className="text-success">{redeemed}</strong>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="ref-btn-manage-stock"
+                      onClick={() => handleOpenKeysTabForProduct(p)}
+                    >
+                      <KeyRound size={14} />
+                      <span>{t("إدارة مفاتيح المنتج", "Manage Product Keys")}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ==================================================== */}
         {/* ==================================================== */}
         {/* VIEW 1: المنتجات والمخزون (Matching Image 2 Exactly) */}
@@ -1734,11 +1989,15 @@ export function AdminControlSpace({
                       </div>
 
                       <div className="ref-prod-card-badge-row">
-                        {p.category && <span className="ref-prod-card-cat-badge">{p.category}</span>}
-                        {(p as any).version && <span className="ref-prod-card-cat-badge">{(p as any).version}</span>}
+                        <span className="ref-prod-card-cat-badge">{p.category || "General"}</span>
+                        {(p as any).version && (
+                          <span className="ref-prod-card-cat-badge">{(p as any).version}</span>
+                        )}
                       </div>
 
-                      {p.description && <p className="ref-prod-card-description">{p.description}</p>}
+                      <p className="ref-prod-card-description">
+                        {p.description || t("لا يوجد وصف إضافي.", "No description provided.")}
+                      </p>
                     </div>
 
                     {/* Exactly 2 Wide Action Buttons Side-by-Side (Image 2) */}
@@ -1773,9 +2032,9 @@ export function AdminControlSpace({
 
 
         {/* ==================================================== */}
-        {/* VIEW 2B: طلبات رستات المفاتيح (Key Reset Requests) */}
+        {/* VIEW 2B: الطلبات ورستات المفاتيح (Orders & Key Reset Requests) */}
         {/* ==================================================== */}
-        {activeSection === "reset-requests" && (
+        {(activeSection === "orders" || activeSection === "reset-requests") && (
           <div className="ref-view-section">
             <div className="ref-table-card">
               {/* Toolbar & Filter Bar */}
@@ -1783,7 +2042,7 @@ export function AdminControlSpace({
                 <div className="ref-reset-header-info">
                   <h3 className="ref-card-main-title">
                     <RotateCcw size={20} className="text-warning" />
-                    <span>{t("طلبات رستات المفاتيح (HWID Resets)", "Key Reset Requests (HWID Resets)")}</span>
+                    <span>{t("إدارة الطلبات ورستات المفاتيح", "Orders & Key Reset Requests")}</span>
                   </h3>
                   <p className="ref-section-subtitle">
                     {t(
@@ -2049,7 +2308,7 @@ export function AdminControlSpace({
                     {customers.length > 0 ? (
                       customers.map((c) => {
                         const isMuted = c.status === "SUSPENDED";
-                        const clientIp = (c as any).last_ip || "—";
+                        const clientIp = (c as any).last_ip || null;
                         const role = (c as any).role || "Customer";
                         const userId = `user-${c.id.slice(0, 16)}...`;
 
@@ -2084,7 +2343,7 @@ export function AdminControlSpace({
                             </td>
 
                             <td dir="ltr" className="ref-ip-text">
-                              {clientIp}
+                              {clientIp || "—"}
                             </td>
 
                             <td>
@@ -2231,7 +2490,36 @@ export function AdminControlSpace({
         {/* ==================================================== */}
         {/* VIEW 5: سجل النشاط والتفعيلات (Matching Image 2) */}
         {/* ==================================================== */}
-        {activeSection === "logs-activations" && (
+        {activeSection === "logs" && (
+          <div className="ref-logs-subnav-bar">
+            <button
+              type="button"
+              className={`ref-logs-tab-pill ${logsTab === "activations" ? "active" : ""}`}
+              onClick={() => {
+                setLogsTab("activations");
+                void loadActivationLogs();
+              }}
+            >
+              <KeyRound size={15} />
+              <span>{t("سجل النشاط والتفعيلات", "Activity & Activations")}</span>
+              {activationLogs.length > 0 && <span className="nav-pill-counter">{activationLogs.length}</span>}
+            </button>
+            <button
+              type="button"
+              className={`ref-logs-tab-pill ${logsTab === "sessions" ? "active" : ""}`}
+              onClick={() => {
+                setLogsTab("sessions");
+                void loadLoginLogs();
+              }}
+            >
+              <ShieldCheck size={15} />
+              <span>{t("جلسات الدخول والاتصال", "Active Sessions")}</span>
+              {activeSessions.length > 0 && <span className="nav-pill-counter">{activeSessions.length}</span>}
+            </button>
+          </div>
+        )}
+
+        {(activeSection === "logs-activations" || (activeSection === "logs" && logsTab === "activations")) && (
           <div className="ref-view-section">
             <div className="ref-table-card">
               <div className="ref-timeline-header-block">
@@ -2255,12 +2543,12 @@ export function AdminControlSpace({
 
                 <div className="ref-timeline-stats-row">
                   <div className="ref-timeline-stat-pill">
-                    <strong>40</strong>
+                    <strong>{activationLogs.length}</strong>
                     <span>{t("الأحداث المسجلة", "Logged Events")}</span>
                   </div>
 
                   <div className="ref-timeline-stat-pill">
-                    <strong>10</strong>
+                    <strong>{new Set(activationLogs.map((l) => l.redeemed_by).filter(Boolean)).size}</strong>
                     <span>{t("أصحاب النشاط", "Active Users")}</span>
                   </div>
 
@@ -2287,8 +2575,9 @@ export function AdminControlSpace({
               <div className="ref-timeline-cards-list">
                 {filteredActivationLogs.length > 0 ? (
                   filteredActivationLogs.map((log) => {
-                    const clientIp = log.ip;
-                    const userName = log.redeemed_by?.split("@")[0] || t("عميل", "Customer");
+                    const clientIp = log.ip || null;
+                    const userName = log.redeemed_by ? log.redeemed_by.split("@")[0] : t("مستخدم", "User");
+                    const displayCode = log.raw_code || log.masked_code || (log.code_suffix ? `••••-••••-${log.code_suffix}` : "••••••••");
 
                     return (
                       <div className="ref-timeline-event-card" key={log.id}>
@@ -2297,16 +2586,9 @@ export function AdminControlSpace({
                             {t("تفعيل مفتاح", "Key Activation")}
                           </span>
                           <div className="ref-event-title-stack">
-                            <strong>{t(`تم تفعيل مفتاح ${log.product_name || "سيوفر تعن"}`, `Activated key for ${log.product_name}`)}</strong>
+                            <strong>{t(`تم تفعيل مفتاح ${log.product_name || "المنتج"}`, `Activated key for ${log.product_name || "Product"}`)}</strong>
                             <small dir="ltr" className="ref-key-code-masked">
-                              {(() => {
-                                let c = log.raw_code || log.masked_code || "";
-                                if (!c || c.includes("*")) {
-                                  const repl = (log.id ? log.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
-                                  c = c ? c.replace(/\*+/g, repl) : `KEY-${repl}-${log.code_suffix || "H9whoQ"}`;
-                                }
-                                return c;
-                              })()}
+                              {displayCode}
                             </small>
                           </div>
                         </div>
@@ -2342,7 +2624,7 @@ export function AdminControlSpace({
         {/* ==================================================== */}
         {/* VIEW 6: حضور العملاء والجلسات النشطة (Matching Image 5) */}
         {/* ==================================================== */}
-        {activeSection === "logs-logins" && (
+        {(activeSection === "logs-logins" || (activeSection === "logs" && logsTab === "sessions")) && (
           <div className="ref-view-section">
             <div className="ref-table-card">
               <div className="ref-sessions-header-block">
@@ -2844,7 +3126,7 @@ export function AdminControlSpace({
                       dir="ltr"
                       value={productForm.version}
                       onChange={(e) => setProductForm({ ...productForm, version: e.target.value })}
-                      placeholder="v4.1.0"
+                      placeholder={t("اختياري", "Optional")}
                     />
                   </div>
 
@@ -2855,7 +3137,7 @@ export function AdminControlSpace({
                       dir="ltr"
                       value={productForm.fileSize}
                       onChange={(e) => setProductForm({ ...productForm, fileSize: e.target.value })}
-                      placeholder="95.7 MB"
+                      placeholder={t("اختياري", "Optional")}
                     />
                   </div>
                 </div>
