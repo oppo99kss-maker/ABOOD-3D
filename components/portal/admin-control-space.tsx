@@ -65,6 +65,7 @@ import { notify as notifyMgr } from "@/lib/notify";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 export type AdminSection =
+  | "overview"
   | "products"
   | "reset-requests"
   | "customers"
@@ -117,7 +118,7 @@ export function AdminControlSpace({
   const ar = lang === "ar";
   const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
 
-  const [activeSection, setActiveSection] = useState<AdminSection>("products");
+  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [busy, setBusy] = useState(false);
 
   // Key Reset Requests State
@@ -1507,25 +1508,12 @@ export function AdminControlSpace({
           email: log.actor_email,
           image: log.customer_image,
           auth_provider: "Google",
-          last_active: log.created_at || new Date().toISOString(),
-          ip: log.ip || "142.247.179.206",
+          last_active: log.created_at || null,
+          ip: log.ip || null,
           status: log.customer_status || "ACTIVE",
         });
       }
     });
-
-    if (map.size === 0 && currentUser) {
-      map.set(currentUser, {
-        id: "curr_admin",
-        name: currentUser.split("@")[0],
-        email: currentUser,
-        image: null,
-        auth_provider: "Google",
-        last_active: new Date().toISOString(),
-        ip: "188.53.111.115",
-        status: "ACTIVE",
-      });
-    }
 
     return Array.from(map.values());
   }, [loginLogs, currentUser]);
@@ -1547,6 +1535,12 @@ export function AdminControlSpace({
 
   const navItems = [
     {
+      id: "overview" as AdminSection,
+      icon: Layers,
+      ar: "نظرة عامة",
+      en: "Overview",
+    },
+    {
       id: "products" as AdminSection,
       icon: Package,
       ar: "المنتجات والمخزون",
@@ -1565,7 +1559,7 @@ export function AdminControlSpace({
       icon: Users,
       ar: "إدارة العملاء",
       en: "Customers",
-      badge: customerTotalCount || customers.length || 122,
+      badge: customerTotalCount || customers.length,
     },
     {
       id: "search-customer" as AdminSection,
@@ -1578,14 +1572,14 @@ export function AdminControlSpace({
       icon: KeyRound,
       ar: "سجل النشاط والتفعيلات",
       en: "Activity & Activations",
-      badge: activationLogs.length || 40,
+      badge: activationLogs.length,
     },
     {
       id: "logs-logins" as AdminSection,
       icon: ShieldCheck,
       ar: "حضور العملاء والجلسات",
       en: "Active Sessions",
-      badge: activeSessions.length || 1,
+      badge: activeSessions.length,
     },
     {
       id: "settings" as AdminSection,
@@ -1645,6 +1639,31 @@ export function AdminControlSpace({
 
       {/* 4. DYNAMIC VIEW CONTENT */}
       <main className="admin-ref-main-view">
+        {activeSection === "overview" && (
+          <section className="admin-overview">
+            <div className="admin-overview-heading">
+              <div>
+                <span className="admin-overview-kicker">{t("إدارة المنصة", "Platform management")}</span>
+                <h1>{t("نظرة عامة", "Overview")}</h1>
+                <p>{t("إحصاءات مباشرة من بيانات المنتجات والتراخيص والعملاء.", "Current figures from products, licenses, and customers.")}</p>
+              </div>
+              <button type="button" className="secondary-button" onClick={() => void onRefresh()}><RefreshCw size={15} />{t("تحديث", "Refresh")}</button>
+            </div>
+            <div className="admin-overview-stats">
+              {[
+                { label: t("المنتجات النشطة", "Active products"), value: dashboardStats?.products?.active_products, icon: Package },
+                { label: t("المفاتيح المتاحة", "Available keys"), value: dashboardStats?.keys?.available_keys, icon: KeyRound },
+                { label: t("العملاء", "Customers"), value: dashboardStats?.customers?.total_customers, icon: Users },
+                { label: t("تفعيلات اليوم", "Activations today"), value: dashboardStats?.activationsToday, icon: CheckCircle2 },
+              ].map((item) => { const Icon = item.icon; return <div className="admin-overview-stat" key={item.label}><Icon size={20} /><span>{item.label}</span><strong>{item.value ?? "—"}</strong></div>; })}
+            </div>
+            <div className="admin-overview-actions">
+              <button type="button" onClick={() => setActiveSection("products")}><Package size={19} />{t("إدارة المنتجات والمخزون", "Manage products and stock")}<ArrowRight size={16} /></button>
+              <button type="button" onClick={() => setActiveSection("reset-requests")}><RotateCcw size={19} />{t("مراجعة طلبات المفاتيح", "Review key requests")}<ArrowRight size={16} /></button>
+              <button type="button" onClick={() => { setActiveSection("customers"); void loadCustomers(customerSearch, customerStatusFilter, customerPage); }}><Users size={19} />{t("عرض العملاء", "View customers")}<ArrowRight size={16} /></button>
+            </div>
+          </section>
+        )}
         {/* ==================================================== */}
         {/* ==================================================== */}
         {/* VIEW 1: المنتجات والمخزون (Matching Image 2 Exactly) */}
@@ -1715,17 +1734,11 @@ export function AdminControlSpace({
                       </div>
 
                       <div className="ref-prod-card-badge-row">
-                        <span className="ref-prod-card-cat-badge">{p.category || "Utility"}</span>
-                        <span className="ref-prod-card-cat-badge">{(p as any).version || "VIP v4.1.0"}</span>
+                        {p.category && <span className="ref-prod-card-cat-badge">{p.category}</span>}
+                        {(p as any).version && <span className="ref-prod-card-cat-badge">{(p as any).version}</span>}
                       </div>
 
-                      <p className="ref-prod-card-description">
-                        {p.description ||
-                          t(
-                            "أداة متخصصة ومجهزة بأحدث الحلول البرمجية الفعالة والحماية القصوى لتوفير أفضل تجربة تشغيل مستقرة وآمنة.",
-                            "Dedicated specialized tool with high security and stability."
-                          )}
-                      </p>
+                      {p.description && <p className="ref-prod-card-description">{p.description}</p>}
                     </div>
 
                     {/* Exactly 2 Wide Action Buttons Side-by-Side (Image 2) */}
@@ -2036,7 +2049,7 @@ export function AdminControlSpace({
                     {customers.length > 0 ? (
                       customers.map((c) => {
                         const isMuted = c.status === "SUSPENDED";
-                        const clientIp = (c as any).last_ip || `178.153.86.119`;
+                        const clientIp = (c as any).last_ip || "—";
                         const role = (c as any).role || "Customer";
                         const userId = `user-${c.id.slice(0, 16)}...`;
 
@@ -2274,8 +2287,8 @@ export function AdminControlSpace({
               <div className="ref-timeline-cards-list">
                 {filteredActivationLogs.length > 0 ? (
                   filteredActivationLogs.map((log) => {
-                    const clientIp = log.ip || `142.247.179.206`;
-                    const userName = log.redeemed_by?.split("@")[0] || "koza124";
+                    const clientIp = log.ip;
+                    const userName = log.redeemed_by?.split("@")[0] || t("عميل", "Customer");
 
                     return (
                       <div className="ref-timeline-event-card" key={log.id}>
@@ -2305,7 +2318,7 @@ export function AdminControlSpace({
                           <div className="ref-event-user-details">
                             <strong>{userName}</strong>
                             <span dir="ltr" className="ref-google-user-tag"><span className="ref-google-dot" /> Google</span>
-                            <small dir="ltr">IP {clientIp}</small>
+                            {clientIp && <small dir="ltr">IP {clientIp}</small>}
                           </div>
                         </div>
 

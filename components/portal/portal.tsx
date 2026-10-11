@@ -974,7 +974,7 @@ export function Portal({ user }: { user: PortalUser }) {
                           ) : (
                             <span className="luxe-vip-badge client">
                               <Sparkles size={14} />
-                              <span>{t("عضو موثق", "Verified Client")}</span>
+                              <span>{t("عميل", "Customer")}</span>
                             </span>
                           )}
                         </div>
@@ -995,7 +995,7 @@ export function Portal({ user }: { user: PortalUser }) {
                       {/* Status indicator on end */}
                       <div className="luxe-session-status-tag">
                         <span className="luxe-status-dot" />
-                        <span>{t("جلسة نشطة وموثقة", "Active Verified Session")}</span>
+                        <span>{t("تم تسجيل الدخول", "Signed in")}</span>
                       </div>
                     </div>
 
@@ -1007,8 +1007,8 @@ export function Portal({ user }: { user: PortalUser }) {
                       </div>
                       <div className="luxe-meta-divider" />
                       <div className="luxe-meta-item">
-                        <span className="luxe-meta-label">{t("حالة التوثيق", "Verification")}</span>
-                        <strong className="luxe-meta-val text-cyan">{t("معتمد ومحمي 100%", "100% Protected")}</strong>
+                        <span className="luxe-meta-label">{t("الحساب", "Account")}</span>
+                        <strong className="luxe-meta-val text-cyan">{t("مسجل الدخول", "Signed in")}</strong>
                       </div>
                       <div className="luxe-meta-divider" />
                       <div className="luxe-meta-item">
