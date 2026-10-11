@@ -109,8 +109,6 @@ export function Portal({ user }: { user: PortalUser }) {
   const [guideModalProduct, setGuideModalProduct] = useState<Product | null>(null);
   const [resetModalProduct, setResetModalProduct] = useState<Product | null>(null);
   const [submittingReset, setSubmittingReset] = useState(false);
-  const [floatingAlertSeconds, setFloatingAlertSeconds] = useState(25);
-  const [floatingAlertDismissed, setFloatingAlertDismissed] = useState(false);
   const [guideSearch, setGuideSearch] = useState("");
 
   const [data, setData] = useState<Data>({
@@ -179,37 +177,6 @@ export function Portal({ user }: { user: PortalUser }) {
     }
   }, []);
 
-  // 25-Second floating alert timer on site entry
-  useEffect(() => {
-    if (floatingAlertDismissed) return;
-    const timer = setInterval(() => {
-      setFloatingAlertSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setFloatingAlertDismissed(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [floatingAlertDismissed]);
-
-  const handleDismissFloatingAlert = useCallback(() => {
-    setFloatingAlertDismissed(true);
-    const activeNotif = data.customerNotifications?.[0];
-    if (activeNotif && !activeNotif.customer_notified) {
-      void fetch("/api/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "dismissNotification",
-          id: activeNotif.id,
-        }),
-      });
-    }
-  }, [data.customerNotifications]);
-
   function handleDownloadProduct(p: Product) {
     let downloadUrl = "/downloads/Spoofx.rar";
     if (Array.isArray(p.files) && p.files.length > 0 && p.files[0]?.url) {
@@ -250,8 +217,6 @@ export function Portal({ user }: { user: PortalUser }) {
       );
       setResetModalProduct(null);
       await refresh();
-      setFloatingAlertSeconds(25);
-      setFloatingAlertDismissed(false);
     } catch (err: any) {
       notify.error(t("خطأ", "Error"), err.message || t("فشل إرسال طلب الرستات", "Failed to submit reset request"));
     } finally {
@@ -392,107 +357,6 @@ export function Portal({ user }: { user: PortalUser }) {
   return (
     <div className="image2-portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
       <div className="image2-container">
-            {/* Real Notification Alert (Only rendered when there is an actual event) */}
-            {!floatingAlertDismissed && data.customerNotifications && data.customerNotifications.length > 0 && (
-              <aside className="portal-floating-alert-25s" role="alert" aria-live="polite">
-                <div className="alert-content-row">
-                  <div className="alert-badge-icon">
-                    {(() => {
-                      const notif = data.customerNotifications[0];
-                      if (notif.status === "APPROVED") return <CheckCircle2 size={20} className="text-success" />;
-                      if (notif.status === "REJECTED") return <ShieldAlert size={20} className="text-danger" />;
-                      return <Clock size={20} className="text-warning" />;
-                    })()}
-                  </div>
-
-                  <div className="alert-text-body">
-                    {(() => {
-                      const notif = data.customerNotifications[0];
-                      if (notif.status === "APPROVED") {
-                        return (
-                          <>
-                            <div className="alert-headline">
-                              <strong>{t("تمت الموافقة على طلب رستات المفتاح!", "Key Reset Request Approved!")}</strong>
-                              <span className="alert-chip approved">{t("معتمد", "Approved")}</span>
-                            </div>
-                            <p>
-                              {t(
-                                `تمت الموافقة على طلب رستات المفتاح لمنتج "${notif.product_name}". يمكنك الآن إعادة استخدام المفتاح على جهازك الجديد.`,
-                                `Your key reset request for "${notif.product_name}" was approved. You can now use the key on your new device.`
-                              )}
-                              {notif.admin_notes && (
-                                <span className="alert-admin-note">
-                                  {" "}• {t("ملاحظة الإدارة:", "Admin note:")} {notif.admin_notes}
-                                </span>
-                              )}
-                            </p>
-                          </>
-                        );
-                      }
-                      if (notif.status === "REJECTED") {
-                        return (
-                          <>
-                            <div className="alert-headline">
-                              <strong>{t("تم رفض طلب رستات المفتاح", "Key Reset Request Rejected")}</strong>
-                              <span className="alert-chip rejected">{t("مرفوض", "Rejected")}</span>
-                            </div>
-                            <p>
-                              {t(
-                                `تم رفض طلب رستات المفتاح لمنتج "${notif.product_name}".`,
-                                `Your key reset request for "${notif.product_name}" was rejected.`
-                              )}
-                              {notif.admin_notes && (
-                                <span className="alert-admin-note">
-                                  {" "}• {t("ملاحظة الإدارة:", "Admin note:")} {notif.admin_notes}
-                                </span>
-                              )}
-                            </p>
-                          </>
-                        );
-                      }
-                      return (
-                        <>
-                          <div className="alert-headline">
-                            <strong>{t("طلب رستات المفتاح قيد المراجعة", "Key Reset Request Pending")}</strong>
-                            <span className="alert-chip pending">{t("قيد التدقيق", "In Review")}</span>
-                          </div>
-                          <p>
-                            {t(
-                              `طلبك لإعادة تعيين مفتاح "${notif.product_name}" قيد المراجعة حالياً من قبل الإدارة وسيتم الرد قريباً.`,
-                              `Your key reset request for "${notif.product_name}" is currently under review by our admin team.`
-                            )}
-                          </p>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  <div className="alert-actions-side">
-                    <div className="alert-timer-tag" title={t("يختفي تلقائياً بعد 25 ثانية", "Auto-dismisses in 25 seconds")}>
-                      <Clock size={12} />
-                      <span>{floatingAlertSeconds} {t("ثانية", "s")}</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="alert-dismiss-btn"
-                      onClick={handleDismissFloatingAlert}
-                      title={t("إغلاق الإشعار (X)", "Dismiss (X)")}
-                      aria-label="Close alert"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="alert-progress-track">
-                  <div
-                    className="alert-progress-bar-fill"
-                    style={{ width: `${Math.max(0, Math.min(100, (floatingAlertSeconds / 25) * 100))}%` }}
-                  />
-                </div>
-              </aside>
-            )}
-
         {/* Top Header Matching Image 2 Exactly */}
         <header className="image2-header-row">
           {activeTab === "overview" ? (
