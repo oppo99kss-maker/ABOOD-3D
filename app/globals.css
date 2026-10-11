@@ -9680,6 +9680,37 @@ tr.selected-row {
   margin: 0;
 }
 
+/* Portal overview: keep account information and actions in a compact workspace. */
+.ref-overview-wrapper { max-width: 1120px; gap: 0; }
+.ref-overview-main-grid { grid-template-columns: minmax(0, 1fr) 270px; gap: 18px; }
+.ref-overview-primary-col { gap: 18px; }
+.ref-hero-card {
+  min-height: 238px;
+  padding: clamp(24px, 3vw, 38px);
+  background: linear-gradient(125deg, #142538 0%, #101a2a 62%, #101623 100%);
+  border: 1px solid #2d435d;
+  box-shadow: none;
+}
+.ref-hero-content-cluster { align-items: flex-start; }
+.ref-hero-info h2 { font-size: clamp(25px, 2.6vw, 34px); line-height: 1.25; }
+.ref-hero-info p { max-width: 55ch; font-size: 14px; line-height: 1.8; }
+.overview-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.ref-metric-cards-grid { gap: 12px; }
+.ref-metric-card { min-height: 118px; padding: 20px; background: #101826; border-color: #26384e; box-shadow: none; }
+.ref-metric-value { font-size: 28px; }
+.ref-metric-label { font-size: 12px; }
+.ref-quick-actions-card { background: #101826; border-color: #26384e; box-shadow: none; }
+.ref-quick-actions-title { font-size: 15px; }
+.ref-quick-action-row { min-height: 58px; }
+@media (max-width: 960px) { .ref-overview-main-grid { grid-template-columns: 1fr; } }
+@media (max-width: 620px) {
+  .ref-hero-card { min-height: auto; }
+  .ref-hero-content-cluster { flex-direction: column; }
+  .ref-metric-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ref-metric-card { min-width: 0; padding: 14px 10px; }
+  .ref-metric-value { font-size: 22px; }
+}
+
 
 
 

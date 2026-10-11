@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
 import {
   ArrowLeft,
   ArrowUpLeft,
@@ -199,7 +198,7 @@ export function Portal({ user }: { user: PortalUser }) {
   }, [data.customerNotifications]);
 
   function handleDownloadProduct(p: Product) {
-    let downloadUrl = "/downloads/Spoofx.rar";
+    let downloadUrl = "";
     if (Array.isArray(p.files) && p.files.length > 0 && p.files[0]?.url) {
       downloadUrl = p.files[0].url;
     } else if (typeof p.files === "string") {
@@ -208,9 +207,13 @@ export function Portal({ user }: { user: PortalUser }) {
         if (Array.isArray(parsed) && parsed[0]?.url) downloadUrl = parsed[0].url;
       } catch {}
     }
+    if (!downloadUrl) {
+      notify.error(t("التحميل غير متاح", "Download unavailable"), t("لا يوجد ملف تحميل مضاف لهذا المنتج.", "No download file is available for this product."));
+      return;
+    }
     const a = document.createElement("a");
     a.href = downloadUrl;
-    a.download = "Spoofx.rar";
+    a.download = "";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -392,7 +395,7 @@ export function Portal({ user }: { user: PortalUser }) {
         ) : (
           <>
             {/* 25-Second Floating Alert on Customer Site Entry */}
-            {!floatingAlertDismissed && (
+            {!floatingAlertDismissed && Boolean(data.customerNotifications?.length) && (
               <aside className="portal-floating-alert-25s" role="alert" aria-live="polite">
                 <div className="alert-content-row">
                   <div className="alert-badge-icon">
@@ -463,6 +466,10 @@ export function Portal({ user }: { user: PortalUser }) {
                                 `Your key reset request for "${notif.product_name}" is currently under review by our admin team.`
                               )}
                             </p>
+                            <div className="overview-hero-actions">
+                              <button type="button" className="primary-button" onClick={() => navigate(data.products.length ? "my-products" : "redeem")}>{data.products.length ? t("عرض منتجاتي", "View my products") : t("تفعيل مفتاح", "Activate a key")}</button>
+                              <button type="button" className="secondary-button" onClick={() => navigate("tickets")}>{t("المساعدة", "Help")}</button>
+                            </div>
                           </>
                         );
                       }
@@ -565,29 +572,25 @@ export function Portal({ user }: { user: PortalUser }) {
                             )}
                           </div>
                           <div className="ref-hero-info">
-                            <div className="ref-hero-status-tag">
-                              <span>{t("حسابك متصل", "Account Connected")}</span>
-                              <span className="ref-hero-pulse-dot" />
-                            </div>
                             <h2>
-                              {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
+                              {t("مرحباً،", "Hello,")} {user.name}
                             </h2>
                             <p>
                               {data.products.length > 0
                                 ? t(
-                                    `لديك ${data.products.length} منتجات مفعلة بحسابك.`,
-                                    `You have ${data.products.length} active products in your account.`
+                                    `لديك ${data.products.length} منتجات في مكتبتك.`,
+                                    `You have ${data.products.length} products in your library.`
                                   )
                                 : t(
-                                    "مكتبتك الرقمية جاهزة. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
-                                    "Your digital library is ready. Enter your key to activate."
+                                    "لا توجد منتجات في مكتبتك بعد. يمكنك إضافة منتج باستخدام مفتاح ترخيص.",
+                                    "Your library is empty. Activate a license key to add a product."
                                   )}
                             </p>
                           </div>
                         </div>
                       </section>
 
-                      {/* 3 Metric Stat Cards */}
+                      {/* Counts from the customer's actual products */}
                       <div className="ref-metric-cards-grid">
                         {/* Card 1: Active Products */}
                         <div className="ref-metric-card">
@@ -595,27 +598,27 @@ export function Portal({ user }: { user: PortalUser }) {
                             <Box size={18} />
                           </div>
                           <strong className="ref-metric-value">{data.products.length}</strong>
-                          <span className="ref-metric-label">{t("منتجات مفعلة", "Active Products")}</span>
+                          <span className="ref-metric-label">{t("المنتجات في مكتبتك", "Products in your library")}</span>
                         </div>
 
-                        {/* Card 2: Account Status */}
+                        {/* Card 2: Active licenses */}
                         <div className="ref-metric-card centered">
                           <div className="ref-metric-icon-wrap">
                             <CheckCircle2 size={18} />
                           </div>
-                          <strong className="ref-metric-value">{t("فعال", "Active")}</strong>
-                          <span className="ref-metric-label">{t("حالة الحساب", "Account Status")}</span>
+                          <strong className="ref-metric-value">{activeProductsCount}</strong>
+                          <span className="ref-metric-label">{t("تراخيص سارية", "Current licenses")}</span>
                         </div>
 
-                        {/* Card 3: Member Since */}
+                        {/* Card 3: Expired licenses */}
                         <div className="ref-metric-card centered">
                           <div className="ref-metric-icon-wrap">
                             <Clock size={18} />
                           </div>
                           <strong className="ref-metric-value">
-                            {new Date().toLocaleDateString(ar ? "ar-SA" : "en-US", { month: "long", year: "numeric" })}
+                            {data.products.length - activeProductsCount}
                           </strong>
-                          <span className="ref-metric-label">{t("عضو منذ", "Member Since")}</span>
+                          <span className="ref-metric-label">{t("تراخيص منتهية", "Expired licenses")}</span>
                         </div>
                       </div>
                     </div>
@@ -690,30 +693,6 @@ export function Portal({ user }: { user: PortalUser }) {
                     </div>
                   </div>
 
-                  {/* Bottom Luxury Banner Card */}
-                  <section className="ref-bottom-brand-banner">
-                    <div className="ref-brand-banner-lead">
-                      <div className="ref-brand-banner-icon">
-                        <Image src="/logo.png" width={32} height={32} alt="SpooFX" style={{ objectFit: "contain", borderRadius: 8 }} />
-                      </div>
-                      <div className="ref-brand-banner-meta">
-                        <strong className="ref-brand-banner-name">SpooFX</strong>
-                        <span className="ref-brand-banner-desc">
-                          {t("منتجاتك وتراخيصك في مكان واحد", "Your products and licenses in one place")}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="ref-brand-banner-badge">
-                      <ShieldCheck size={16} />
-                      <span>{t("وثيقة العمل الحر / موثق رسمياً", "Verified Digital Identity")}</span>
-                    </div>
-                  </section>
-
-                  {/* Copyright Footer */}
-                  <footer className="ref-overview-copyright">
-                    <p>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</p>
-                  </footer>
                 </div>
               )}
 
@@ -1186,7 +1165,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
         <footer className="portal-footer">
           <div className="footer-left">
-            <span>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</span>
+            <span>SpooFX</span>
           </div>
         </footer>
       </>
@@ -1661,33 +1640,13 @@ function ProductGuideModal({
             </div>
           )}
 
-          {/* Video Tutorial Section */}
-          <div className="guide-video-callout">
-            <div className="guide-video-info">
-              <Sparkles size={20} className="text-cyan" />
-              <div>
-                <strong>{t("شرح الفيديو التوضيحي", "Video Walkthrough & Tutorial")}</strong>
-                <p>{t("شاهد الشرح المرئي خطوة بخطوة للتعرف على طريقة التشغيل وحل المشاكل الشائعة.", "Watch our step-by-step video tutorial covering setup and troubleshooting.")}</p>
-              </div>
-            </div>
-            <a
-              href="https://spoofx.rmz.gg/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="secondary-button video-link-btn"
-            >
-              <ExternalLink size={15} />
-              <span>{t("فتح المتجر والشروحات", "Open Store & Tutorials")}</span>
-            </a>
-          </div>
-
           {/* Reset Key Callout */}
           <div className="guide-reset-callout">
             <div className="guide-reset-info">
               <RotateCcw size={20} className="text-warning" />
               <div>
                 <strong>{t("هل قمت بتغيير جهازك أو فورمات؟", "Changed your PC or formatted Windows?")}</strong>
-                <p>{t("يمكنك طلب رستات المفتاح (HWID Reset) لإعادة ربط ترخيصك بجهازك الجديد فوراً.", "Request a HWID key reset to link your license to your new hardware instantly.")}</p>
+                <p>{t("يمكنك إرسال طلب لإعادة ربط الترخيص بجهازك الجديد. تخضع الطلبات للمراجعة.", "You can request to link the license to your new device. Requests are reviewed.")}</p>
               </div>
             </div>
             <button
@@ -1847,4 +1806,3 @@ function KeyResetModal({
     </div>
   );
 }
-
