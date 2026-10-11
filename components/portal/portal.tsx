@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUpLeft,
   Box,
   CheckCircle2,
@@ -15,6 +16,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Globe,
   HardDrive,
   HelpCircle,
   History,
@@ -31,6 +33,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingBag,
+  ShoppingCart,
   Sliders,
   Sparkles,
   Sun,
@@ -43,6 +46,14 @@ import { PortalNavigation, type PortalTab } from "./portal-navigation";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
 import { notify } from "@/lib/notify";
+
+function DiscordIcon({ size = 17 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
+  );
+}
 import type {
   Product,
   Guide,
@@ -355,43 +366,32 @@ export function Portal({ user }: { user: PortalUser }) {
     );
   }, [data.guides, guideSearch]);
 
-  return (
-    <div className="portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
-      <PortalNavigation
-        activeTab={activeTab}
-        onNavigate={navigate}
-        lang={lang}
-        isDark={isDark}
-        isAdmin={data.isAdmin}
-        productCount={data.products.length}
-        mobileOpen={mobileOpen}
-        onMobileChange={setMobileOpen}
-        onToggleTheme={toggleTheme}
-        onToggleLanguage={() => setLang(ar ? "en" : "ar")}
-        onLogout={() => void signOut({ callbackUrl: "/" })}
-        user={{ name: user.name, email: user.email, image: user.image }}
-      />
+  if (activeTab === "admin" && data.isAdmin) {
+    return (
+      <div className="portal-admin-wrapper" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+        <AdminControlSpace
+          products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}
+          inventory={data.inventory}
+          dashboardStats={data.dashboardStats}
+          orders={data.orders}
+          allGuides={data.allGuides}
+          settings={data.settings}
+          resetRequests={data.resetRequests || []}
+          currentUser={data.currentUser || user.email}
+          lang={lang}
+          isDark={isDark}
+          onRefresh={refresh}
+          onExitAdmin={() => navigate("overview")}
+          onToggleTheme={toggleTheme}
+          onToggleLanguage={() => setLang(ar ? "en" : "ar")}
+        />
+      </div>
+    );
+  }
 
-      <div className="portal-body">
-        {activeTab === "admin" && data.isAdmin ? (
-          <AdminControlSpace
-            products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}
-            inventory={data.inventory}
-            dashboardStats={data.dashboardStats}
-            orders={data.orders}
-            allGuides={data.allGuides}
-            settings={data.settings}
-            resetRequests={data.resetRequests || []}
-            currentUser={data.currentUser || user.email}
-            lang={lang}
-            isDark={isDark}
-            onRefresh={refresh}
-            onExitAdmin={() => navigate("overview")}
-            onToggleTheme={toggleTheme}
-            onToggleLanguage={() => setLang(ar ? "en" : "ar")}
-          />
-        ) : (
-          <>
+  return (
+    <div className="image2-portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+      <div className="image2-container">
             {/* Real Notification Alert (Only rendered when there is an actual event) */}
             {!floatingAlertDismissed && data.customerNotifications && data.customerNotifications.length > 0 && (
               <aside className="portal-floating-alert-25s" role="alert" aria-live="polite">
@@ -493,16 +493,70 @@ export function Portal({ user }: { user: PortalUser }) {
               </aside>
             )}
 
-            <main className="portal-main">
-          {/* Header Bar */}
-          <div className="page-heading">
-            <div className="page-heading-info">
-              <h1>{titles[activeTab].title}</h1>
-              {activeTab !== "overview" && titles[activeTab].desc && (
-                <p>{titles[activeTab].desc}</p>
-              )}
+        {/* Top Header Matching Image 2 Exactly */}
+        <header className="image2-header-row">
+          {activeTab === "overview" ? (
+            <h1 className="image2-header-title">{t("الرئيسية", "Overview")}</h1>
+          ) : (
+            <div className="image2-header-title-wrap">
+              <button
+                type="button"
+                className="image2-back-home-btn"
+                onClick={() => navigate("overview")}
+                title={t("العودة للرئيسية", "Back to Home")}
+              >
+                {ar ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
+                <span>{t("الرئيسية", "Home")}</span>
+              </button>
+              <span className="image2-breadcrumb-sep">/</span>
+              <h1 className="image2-header-title">{titles[activeTab].title}</h1>
             </div>
+          )}
+
+          <div className="image2-header-controls">
+            {data.isAdmin && (
+              <button
+                type="button"
+                className="image2-ctrl-btn admin-pill"
+                onClick={() => navigate("admin")}
+                title={t("لوحة الإدارة", "Admin Dashboard")}
+              >
+                <ShieldCheck size={15} />
+                <span>{t("الإدارة", "Admin")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="image2-ctrl-btn icon-only"
+              onClick={toggleTheme}
+              title={isDark ? t("الوضع الفاتح", "Light Mode") : t("الوضع الداكن", "Dark Mode")}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
+              type="button"
+              className="image2-ctrl-btn lang-pill"
+              onClick={() => setLang(ar ? "en" : "ar")}
+              title={t("تغيير اللغة", "Switch Language")}
+            >
+              <span>{ar ? "EN" : "عربي"}</span>
+              <Globe size={14} />
+            </button>
+            <button
+              type="button"
+              className="image2-ctrl-btn icon-only logout-btn"
+              onClick={() => void signOut({ callbackUrl: "/" })}
+              title={t("تسجيل الخروج", "Sign Out")}
+              aria-label="Sign Out"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
+        </header>
+        <hr className="image2-divider" />
+
+        <main className="portal-main">
 
           {loading && (
             <div className="panel empty" role="status">
@@ -524,173 +578,167 @@ export function Portal({ user }: { user: PortalUser }) {
           {!loading && !loadError && (
             <>
               {/* ==================================================== */}
-              {/* TAB 1: OVERVIEW */}
+              {/* TAB 1: OVERVIEW MATCHING IMAGE 2 EXACTLY */}
               {/* ==================================================== */}
               {activeTab === "overview" && (
-                <div className="ref-overview-wrapper">
-                  <div className="ref-overview-main-grid">
-                    {/* Primary Column (Hero + Metrics) */}
-                    <div className="ref-overview-primary-col">
-                      {/* Hero Welcome Card */}
-                      <section className="ref-hero-card">
-                        <div className="ref-hero-content-cluster">
-                          <div className="ref-hero-avatar-wrap">
-                            {user.image ? (
-                              <img
-                                src={user.image}
-                                alt={user.name}
-                                className="ref-hero-avatar-img"
-                                referrerPolicy="no-referrer"
-                              />
-                            ) : (
-                              <div className="ref-hero-avatar-fallback">
-                                {user.name ? user.name[0].toUpperCase() : "U"}
-                              </div>
-                            )}
+                <div className="image2-main-grid">
+                  {/* Left Column: Quick Actions Card */}
+                  <div className="image2-left-col">
+                    <section className="image2-quick-actions-card">
+                      <h3 className="image2-quick-actions-title">{t("إجراءات سريعة", "Quick Actions")}</h3>
+                      <div className="image2-actions-list">
+                        {/* 1. My Products */}
+                        <button
+                          type="button"
+                          className="image2-action-row"
+                          onClick={() => navigate("my-products")}
+                        >
+                          <div className="image2-action-lead">
+                            <span className="image2-action-icon-box">
+                              <Package size={17} />
+                            </span>
+                            <span className="image2-action-text">{t("منتجاتي", "My Products")}</span>
                           </div>
-                          <div className="ref-hero-info">
-                            <div className="ref-hero-status-tag">
-                              <span dir="ltr">{user.email}</span>
-                              <span className="ref-hero-pulse-dot" />
-                            </div>
-                            <h2>
-                              {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
-                            </h2>
-                            <p>
-                              {activeProducts.length > 0
-                                ? t(
-                                    `لديك ${activeProducts.length} منتج نشط في حسابك. يمكنك تحميل الحزمة وإدارة التراخيص مباشرة.`,
-                                    `You have ${activeProducts.length} active products in your account.`
-                                  )
-                                : t(
-                                    "مكتبتك الرقمية جاهزة. أدخل مفتاح الترخيص لتفعيل منتجك فوراً.",
-                                    "Your digital library is ready. Enter your key to activate."
-                                  )}
-                            </p>
-                          </div>
-                        </div>
-                      </section>
+                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                        </button>
 
-                      {/* 3 Metric Stat Cards based strictly on real user data */}
-                      <div className="ref-metric-cards-grid">
-                        {/* Card 1: Active Products */}
-                        <div className="ref-metric-card">
-                          <div className="ref-metric-icon-wrap">
-                            <Box size={18} />
+                        {/* 2. Join Discord */}
+                        <a
+                          href={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="image2-action-row"
+                        >
+                          <div className="image2-action-lead">
+                            <span className="image2-action-icon-box">
+                              <DiscordIcon size={17} />
+                            </span>
+                            <span className="image2-action-text">{t("انضم إلى ديسكورد", "Join Discord")}</span>
                           </div>
-                          <strong className="ref-metric-value">{activeProducts.length}</strong>
-                          <span className="ref-metric-label">{t("منتجات نشطة", "Active Products")}</span>
-                        </div>
+                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                        </a>
 
-                        {/* Card 2: Expired Licenses */}
-                        <div className="ref-metric-card centered">
-                          <div className="ref-metric-icon-wrap">
-                            <Clock size={18} />
+                        {/* 3. Store */}
+                        <a
+                          href={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="image2-action-row"
+                        >
+                          <div className="image2-action-lead">
+                            <span className="image2-action-icon-box">
+                              <ShoppingCart size={17} />
+                            </span>
+                            <span className="image2-action-text">{t("المتجر", "Store")}</span>
                           </div>
-                          <strong className="ref-metric-value">{expiredProducts.length}</strong>
-                          <span className="ref-metric-label">{t("تراخيص منتهية", "Expired Licenses")}</span>
-                        </div>
+                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                        </a>
 
-                        {/* Card 3: Total Licenses */}
-                        <div className="ref-metric-card centered">
-                          <div className="ref-metric-icon-wrap">
-                            <CheckCircle2 size={18} />
+                        {/* 4. Help Center */}
+                        <button
+                          type="button"
+                          className="image2-action-row"
+                          onClick={() => navigate("tickets")}
+                        >
+                          <div className="image2-action-lead">
+                            <span className="image2-action-icon-box">
+                              <HelpCircle size={17} />
+                            </span>
+                            <span className="image2-action-text">{t("مركز المساعدة", "Help Center")}</span>
                           </div>
-                          <strong className="ref-metric-value">{data.products.length}</strong>
-                          <span className="ref-metric-label">{t("إجمالي التراخيص", "Total Licenses")}</span>
-                        </div>
+                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                        </button>
                       </div>
-                    </div>
-
-                    {/* Secondary Column: Quick Actions Card */}
-                    <div className="ref-overview-secondary-col">
-                      <section className="ref-quick-actions-card">
-                        <h3 className="ref-quick-actions-title">{t("إجراءات سريعة", "Quick Actions")}</h3>
-                        <div className="ref-quick-actions-list">
-                          {/* 1. My Products */}
-                          <button
-                            type="button"
-                            className="ref-quick-action-row"
-                            onClick={() => navigate("my-products")}
-                          >
-                            <div className="ref-action-lead">
-                              <span className="ref-action-icon-pill">
-                                <Box size={18} />
-                              </span>
-                              <span className="ref-action-text">{t("منتجاتي", "My Products")}</span>
-                            </div>
-                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                          </button>
-
-                          {/* 2. Activate Key */}
-                          <button
-                            type="button"
-                            className="ref-quick-action-row"
-                            onClick={() => navigate("redeem")}
-                          >
-                            <div className="ref-action-lead">
-                              <span className="ref-action-icon-pill">
-                                <KeyRound size={18} />
-                              </span>
-                              <span className="ref-action-text">{t("تفعيل مفتاح", "Activate Key")}</span>
-                            </div>
-                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                          </button>
-
-                          {/* 3. Help Center */}
-                          <button
-                            type="button"
-                            className="ref-quick-action-row"
-                            onClick={() => navigate("tickets")}
-                          >
-                            <div className="ref-action-lead">
-                              <span className="ref-action-icon-pill">
-                                <HelpCircle size={18} />
-                              </span>
-                              <span className="ref-action-text">{t("مركز المساعدة", "Help Center")}</span>
-                            </div>
-                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                          </button>
-
-                          {/* 4. Store */}
-                          <a
-                            href="https://spoofx.rmz.gg/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ref-quick-action-row"
-                          >
-                            <div className="ref-action-lead">
-                              <span className="ref-action-icon-pill">
-                                <ShoppingBag size={18} />
-                              </span>
-                              <span className="ref-action-text">{t("المتجر", "Store")}</span>
-                            </div>
-                            <ArrowLeft size={16} className={`ref-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                          </a>
-                        </div>
-                      </section>
-                    </div>
+                    </section>
                   </div>
 
-                  {/* Bottom Brand Banner Card */}
-                  <section className="ref-bottom-brand-banner">
-                    <div className="ref-brand-banner-lead">
-                      <div className="ref-brand-banner-icon">
-                        <Image src="/logo.png" width={32} height={32} alt="SpooFX" style={{ objectFit: "contain", borderRadius: 8 }} />
+                  {/* Right Column: Hero Welcome Card + 3 Stat Cards */}
+                  <div className="image2-right-col">
+                    {/* Hero Welcome Card */}
+                    <section className="image2-hero-card">
+                      <div className="image2-hero-content">
+                        <div
+                          className="image2-avatar-wrap"
+                          onClick={() => navigate("profile")}
+                          role="button"
+                          tabIndex={0}
+                          title={t("الملف الشخصي", "Profile")}
+                          style={{ cursor: "pointer" }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              navigate("profile");
+                            }
+                          }}
+                        >
+                          {user.image ? (
+                            <img
+                              src={user.image}
+                              alt={user.name}
+                              className="image2-avatar-img"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="image2-avatar-fallback">
+                              {user.name ? user.name[0].toUpperCase() : "U"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="image2-hero-text">
+                          <div className="image2-status-tag">
+                            <span className="image2-status-dot" />
+                            <span>{t("حسابك متصل", "Account Connected")}</span>
+                          </div>
+                          <h2 className="image2-hero-title">
+                            {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
+                          </h2>
+                          <p className="image2-hero-sub">
+                            {activeProducts.length > 0
+                              ? t(
+                                  `لديك ${activeProducts.length} منتجات مفعلة بحسابك.`,
+                                  `You have ${activeProducts.length} active products in your account.`
+                                )
+                              : t(
+                                  "لا توجد منتجات مفعلة بحسابك حالياً.",
+                                  "No active products in your account currently."
+                                )}
+                          </p>
+                        </div>
                       </div>
-                      <div className="ref-brand-banner-meta">
-                        <strong className="ref-brand-banner-name">SpooFX</strong>
-                        <span className="ref-brand-banner-desc">
-                          {t("منتجاتك وتراخيصك في مكان واحد", "Your products and licenses in one place")}
-                        </span>
+                    </section>
+
+                    {/* 3 Stat Cards directly underneath */}
+                    <div className="image2-stats-row">
+                      {/* Card 1: Active Products */}
+                      <div className="image2-stat-card">
+                        <div className="image2-stat-icon-badge">
+                          <Package size={18} />
+                        </div>
+                        <strong className="image2-stat-value">{activeProducts.length}</strong>
+                        <span className="image2-stat-label">{t("منتجات مفعلة", "Active Products")}</span>
+                      </div>
+
+                      {/* Card 2: Account Status */}
+                      <div className="image2-stat-card">
+                        <div className="image2-stat-icon-badge">
+                          <CheckCircle2 size={18} />
+                        </div>
+                        <strong className="image2-stat-value">{t("فعال", "Active")}</strong>
+                        <span className="image2-stat-label">{t("حالة الحساب", "Account Status")}</span>
+                      </div>
+
+                      {/* Card 3: Member Since */}
+                      <div className="image2-stat-card">
+                        <div className="image2-stat-icon-badge">
+                          <Clock size={18} />
+                        </div>
+                        <strong className="image2-stat-value">
+                          {new Date().toLocaleDateString("ar", { month: "long", year: "numeric" })}
+                        </strong>
+                        <span className="image2-stat-label">{t("عضو منذ", "Member Since")}</span>
                       </div>
                     </div>
-                  </section>
-
-                  {/* Copyright Footer */}
-                  <footer className="ref-overview-copyright">
-                    <p>{t("بوابة SpooFX — إدارة وتفعيل التراخيص والمنتجات الرقمية", "SpooFX Portal — Digital Licenses & Products Management")}</p>
-                  </footer>
+                  </div>
                 </div>
               )}
 
@@ -1160,14 +1208,6 @@ export function Portal({ user }: { user: PortalUser }) {
             </>
           )}
         </main>
-
-        <footer className="portal-footer">
-          <div className="footer-left">
-            <span>{t("سبوفكس وجهتك الأولى مع منتجات مضمونة والأفضل", "SpooFX — Your premier destination with guaranteed & best products")}</span>
-          </div>
-        </footer>
-      </>
-    )}
       </div>
 
       {/* ==================================================== */}
