@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import dynamic from "next/dynamic";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import {
@@ -9,7 +10,6 @@ import {
   ArrowUpLeft,
   Box,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ClipboardPaste,
   Clock,
@@ -46,6 +46,9 @@ import { PortalNavigation, type PortalTab } from "./portal-navigation";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
 import { notify } from "@/lib/notify";
+
+/** Loaded on demand: the help centre brings its own media-heavy guide library. */
+const HelpCenter = dynamic(() => import("./help-center").then((module) => module.HelpCenter), { ssr: false });
 
 function DiscordIcon({ size = 17 }: { size?: number }) {
   return (
@@ -109,7 +112,6 @@ export function Portal({ user }: { user: PortalUser }) {
   const [guideModalProduct, setGuideModalProduct] = useState<Product | null>(null);
   const [resetModalProduct, setResetModalProduct] = useState<Product | null>(null);
   const [submittingReset, setSubmittingReset] = useState(false);
-  const [guideSearch, setGuideSearch] = useState("");
 
   const [data, setData] = useState<Data>({
     products: [],
@@ -324,12 +326,6 @@ export function Portal({ user }: { user: PortalUser }) {
     return data.products.filter((p) => !p.expires_at || new Date(p.expires_at) > new Date()).length;
   }, [data.products]);
 
-  const filteredGuides = useMemo(() => {
-    if (!guideSearch) return data.guides;
-    return data.guides.filter((g) =>
-      (g.title + (g.title_en || "") + g.content + (g.content_en || "") + (g.category || "")).toLowerCase().includes(guideSearch.toLowerCase())
-    );
-  }, [data.guides, guideSearch]);
 
   if (activeTab === "admin" && data.isAdmin) {
     return (
@@ -847,48 +843,11 @@ export function Portal({ user }: { user: PortalUser }) {
               )}
 
               {/* ==================================================== */}
-              {/* TAB 4: HELP & GUIDES */}
+              {/* TAB 4: HELP CENTRE (videos, screenshots & written guides) */}
               {/* ==================================================== */}
               {activeTab === "tickets" && (
                 <section className="help-section">
-                  <div className="panel support-hero">
-                    <LifeBuoy size={42} />
-                    <h2>{t("مركز المساعدة والأدلة الفنية", "Help & Knowledge Base")}</h2>
-                    <p>{t("شروحات مفصلة، خطوات التثبيت، والحلول السريعة لأكثر المشاكل شيوعاً.", "Detailed guides, installation steps, and quick solutions to common issues.")}</p>
-                    <label className="search help-search">
-                      <Search size={18} />
-                      <input
-                        value={guideSearch}
-                        onChange={(e) => setGuideSearch(e.target.value)}
-                        placeholder={t("ابحث في شروحات المنصة والمشاكل الشائعة…", "Search articles and setup guides…")}
-                      />
-                    </label>
-                  </div>
-
-                  {filteredGuides.length > 0 ? (
-                    <div className="faq-list">
-                      {filteredGuides.map((guide) => (
-                        <details className="panel guide-faq-item" key={guide.id}>
-                          <summary>
-                            <span className="faq-title-wrap">
-                              <span className="guide-cat-tag">{guide.category}</span>
-                              <strong>{ar ? guide.title : (guide.title_en || guide.title)}</strong>
-                            </span>
-                            <ChevronDown size={18} className="faq-chevron" />
-                          </summary>
-                          <div className="guide-content-body">
-                            <p>{ar ? guide.content : (guide.content_en || guide.content)}</p>
-                          </div>
-                        </details>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="panel empty compact-empty">
-                      <HelpCircle size={28} />
-                      <h3>{t("لا توجد مقالات مطابقة لبحثك", "No guides match your search")}</h3>
-                      <p>{t("جرّب البحث بكلمات أخرى أو تواصل مباشرة مع الدعم الفني.", "Try different search terms or reach out to support.")}</p>
-                    </div>
-                  )}
+                  <HelpCenter lang={lang} onNavigateTab={navigate} />
 
                   {/* Support Footer Note */}
                   <div className="panel support-contact-card">
