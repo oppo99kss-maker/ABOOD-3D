@@ -401,27 +401,57 @@ export function Portal({ user }: { user: PortalUser }) {
   return (
     <div className="image2-portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
       <div className="image2-container">
-        {/* Top Header Matching Image 2 Exactly */}
-        <header className="image2-header-row">
-          {activeTab === "overview" ? (
-            <h1 className="image2-header-title">{t("الرئيسية", "Overview")}</h1>
-          ) : (
-            <div className="image2-header-title-wrap">
-              <button
-                type="button"
-                className="image2-back-home-btn"
-                onClick={() => navigate("overview")}
-                title={t("العودة للرئيسية", "Back to Home")}
-              >
-                {ar ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
-                <span>{t("الرئيسية", "Home")}</span>
-              </button>
-              <span className="image2-breadcrumb-sep">/</span>
-              <h1 className="image2-header-title">{titles[activeTab].title}</h1>
-            </div>
-          )}
+        {/* Top Navigation Bar: brand + links + account controls */}
+        <nav className="image2-topnav" aria-label={t("التنقل الرئيسي", "Main navigation")}>
+          <button
+            type="button"
+            className="image2-brand"
+            onClick={() => navigate("overview")}
+            title={t("الصفحة الرئيسية", "Home")}
+          >
+            <Image src="/logo.png" alt="SpooFx" width={34} height={34} className="image2-brand-logo" priority />
+            <span className="image2-brand-name">SpooFx</span>
+          </button>
 
-          <div className="image2-header-controls">
+          <div className="image2-nav-links">
+            <button
+              type="button"
+              className={`image2-nav-link ${activeTab === "overview" ? "active" : ""}`}
+              onClick={() => navigate("overview")}
+            >
+              {t("الرئيسية", "Home")}
+            </button>
+            <button
+              type="button"
+              className={`image2-nav-link ${activeTab === "redeem" ? "active" : ""}`}
+              onClick={() => navigate("redeem")}
+            >
+              {t("تفعيل مفتاح", "Activate Key")}
+            </button>
+            <button
+              type="button"
+              className={`image2-nav-link ${activeTab === "my-products" ? "active" : ""}`}
+              onClick={() => navigate("my-products")}
+            >
+              {t("منتجاتي", "My Products")}
+            </button>
+            <button
+              type="button"
+              className={`image2-nav-link ${activeTab === "tickets" ? "active" : ""}`}
+              onClick={() => navigate("tickets")}
+            >
+              {t("مركز المساعدة", "Help Center")}
+            </button>
+            <button
+              type="button"
+              className={`image2-nav-link ${activeTab === "profile" ? "active" : ""}`}
+              onClick={() => navigate("profile")}
+            >
+              {t("حسابي", "My Account")}
+            </button>
+          </div>
+
+          <div className="image2-nav-actions">
             {data.isAdmin && (
               <button
                 type="button"
@@ -453,15 +483,22 @@ export function Portal({ user }: { user: PortalUser }) {
             </button>
             <button
               type="button"
-              className="image2-ctrl-btn icon-only logout-btn"
+              className="image2-logout-btn"
               onClick={() => void signOut({ callbackUrl: "/" })}
               title={t("تسجيل الخروج", "Sign Out")}
-              aria-label="Sign Out"
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
+              <span>{t("تسجيل خروج", "Sign Out")}</span>
             </button>
           </div>
-        </header>
+        </nav>
+
+        {activeTab !== "overview" && (
+          <div className="image2-page-head">
+            <h1 className="image2-header-title">{titles[activeTab].title}</h1>
+            <p className="image2-page-desc">{titles[activeTab].desc}</p>
+          </div>
+        )}
         <hr className="image2-divider" />
 
         <main className="portal-main">
@@ -495,38 +532,22 @@ export function Portal({ user }: { user: PortalUser }) {
                     <section className="image2-quick-actions-card">
                       <h3 className="image2-quick-actions-title">{t("إجراءات سريعة", "Quick Actions")}</h3>
                       <div className="image2-actions-list">
-                        {/* 1. My Products */}
+                        {/* 1. Activate Key */}
                         <button
                           type="button"
                           className="image2-action-row"
-                          onClick={() => navigate("my-products")}
+                          onClick={() => navigate("redeem")}
                         >
                           <div className="image2-action-lead">
                             <span className="image2-action-icon-box">
-                              <Package size={17} />
+                              <KeyRound size={16} />
                             </span>
-                            <span className="image2-action-text">{t("منتجاتي", "My Products")}</span>
+                            <span className="image2-action-text">{t("تفعيل مفتاح", "Activate Key")}</span>
                           </div>
-                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
                         </button>
 
-                        {/* 2. Join Discord */}
-                        <a
-                          href={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="image2-action-row"
-                        >
-                          <div className="image2-action-lead">
-                            <span className="image2-action-icon-box">
-                              <DiscordIcon size={17} />
-                            </span>
-                            <span className="image2-action-text">{t("انضم إلى ديسكورد", "Join Discord")}</span>
-                          </div>
-                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                        </a>
-
-                        {/* 3. Store */}
+                        {/* 2. Store */}
                         <a
                           href={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"}
                           target="_blank"
@@ -535,27 +556,28 @@ export function Portal({ user }: { user: PortalUser }) {
                         >
                           <div className="image2-action-lead">
                             <span className="image2-action-icon-box">
-                              <ShoppingCart size={17} />
+                              <ShoppingCart size={16} />
                             </span>
                             <span className="image2-action-text">{t("المتجر", "Store")}</span>
                           </div>
-                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
                         </a>
 
-                        {/* 4. Help Center */}
-                        <button
-                          type="button"
+                        {/* 3. Join Discord */}
+                        <a
+                          href={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="image2-action-row"
-                          onClick={() => navigate("tickets")}
                         >
                           <div className="image2-action-lead">
                             <span className="image2-action-icon-box">
-                              <HelpCircle size={17} />
+                              <DiscordIcon size={16} />
                             </span>
-                            <span className="image2-action-text">{t("مركز المساعدة", "Help Center")}</span>
+                            <span className="image2-action-text">{t("انضم إلى ديسكورد", "Join Discord")}</span>
                           </div>
-                          <ArrowLeft size={16} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                        </button>
+                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
+                        </a>
                       </div>
                     </section>
                   </div>

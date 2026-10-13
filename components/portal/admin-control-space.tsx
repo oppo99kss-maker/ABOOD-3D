@@ -244,17 +244,120 @@ export function AdminControlSpace({
 
   function formatRiyadhHour(dateStr?: string | Date) {
     const d = dateStr ? new Date(dateStr) : new Date();
-    if (isNaN(d.getTime())) return "الساعة 3:58 ظهراً";
+    if (isNaN(d.getTime())) return t("—", "—");
     try {
-      const timePart = new Intl.DateTimeFormat("ar-SA", {
+      return new Intl.DateTimeFormat(ar ? "ar-SA" : "en-US", {
         timeZone: "Asia/Riyadh",
         hour: "numeric",
         minute: "numeric",
         hour12: true,
       }).format(d);
-      return `الساعة ${timePart}`;
     } catch {
       return d.toLocaleTimeString("ar-SA");
+    }
+  }
+
+  /** Human-readable audit activity: icon + Arabic label instead of raw action codes. */
+  function describeActivity(log: any): {
+    Icon: typeof Clock;
+    tone: string;
+    title: string;
+    subtitle: string;
+  } {
+    const d = log?.details && typeof log.details === "object" ? (log.details as Record<string, any>) : {};
+    const product = String(d.product || d.product_name || d.productName || "");
+    const reason = String(d.reason || d.notes || "");
+    const subject = String(d.subject || "");
+    const count = d.importedCount ?? d.generated ?? d.count ?? "";
+    const action = String(log?.action || "");
+
+    switch (action) {
+      case "KEY_RESET_REQUESTED":
+        return {
+          Icon: RotateCcw,
+          tone: "yellow",
+          title: t("تم عمل فورمات", "Reset Requested"),
+          subtitle: reason || "",
+        };
+      case "KEY_RESET_APPROVED":
+        return {
+          Icon: CheckCircle2,
+          tone: "green",
+          title: t("تمت الموافقة على الرستة", "Reset Approved"),
+          subtitle: product,
+        };
+      case "KEY_RESET_REJECTED":
+        return {
+          Icon: X,
+          tone: "red",
+          title: t("تم رفض الرستة", "Reset Rejected"),
+          subtitle: product,
+        };
+      case "KEY_REDEEMED_SUCCESS":
+        return {
+          Icon: KeyRound,
+          tone: "green",
+          title: t("تفعيل مفتاح", "Key Activated"),
+          subtitle: product,
+        };
+      case "KEYS_IMPORTED":
+        return {
+          Icon: Upload,
+          tone: "cyan",
+          title: t("استيراد مفاتيح", "Keys Imported"),
+          subtitle: count !== "" ? t(`تم استيراد ${count} مفتاح`, `${count} keys imported`) : "",
+        };
+      case "KEYS_GENERATED":
+        return {
+          Icon: CopyPlus,
+          tone: "cyan",
+          title: t("توليد مفاتيح", "Keys Generated"),
+          subtitle: count !== "" ? t(`تم توليد ${count} مفتاح`, `${count} keys generated`) : "",
+        };
+      case "KEYS_CLEARED":
+        return { Icon: Trash2, tone: "red", title: t("مسح المفاتيح", "Keys Cleared"), subtitle: product };
+      case "KEY_DELETED":
+        return { Icon: Trash2, tone: "red", title: t("حذف مفتاح", "Key Deleted"), subtitle: product };
+      case "KEY_ALLOCATED_TO_ORDER":
+        return { Icon: Package, tone: "blue", title: t("إسناد مفتاح لطلب", "Key Allocated to Order"), subtitle: product };
+      case "PRODUCT_CREATED":
+        return { Icon: Package, tone: "blue", title: t("إنشاء منتج", "Product Created"), subtitle: product };
+      case "PRODUCT_UPDATED":
+        return { Icon: Wrench, tone: "blue", title: t("تعديل منتج", "Product Updated"), subtitle: product };
+      case "PRODUCT_DUPLICATED":
+        return { Icon: CopyPlus, tone: "purple", title: t("نسخ منتج", "Product Duplicated"), subtitle: product };
+      case "PRODUCT_SHOWN":
+        return { Icon: Eye, tone: "green", title: t("إظهار منتج", "Product Shown"), subtitle: product };
+      case "PRODUCT_HIDDEN":
+        return { Icon: EyeOff, tone: "yellow", title: t("إخفاء منتج", "Product Hidden"), subtitle: product };
+      case "PRODUCT_DELETED":
+      case "PRODUCT_ARCHIVED_AS_DELETED":
+        return { Icon: Trash2, tone: "red", title: t("حذف منتج", "Product Deleted"), subtitle: product };
+      case "ORDER_CREATED":
+        return { Icon: Package, tone: "blue", title: t("إنشاء طلب", "Order Created"), subtitle: product };
+      case "CUSTOMER_MESSAGE_SENT":
+        return { Icon: Mail, tone: "purple", title: t("رسالة من عميل", "Customer Message"), subtitle: subject };
+      case "LICENSE_EXTENDED":
+        return { Icon: Clock, tone: "cyan", title: t("تمديد رخصة", "License Extended"), subtitle: product };
+      case "LICENSE_REVOKED":
+        return { Icon: Lock, tone: "red", title: t("إلغاء رخصة", "License Revoked"), subtitle: product };
+      case "DIRECT_LICENSE_GRANTED":
+        return { Icon: Gift, tone: "green", title: t("منح رخصة مباشرة", "Direct License Granted"), subtitle: product };
+      case "COMPENSATION_ISSUED":
+        return { Icon: Gift, tone: "purple", title: t("إصدار تعويض", "Compensation Issued"), subtitle: product };
+      case "SYSTEM_SETTINGS_UPDATED":
+        return { Icon: Settings, tone: "purple", title: t("تحديث إعدادات النظام", "System Settings Updated"), subtitle: "" };
+      case "REDEEM_FAILED_ALREADY_USED":
+        return { Icon: AlertTriangle, tone: "red", title: t("فشل تفعيل — مستخدم مسبقاً", "Redeem Failed — Already Used"), subtitle: "" };
+      case "REDEEM_FAILED_INVALID_KEY":
+        return { Icon: AlertTriangle, tone: "red", title: t("فشل تفعيل — مفتاح غير صالح", "Redeem Failed — Invalid Key"), subtitle: "" };
+      default:
+        return {
+          Icon: Database,
+          tone: "blue",
+          title: action ? action.replaceAll("_", " ") : t("حدث", "Event"),
+          subtitle: product,
+        };
     }
   }
 
@@ -1805,23 +1908,26 @@ export function AdminControlSpace({
 
               {dashboardStats?.recentActivity && dashboardStats.recentActivity.length > 0 ? (
                 <div className="ref-recent-logs-list">
-                  {dashboardStats.recentActivity.map((log: any) => (
-                    <div className="ref-recent-log-row" key={log.id}>
-                      <div className="recent-log-badge">
-                        <span className={`badge-pill ${log.category?.toLowerCase() || "system"}`}>
-                          {log.action || log.category}
+                  {dashboardStats.recentActivity.map((log: any) => {
+                    const info = describeActivity(log);
+                    const RowIcon = info.Icon;
+                    return (
+                      <div className="ref-recent-log-row" key={log.id}>
+                        <span className={`recent-log-icon ${info.tone}`} aria-hidden="true">
+                          <RowIcon size={15} />
                         </span>
+                        <div className="recent-log-desc">
+                          <strong>{info.title}</strong>
+                          {info.subtitle && <span className="recent-log-sub">{info.subtitle}</span>}
+                        </div>
+                        <div className="recent-log-actor" dir="ltr">{log.actor_email}</div>
+                        <div className="recent-log-time">
+                          <Clock size={12} />
+                          <time>{new Date(log.created_at).toLocaleTimeString(ar ? "ar-SA" : "en-US")}</time>
+                        </div>
                       </div>
-                      <div className="recent-log-desc">
-                        <strong dir="ltr">{log.actor_email}</strong>
-                        <span>{typeof log.details === "object" ? JSON.stringify(log.details) : String(log.details || "")}</span>
-                      </div>
-                      <div className="recent-log-time">
-                        <Clock size={12} />
-                        <time>{new Date(log.created_at).toLocaleTimeString(ar ? "ar-SA" : "en-US")}</time>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="ref-empty-admin-state">
