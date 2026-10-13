@@ -328,25 +328,29 @@ export function Portal({ user }: { user: PortalUser }) {
 
 
   if (activeTab === "admin" && data.isAdmin) {
+    // The admin workspace always renders in the light identity, regardless of the
+    // portal theme, so the control space keeps one calm look.
     return (
-      <div className="portal-admin-wrapper" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+      <div className="portal-admin-wrapper" data-theme="light" dir={ar ? "rtl" : "ltr"}>
         <div className="image2-container" style={{ padding: "0 24px" }}>
           <header className="image2-header-row" style={{ paddingBottom: "16px" }}>
             <div className="image2-header-title-wrap">
-              <button
-                type="button"
-                className="image2-back-home-btn"
-                onClick={() => navigate("overview")}
-                title={t("العودة للرئيسية", "Back to Home")}
-              >
-                {ar ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
-                <span>{t("الرئيسية", "Home")}</span>
-              </button>
-              <span className="image2-breadcrumb-sep">/</span>
+              <span className="admin-brand-mark">
+                <Image src="/logo.png" alt="SpooFx" width={28} height={28} priority />
+              </span>
               <h1 className="image2-header-title">{t("لوحة الإدارة", "Admin Dashboard")}</h1>
             </div>
 
             <div className="image2-header-controls">
+              <button
+                type="button"
+                className="image2-ctrl-btn ghost-link"
+                onClick={() => navigate("overview")}
+                title={t("العودة للرئيسية", "Back to Home")}
+              >
+                {ar ? <ArrowRight size={15} /> : <ArrowLeft size={15} />}
+                <span>{t("الرئيسية", "Home")}</span>
+              </button>
               <button
                 type="button"
                 className="image2-ctrl-btn icon-only"
