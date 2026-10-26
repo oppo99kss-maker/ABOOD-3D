@@ -497,13 +497,13 @@ export function Portal({ user }: { user: PortalUser }) {
           </div>
         </nav>
 
-        {activeTab !== "overview" && (
+        {activeTab !== "overview" && activeTab !== "my-products" && (
           <div className="image2-page-head">
             <h1 className="image2-header-title">{titles[activeTab].title}</h1>
             {activeTab !== "profile" && <p className="image2-page-desc">{titles[activeTab].desc}</p>}
           </div>
         )}
-        {activeTab !== "profile" && <hr className="image2-divider" />}
+        {activeTab !== "profile" && activeTab !== "my-products" && <hr className="image2-divider" />}
 
         <main className="portal-main">
 
@@ -779,18 +779,14 @@ export function Portal({ user }: { user: PortalUser }) {
               {activeTab === "redeem" && (
                 <div className="form-layout">
                   <section className="panel activation">
-                    <span className="large-icon">
-                      <KeyRound size={28} />
-                    </span>
+
                     <h2>{t("تفعيل مفتاح ترخيص رقمي", "Activate License Key")}</h2>
-                    <p>{t("أدخل رمز المفتاح الذي حصلت عليه بعد الشراء لإضافة المنتج إلى مكتبتك فوراً.", "Enter the key code received upon purchase to unlock the product immediately.")}</p>
+
 
                     <form onSubmit={redeem}>
                       <div className="label-with-format">
                         <label htmlFor="license-key">{t("رمز مفتاح الترخيص", "License Key")}</label>
-                        <span className="key-format-tag" dir="ltr" style={{ direction: "ltr", unicodeBidi: "isolate" }}>
-                          KEY-XXXX-XXXX-XXXX
-                        </span>
+
                       </div>
                       <div className="key-input-wrapper">
                         <input
@@ -837,34 +833,10 @@ export function Portal({ user }: { user: PortalUser }) {
                       </div>
                     )}
 
-                    <div className="muted-note">
-                      <ShieldCheck size={15} />
-                      {t("المفاتيح الرقمية مشفرة وصالحة للاستخدام مرة واحدة فقط.", "Digital keys are encrypted and strictly single-use.")}
-                    </div>
+
                   </section>
 
-                  {/* Instructions Sidebar */}
-                  <section className="panel instructions">
-                    <h2>{t("خطوات التشغيل السريع", "Quick Steps")}</h2>
-                    {[
-                      t("تسجيل الدخول بحساب Google المعتمد", "Sign in with verified Google account"),
-                      t("إدخال مفتاح الترخيص بصيغة KEY-XXXX-XXXX-XXXX", "Enter your license key in KEY-XXXX-XXXX-XXXX format"),
-                      t("فتح صفحة منتجاتي لتحميل الملفات والتعليمات", "Open My Products to download software & guides"),
-                    ].map((step, index) => (
-                      <div key={step}>
-                        <b>0{index + 1}</b>
-                        <p>{step}</p>
-                      </div>
-                    ))}
 
-                    <div className="support-callout">
-                      <p>{t("هل واجهت مشكلة في المفتاح؟", "Need assistance with your license?")}</p>
-                      <button className="secondary-button" onClick={() => navigate("tickets")}>
-                        <LifeBuoy size={15} />
-                        {t("زيارة مركز المساعدة", "Help Center")}
-                      </button>
-                    </div>
-                  </section>
                 </div>
               )}
 

@@ -133,12 +133,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
           <h2>{ar ? "مركز المساعدة" : "Help center"}</h2>
           <p>{ar ? "ابحث عن المشكلة أو اختر القسم المناسب." : "Search for an issue or choose a category."}</p>
         </div>
-        {onNavigateTab && (
-          <button className={css.smallButton} onClick={() => onNavigateTab("my-products")}>
-            <BookOpen size={17} />
-            {ar ? "دليل منتجك في «منتجاتي»" : "Find your product guide in My products"}
-          </button>
-        )}
+
       </header>
 
       <label className={css.search}>

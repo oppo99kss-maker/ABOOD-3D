@@ -117,3 +117,5 @@
 .image2-portal-shell .image2-nav-link:not(.active):not(:hover) { background: transparent; }
 
 .luxe-profile-grid { grid-template-columns: minmax(0, 1fr); }
+
+.image2-portal-shell .form-layout { grid-template-columns: minmax(0, 1fr); max-width: 640px; margin-inline: auto; width: 100%; }
