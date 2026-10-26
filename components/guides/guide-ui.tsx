@@ -75,7 +75,8 @@ export function GuideDialog({
     document.body.style.overflow = "hidden";
     dialog.current?.focus();
     const keydown = (event: KeyboardEvent) => {
-      if (!dialog.current?.contains(document.activeElement)) return;
+      const openDialogs = document.querySelectorAll('[role="dialog"][aria-modal="true"]');
+      if (openDialogs[openDialogs.length - 1] !== dialog.current) return;
       if (event.key === "Escape") {
         event.preventDefault();
         requestCloseRef.current();
@@ -124,7 +125,7 @@ export function GuideDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        dir="rtl"
+        dir={document.documentElement.dir === "ltr" ? "ltr" : "rtl"}
         className={css.dialog}
         initial={reduceMotion ? false : "initial"}
         animate={closing ? "closed" : "open"}

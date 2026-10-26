@@ -20,6 +20,7 @@ import {
   HardDrive,
   HelpCircle,
   History,
+  House,
   Info,
   KeyRound,
   LifeBuoy,
@@ -48,6 +49,7 @@ import { AdminControlSpace } from "./admin-control-space";
 import { notify } from "@/lib/notify";
 
 /** Loaded on demand: the help centre brings its own media-heavy guide library. */
+const ProductGuideModal = dynamic(() => import("./product-guide").then(module => module.ProductGuideModal), { ssr: false });
 const HelpCenter = dynamic(() => import("./help-center").then((module) => module.HelpCenter), { ssr: false });
 
 function DiscordIcon({ size = 17 }: { size?: number }) {
@@ -421,37 +423,42 @@ export function Portal({ user }: { user: PortalUser }) {
             <button
               type="button"
               className={`image2-nav-link ${activeTab === "overview" ? "active" : ""}`}
+              aria-current={activeTab === "overview" ? "page" : undefined}
               onClick={() => navigate("overview")}
             >
-              {t("الرئيسية", "Home")}
+              <House size={17} aria-hidden="true" /><span>{t("الرئيسية", "Home")}</span>
             </button>
             <button
               type="button"
               className={`image2-nav-link ${activeTab === "redeem" ? "active" : ""}`}
+              aria-current={activeTab === "redeem" ? "page" : undefined}
               onClick={() => navigate("redeem")}
             >
-              {t("تفعيل مفتاح", "Activate Key")}
+              <KeyRound size={17} aria-hidden="true" /><span>{t("تفعيل مفتاح", "Activate Key")}</span>
             </button>
             <button
               type="button"
               className={`image2-nav-link ${activeTab === "my-products" ? "active" : ""}`}
+              aria-current={activeTab === "my-products" ? "page" : undefined}
               onClick={() => navigate("my-products")}
             >
-              {t("منتجاتي", "My Products")}
+              <Package size={17} aria-hidden="true" /><span>{t("منتجاتي", "My Products")}</span>
             </button>
             <button
               type="button"
               className={`image2-nav-link ${activeTab === "tickets" ? "active" : ""}`}
+              aria-current={activeTab === "tickets" ? "page" : undefined}
               onClick={() => navigate("tickets")}
             >
-              {t("مركز المساعدة", "Help Center")}
+              <LifeBuoy size={17} aria-hidden="true" /><span>{t("مركز المساعدة", "Help Center")}</span>
             </button>
             <button
               type="button"
               className={`image2-nav-link ${activeTab === "profile" ? "active" : ""}`}
+              aria-current={activeTab === "profile" ? "page" : undefined}
               onClick={() => navigate("profile")}
             >
-              {t("حسابي", "My Account")}
+              <UserRound size={17} aria-hidden="true" /><span>{t("حسابي", "My Account")}</span>
             </button>
           </div>
 
@@ -1179,9 +1186,7 @@ function ProductGrid({
                     (p.name?.toLowerCase().includes("spoofx"))
                   );
 
-                  const hasGuide = Boolean(
-                    typeof p.instructions === "string" && p.instructions.trim().length > 0
-                  );
+                  const hasGuide = Boolean(onOpenGuide);
 
                   const hasReset = !isExpired;
 
@@ -1404,144 +1409,6 @@ function ProductDetailModal({
         <div className="modal-actions">
           <button className="secondary-button" onClick={onClose}>
             {t("إغلاق", "Close")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProductGuideModal({
-  product,
-  ar,
-  onClose,
-  onDownload,
-  onOpenReset,
-}: {
-  product: Product;
-  ar: boolean;
-  onClose: () => void;
-  onDownload: () => void;
-  onOpenReset: () => void;
-}) {
-  const t = (arStr: string, enStr: string) => (ar ? arStr : enStr);
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card guide-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-header-info">
-            <span className="badge-tag cyan">{t("دليل المنتج الرسمي", "Official Product Guide")}</span>
-            <h2>{t(`دليل تشغيل: ${product.name}`, `Setup Guide: ${product.name}`)}</h2>
-          </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
-            <X size={19} />
-          </button>
-        </div>
-
-        <div className="modal-body-scroll">
-          {/* Quick Direct Download Hero Box */}
-          <div className="guide-dl-hero-box">
-            <div className="guide-dl-left">
-              <Download size={22} className="text-cyan" />
-              <div>
-                <strong>{t("تحميل حزمة SpooFX المعتمدة", "Download Official SpooFX Package")}</strong>
-                <p>{t("ملف نظيف ومضغوط بصيغة RAR جاهز للتشغيل المباشر.", "Clean RAR package ready for direct execution.")}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="primary-button guide-dl-btn"
-              onClick={onDownload}
-            >
-              <Download size={15} />
-              <span>{t("تحميل الملف (Spoofx.rar)", "Download (Spoofx.rar)")}</span>
-            </button>
-          </div>
-
-          {/* 4 Step Visual Walkthrough */}
-          <div className="guide-steps-grid">
-            <div className="guide-step-card">
-              <span className="guide-step-number">01</span>
-              <h4>{t("فك الضغط", "Extract Files")}</h4>
-              <p>{t("فك ضغط ملف Spoofx.rar في مجلد مستقل على سطح المكتب باستخدام WinRAR.", "Extract Spoofx.rar into a dedicated folder on Desktop using WinRAR.")}</p>
-            </div>
-
-            <div className="guide-step-card">
-              <span className="guide-step-number">02</span>
-              <h4>{t("إيقاف الحماية مؤقتاً", "Disable Antivirus")}</h4>
-              <p>{t("عطّل مضاد الفيروسات أو Windows Defender مؤقتاً لتجنب الحجب الخاطئ للملفات.", "Temporarily pause antivirus or Windows Defender to avoid false positive blocks.")}</p>
-            </div>
-
-            <div className="guide-step-card">
-              <span className="guide-step-number">03</span>
-              <h4>{t("تشغيل كمسؤول", "Run as Admin")}</h4>
-              <p>{t("انقر بالزر الأيمن على ملف البرنامج واختر 'تشغيل كمسؤول' لمنحه الصلاحيات.", "Right click the executable and select 'Run as administrator' for privileges.")}</p>
-            </div>
-
-            <div className="guide-step-card">
-              <span className="guide-step-number">04</span>
-              <h4>{t("إدخال مفتاح الترخيص", "Activate Key")}</h4>
-              <p>{t("ضع المفتاح المخصص لك داخل خانة الترخيص ثم اضغط تفعيل واستمتع بالخدمة.", "Paste your license key in the activation box, submit, and enjoy.")}</p>
-            </div>
-          </div>
-
-          {/* Detailed Instructions if set */}
-          {product.instructions && (
-            <div className="detail-section">
-              <h3>
-                <FileText size={17} />
-                {t("تعليمات وإرشادات إضافية خاصة بالمنتج", "Special Product Instructions")}
-              </h3>
-              <div className="instructions-card">
-                <pre>{product.instructions}</pre>
-              </div>
-            </div>
-          )}
-
-          {/* Video Tutorial Section */}
-          <div className="guide-video-callout">
-            <div className="guide-video-info">
-              <Sparkles size={20} className="text-cyan" />
-              <div>
-                <strong>{t("شرح الفيديو التوضيحي", "Video Walkthrough & Tutorial")}</strong>
-                <p>{t("شاهد الشرح المرئي خطوة بخطوة للتعرف على طريقة التشغيل وحل المشاكل الشائعة.", "Watch our step-by-step video tutorial covering setup and troubleshooting.")}</p>
-              </div>
-            </div>
-            <a
-              href="https://spoofx.rmz.gg/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="secondary-button video-link-btn"
-            >
-              <ExternalLink size={15} />
-              <span>{t("فتح المتجر والشروحات", "Open Store & Tutorials")}</span>
-            </a>
-          </div>
-
-          {/* Reset Key Callout */}
-          <div className="guide-reset-callout">
-            <div className="guide-reset-info">
-              <RotateCcw size={20} className="text-warning" />
-              <div>
-                <strong>{t("هل قمت بتغيير جهازك أو فورمات؟", "Changed your PC or formatted Windows?")}</strong>
-                <p>{t("يمكنك طلب رستات المفتاح (HWID Reset) لإعادة ربط ترخيصك بجهازك الجديد فوراً.", "Request a HWID key reset to link your license to your new hardware instantly.")}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="secondary-button reset-prompt-btn"
-              onClick={onOpenReset}
-            >
-              <RotateCcw size={14} />
-              <span>{t("طلب رستات مفتاح الآن", "Request Key Reset")}</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="modal-actions">
-          <button className="secondary-button" onClick={onClose}>
-            {t("إغلاق الدليل", "Close Guide")}
           </button>
         </div>
       </div>

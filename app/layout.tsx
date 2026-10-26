@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import "./portal-refinement.css";
 import { ToastContainer } from "@/components/ui/toast-container";

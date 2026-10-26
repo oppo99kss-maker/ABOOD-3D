@@ -145,3 +145,36 @@ test("portal stays open and responsive across themes and languages", async ({ br
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test("product guide opens local media and article library", async ({ browser, request }) => {
+  const { encode } = await import("next-auth/jwt");
+  const token = await encode({ secret: "local-playwright-session-secret-not-for-production", token: { name: "Test Customer", email: "customer@example.invalid", sub: "local-guide-test" } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await context.addCookies([{ name: "next-auth.session-token", value: token, domain: "localhost", path: "/" }]);
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.route("**/api/portal", route => route.fulfill({ json: { products: [{ id: "ui-guide-fixture", name: "SpooFX", instructions: "تعليمات المنتج", files: [], license_key: "TEST-ONLY" }], inventory: [], guides: [], isAdmin: false } }));
+  await page.goto("http://localhost:3101/portal");
+  await page.locator(".image2-nav-links").getByRole("button", { name: "منتجاتي", exact: true }).click();
+  await expect(page.locator(".image2-nav-links [aria-current='page']")).toHaveCount(1);
+  await page.getByRole("button", { name: "دليل المنتج", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "تشغيل شرح شرح المنتج الأساسي", exact: true }).click();
+  await expect(page.locator("video")).toHaveAttribute("src", "/videos/product-guide-1016.mp4");
+  await page.getByRole("button", { name: "الشروحات", exact: true }).click();
+  await page.getByRole("button", { name: /مشكلة الشبكة أو إيقاف Wi-Fi/ }).click();
+  await page.getByRole("button", { name: /تشغيل شرح/ }).click();
+  await expect(page.locator("video")).toHaveAttribute("src", "/guides/network-error-fix.mp4");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "../../outputs/guide-mobile.png", fullPage: true });
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  for (const path of ["/videos/product-guide-1016.mp4", "/guides/network-error-fix.mp4", "/guides/timer-error-fix.mp4", "/guides/wrp-guide.mp4"]) {
+    const response = await request.get(path, { headers: { Range: "bytes=0-31" } });
+    expect(response.status()).toBe(206);
+    expect(response.headers()["content-type"]).toContain("video/mp4");
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+});

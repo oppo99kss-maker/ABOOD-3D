@@ -18,7 +18,7 @@
   overflow-x: hidden;
   background: #080B12;
   color: var(--ink);
-  font-family: Alexandria, system-ui, -apple-system, sans-serif;
+  font-family: "Vazirmatn Variable", system-ui, -apple-system, sans-serif;
 }
 
 .page[data-theme="light"] {
