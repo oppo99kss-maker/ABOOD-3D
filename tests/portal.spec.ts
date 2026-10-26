@@ -47,9 +47,10 @@ test("mobile login fits the screen", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test("luxury dark background token renders on client", async ({ page }) => {
+test("saved dark theme renders on client", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("abood.theme", "dark"));
   await page.goto("/");
-  const bg = await page.locator("[data-theme='dark']").evaluate((el) => {
+  const bg = await page.locator("div[data-theme='dark']").first().evaluate((el) => {
     return window.getComputedStyle(el).backgroundColor;
   });
   expect(bg).toContain("rgb(8, 11, 18)");
@@ -96,3 +97,51 @@ test("parseRawKeyList correctly parses multiline, comma, numbered, and prefixed 
   ]);
 });
 
+
+
+test("login preferences persist with a light Arabic default", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.getByRole("button", { name: "الوضع الداكن", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Switch to English", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(page.getByRole("heading", { name: "Welcome back", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+
+
+test("portal stays open and responsive across themes and languages", async ({ browser }) => {
+  const { encode } = await import("next-auth/jwt");
+  const token = await encode({ secret: "local-playwright-session-secret-not-for-production", token: { name: "Test Customer", email: "customer@example.invalid", sub: "local-ui-test" } });
+  const context = await browser.newContext();
+  await context.addCookies([{ name: "next-auth.session-token", value: token, domain: "localhost", path: "/" }]);
+  const page = await context.newPage();
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.route("**/api/portal", route => route.fulfill({ json: { products: [], inventory: [], guides: [], isAdmin: false } }));
+  await page.goto("http://localhost:3101/portal");
+  await expect(page.locator(".image2-portal-shell")).toBeVisible();
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByRole("button", { name: "حسابي", exact: true }).click();
+    await expect(page.locator(".luxe-card").first()).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(page.locator(".luxe-user-name")).toHaveCSS("color", "rgb(21, 38, 62)");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByRole("button", { name: "داكن", exact: true }).click();
+    await expect(page.locator(".image2-portal-shell")).toHaveAttribute("data-theme", "dark");
+    await page.getByRole("button", { name: "English", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByRole("button", { name: "العربية", exact: true }).click();
+    await page.getByRole("button", { name: "فاتح", exact: true }).click();
+    for (const name of ["تفعيل مفتاح", "منتجاتي", "مركز المساعدة", "الرئيسية"]) {
+      await page.locator(".image2-nav-links").getByRole("button", { name, exact: true }).click();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+});

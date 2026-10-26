@@ -14,7 +14,7 @@ const server = spawn(
         ? "abood-test.apps.googleusercontent.com"
         : "",
       GOOGLE_CLIENT_SECRET: configured ? randomBytes(32).toString("hex") : "",
-      NEXTAUTH_SECRET: configured ? randomBytes(32).toString("hex") : "",
+      NEXTAUTH_SECRET: configured ? "local-playwright-session-secret-not-for-production" : "",
     },
   },
 );

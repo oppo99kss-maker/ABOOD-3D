@@ -531,3 +531,31 @@
   color: var(--muted);
   opacity: 0.85;
 }
+
+/* Calm, flat sign-in surface shared with the portal identity. */
+.headerActions { display: flex; align-items: center; gap: 10px; }
+.headerActions button, .storeLink { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+.headerActions button:hover, .storeLink:hover { background: var(--accent-soft); color: var(--accent); }
+.page { --accent: #5fd5ff; }
+.page[data-theme="light"] { --accent: #087eaf; --accent-hover: #06688f; --muted: #526780; }
+.ambient::before { display: none; }
+.ambient { background: radial-gradient(ellipse at 85% 10%, rgba(54,164,207,.1), transparent 55%), #080b12; }
+.page[data-theme="light"] .ambient { background: radial-gradient(ellipse at 85% 10%, #e1f0f8, transparent 55%), #f7f9fc; }
+.card { background: transparent; border: 0; box-shadow: none; backdrop-filter: none; transform: none; }
+.card:hover { transform: none; box-shadow: none; border-color: transparent; }
+.card::before, .card::after { display: none; }
+.cardLogo, .brandLogoWrap { background: transparent; border: 0; box-shadow: none; transform: none; }
+.cardLogoImg, .brandLogoImg { filter: none; transform: none; }
+.cyanGlowText { color: var(--accent); text-shadow: none; }
+.badge, .featureIconWrap { box-shadow: none; }
+.primary { background: var(--accent); color: #071b29; box-shadow: none; border: 0; }
+.page[data-theme="light"] .primary { color: white; }
+.securityNote { white-space: normal; background: transparent; border: 0; line-height: 1.8; }
+.footer, .page[data-theme="light"] .footer { background: transparent; backdrop-filter: none; border-top: 0; }
+.page :is(button,a):focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 560px) { .header { padding: 20px 16px; } .headerInner { flex-wrap: wrap; } .headerActions { gap: 6px; } .headerActions button, .storeLink { padding: 9px; } .brandTagline { display: none; } .card { padding-inline: 8px; } }
+
+.page .featureItem, .page[data-theme="light"] .featureItem { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; backdrop-filter: none; padding-inline: 0; }
+.page .featureItem:hover { transform: none; }
+.page .primary, .page .primary:hover:not(:disabled) { background: #087eaf; color: #fff; box-shadow: none; transform: none; }
+@media (max-width: 959px) { .content { gap: 28px; padding-block: 24px; } .card { padding-block: 24px; } .hero { gap: 18px; } }

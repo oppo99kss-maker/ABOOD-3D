@@ -939,3 +939,6 @@
     transform: none;
   }
 }
+
+.card { background: transparent; box-shadow: none; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; }
+.card:hover { transform: none; box-shadow: none; }

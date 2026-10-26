@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./portal-refinement.css";
 import { ToastContainer } from "@/components/ui/toast-container";
 
 export const metadata: Metadata = {
@@ -27,3 +28,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+

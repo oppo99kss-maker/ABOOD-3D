@@ -440,3 +440,9 @@
     transition: none;
   }
 }
+
+/* Keep navigation and categories free from nested frames. */
+.hub { padding: 0; border: 0; background: transparent; border-radius: 0; }
+.filterBar { background: transparent; border: 0; padding-inline: 0; }
+.categoryCard { background: transparent; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; box-shadow: none; }
+.categoryCard:hover { background: var(--accent-soft); transform: none; }

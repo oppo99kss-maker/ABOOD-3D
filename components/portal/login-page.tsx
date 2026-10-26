@@ -9,12 +9,16 @@ import {
   LogIn,
   ShieldCheck,
   Zap,
+  Globe,
+  Sun,
+  Moon,
+  ArrowUpLeft,
 } from "lucide-react";
 import { usePreferences } from "./use-preferences";
 import styles from "./login-page.module.css";
 
 export function LoginPage() {
-  const { lang, isDark } = usePreferences();
+  const { lang, isDark, setLang, toggleTheme } = usePreferences();
   const ar = lang === "ar";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
@@ -75,6 +79,11 @@ export function LoginPage() {
               </span>
             </div>
           </Link>
+          <div className={styles.headerActions}>
+            <a className={styles.storeLink} href="https://spoofx.rmz.gg/" target="_blank" rel="noopener noreferrer">{ar ? "المتجر" : "Store"}<ArrowUpLeft size={15} /></a>
+            <button type="button" onClick={toggleTheme} aria-label={ar ? (isDark ? "الوضع الفاتح" : "الوضع الداكن") : (isDark ? "Light mode" : "Dark mode")} aria-pressed={isDark}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+            <button type="button" onClick={() => setLang(ar ? "en" : "ar")} aria-label={ar ? "Switch to English" : "التبديل للعربية"}><Globe size={16} /><span>{ar ? "EN" : "عربي"}</span></button>
+          </div>
         </div>
       </header>
 

@@ -990,12 +990,13 @@ export function Portal({ user }: { user: PortalUser }) {
                         <div className="luxe-option-row">
                           <div className="luxe-option-info">
                             <strong>{t("المظهر العام", "Theme Mode")}</strong>
-                            <span>{isDark ? t("الوضع الداكن الفخم", "Dark Luxury Theme") : t("الوضع الفاتح", "Light Theme")}</span>
+                            <span>{isDark ? t("الوضع الداكن", "Dark Theme") : t("الوضع الفاتح", "Light Theme")}</span>
                           </div>
                           <div className="luxe-toggle-group">
                             <button
                               type="button"
                               className={`luxe-segmented-btn ${isDark ? "active" : ""}`}
+                              aria-pressed={isDark}
                               onClick={() => { if (!isDark) toggleTheme(); }}
                             >
                               <Moon size={13} />
@@ -1004,6 +1005,7 @@ export function Portal({ user }: { user: PortalUser }) {
                             <button
                               type="button"
                               className={`luxe-segmented-btn ${!isDark ? "active" : ""}`}
+                              aria-pressed={!isDark}
                               onClick={() => { if (isDark) toggleTheme(); }}
                             >
                               <Sun size={13} />
@@ -1022,6 +1024,7 @@ export function Portal({ user }: { user: PortalUser }) {
                             <button
                               type="button"
                               className={`luxe-segmented-btn ${ar ? "active" : ""}`}
+                              aria-pressed={ar}
                               onClick={() => setLang("ar")}
                             >
                               <span>العربية</span>
@@ -1029,6 +1032,7 @@ export function Portal({ user }: { user: PortalUser }) {
                             <button
                               type="button"
                               className={`luxe-segmented-btn ${!ar ? "active" : ""}`}
+                              aria-pressed={!ar}
                               onClick={() => setLang("en")}
                             >
                               <span>English</span>
