@@ -119,3 +119,29 @@
 .luxe-profile-grid { grid-template-columns: minmax(0, 1fr); }
 
 .image2-portal-shell .form-layout { grid-template-columns: minmax(0, 1fr); max-width: 640px; margin-inline: auto; width: 100%; }
+
+/* Compact redemption panel embedded in the portal page. */
+.image2-portal-shell .form-layout { max-width: 440px; margin: 34px auto 0; }
+.image2-portal-shell .redeem-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+  padding: 26px; box-shadow: 0 16px 45px #0000000b; text-align: start;
+}
+.redeem-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.redeem-eyebrow { display: block; font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+.image2-portal-shell .redeem-card h2 { margin: 0; color: var(--text); font-size: 21px; line-height: 1.5; }
+.image2-portal-shell .redeem-card form { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.image2-portal-shell .redeem-card .label-with-format { margin: 0; }
+.image2-portal-shell .redeem-card label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.image2-portal-shell .redeem-card .key-input-wrapper {
+  display: flex; align-items: center; gap: 6px; padding: 5px;
+  border: 1px solid var(--border); background: var(--bg); border-radius: 13px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.image2-portal-shell .redeem-card .key-input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.image2-portal-shell .redeem-card .key-field { min-width: 0; flex: 1; width: 100%; min-height: 40px; padding: 8px 10px; background: transparent; border: 0; outline: none; box-shadow: none; text-align: center; font-size: 12px; letter-spacing: 1px; }
+.image2-portal-shell .redeem-card .paste-input-btn { position: static; transform: none; flex-shrink: 0; min-height: 34px; padding: 8px; border: 0; background: transparent; color: var(--text-secondary); }
+.image2-portal-shell .redeem-card .paste-input-btn span { display: none; }
+.image2-portal-shell .redeem-card .paste-input-btn:hover { color: var(--accent); background: var(--accent-soft); }
+.image2-portal-shell .redeem-card .submit-redeem { width: 100%; min-height: 44px; margin: 0; border-radius: 12px; font-size: 13px; font-weight: 650; transition: background .18s ease; }
+.image2-portal-shell .redeem-card .submit-redeem:disabled { background: var(--bg-secondary); color: var(--text-secondary); opacity: 1; }
+@media (max-width: 560px) { .image2-portal-shell .form-layout { margin-top: 22px; } .image2-portal-shell .redeem-card { padding: 22px 18px; } }

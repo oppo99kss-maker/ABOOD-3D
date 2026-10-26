@@ -778,9 +778,13 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* ==================================================== */}
               {activeTab === "redeem" && (
                 <div className="form-layout">
-                  <section className="panel activation">
-
-                    <h2>{t("تفعيل مفتاح ترخيص رقمي", "Activate License Key")}</h2>
+                  <section className="panel activation redeem-card" aria-labelledby="redeem-title">
+                    <header className="redeem-card-header">
+                      <div>
+                        <span className="redeem-eyebrow">{t("تفعيل الترخيص", "License activation")}</span>
+                        <h2 id="redeem-title">{t("استرداد مفتاح", "Redeem a key")}</h2>
+                      </div>
+                    </header>
 
 
                     <form onSubmit={redeem}>
@@ -814,7 +818,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
                       <button className="primary-button submit-redeem" type="submit" disabled={busy || !key.trim()}>
                         {busy ? <LoaderCircle className="spin" size={17} /> : <KeyRound size={17} />}
-                        {t("تفعيل وإضافة المنتج", "Redeem & Add Product")}
+                        {t("تفعيل المفتاح", "Activate key")}
                       </button>
                     </form>
 
