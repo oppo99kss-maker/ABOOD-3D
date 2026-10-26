@@ -500,10 +500,10 @@ export function Portal({ user }: { user: PortalUser }) {
         {activeTab !== "overview" && (
           <div className="image2-page-head">
             <h1 className="image2-header-title">{titles[activeTab].title}</h1>
-            <p className="image2-page-desc">{titles[activeTab].desc}</p>
+            {activeTab !== "profile" && <p className="image2-page-desc">{titles[activeTab].desc}</p>}
           </div>
         )}
-        <hr className="image2-divider" />
+        {activeTab !== "profile" && <hr className="image2-divider" />}
 
         <main className="portal-main">
 
@@ -942,111 +942,10 @@ export function Portal({ user }: { user: PortalUser }) {
                       </div>
                     </div>
 
-                    {/* Metadata Footer Strip */}
-                    <div className="luxe-hero-meta-strip">
-                      <div className="luxe-meta-item">
-                        <span className="luxe-meta-label">{t("نوع الحساب", "Account Type")}</span>
-                        <strong className="luxe-meta-val">Google</strong>
-                      </div>
-                      <div className="luxe-meta-divider" />
-                      <div className="luxe-meta-item">
-                        <span className="luxe-meta-label">{t("المنتجات النشطة", "Active Products")}</span>
-                        <strong className="luxe-meta-val text-cyan">{activeProducts.length}</strong>
-                      </div>
-                      <div className="luxe-meta-divider" />
-                      <div className="luxe-meta-item">
-                        <span className="luxe-meta-label">{t("المكتبة الرقمية", "Digital Library")}</span>
-                        <div className="luxe-meta-action-row">
-                          <strong className="luxe-meta-val">{data.products.length} {t("منتجات", "Products")}</strong>
-                          <button
-                            type="button"
-                            className="luxe-meta-link-btn"
-                            onClick={() => navigate("my-products")}
-                          >
-                            <span>{t("عرض", "View")}</span>
-                            <ArrowUpLeft size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   </section>
 
                   {/* 2. Balanced 2-Card Grid */}
                   <div className="luxe-profile-grid">
-                    {/* Card 1: Appearance & Preferences */}
-                    <section className="luxe-card">
-                      <div className="luxe-card-header">
-                        <div className="luxe-card-icon-box cyan">
-                          <Sliders size={18} />
-                        </div>
-                        <div>
-                          <h3 className="luxe-card-title">{t("تفضيلات الواجهة والمظهر", "Display & Preferences")}</h3>
-                          <p className="luxe-card-sub">{t("تخصيص نمط العرض ولغة الواجهة", "Customize theme mode and system language")}</p>
-                        </div>
-                      </div>
-
-                      <div className="luxe-options-list">
-                        {/* Theme Option */}
-                        <div className="luxe-option-row">
-                          <div className="luxe-option-info">
-                            <strong>{t("المظهر العام", "Theme Mode")}</strong>
-                            <span>{isDark ? t("الوضع الداكن", "Dark Theme") : t("الوضع الفاتح", "Light Theme")}</span>
-                          </div>
-                          <div className="luxe-toggle-group">
-                            <button
-                              type="button"
-                              className={`luxe-segmented-btn ${isDark ? "active" : ""}`}
-                              aria-pressed={isDark}
-                              onClick={() => { if (!isDark) toggleTheme(); }}
-                            >
-                              <Moon size={13} />
-                              <span>{t("داكن", "Dark")}</span>
-                            </button>
-                            <button
-                              type="button"
-                              className={`luxe-segmented-btn ${!isDark ? "active" : ""}`}
-                              aria-pressed={!isDark}
-                              onClick={() => { if (isDark) toggleTheme(); }}
-                            >
-                              <Sun size={13} />
-                              <span>{t("فاتح", "Light")}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Language Option */}
-                        <div className="luxe-option-row">
-                          <div className="luxe-option-info">
-                            <strong>{t("لغة الواجهة", "Language")}</strong>
-                            <span>{ar ? "العربية (RTL)" : "English (LTR)"}</span>
-                          </div>
-                          <div className="luxe-toggle-group">
-                            <button
-                              type="button"
-                              className={`luxe-segmented-btn ${ar ? "active" : ""}`}
-                              aria-pressed={ar}
-                              onClick={() => setLang("ar")}
-                            >
-                              <span>العربية</span>
-                            </button>
-                            <button
-                              type="button"
-                              className={`luxe-segmented-btn ${!ar ? "active" : ""}`}
-                              aria-pressed={!ar}
-                              onClick={() => setLang("en")}
-                            >
-                              <span>English</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="luxe-card-footer-note">
-                        <CheckCircle2 size={13} className="text-cyan" />
-                        <span>{t("تُحفظ جميع التفضيلات تلقائياً في المتصفح.", "Preferences are preserved locally in your browser.")}</span>
-                      </div>
-                    </section>
-
                     {/* Card 2: Google Account & Session */}
                     <section className="luxe-card">
                       <div className="luxe-card-header">

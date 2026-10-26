@@ -130,13 +130,13 @@ test("portal stays open and responsive across themes and languages", async ({ br
     await expect(page.locator(".luxe-card").first()).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect(page.locator(".luxe-user-name")).toHaveCSS("color", "rgb(21, 38, 62)");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole("button", { name: "داكن", exact: true }).click();
+    await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
     await expect(page.locator(".image2-portal-shell")).toHaveAttribute("data-theme", "dark");
-    await page.getByRole("button", { name: "English", exact: true }).click();
+    await page.locator(".image2-nav-actions .lang-pill").click();
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole("button", { name: "العربية", exact: true }).click();
-    await page.getByRole("button", { name: "فاتح", exact: true }).click();
+    await page.locator(".image2-nav-actions .lang-pill").click();
+    await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
     for (const name of ["تفعيل مفتاح", "منتجاتي", "مركز المساعدة", "الرئيسية"]) {
       await page.locator(".image2-nav-links").getByRole("button", { name, exact: true }).click();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
