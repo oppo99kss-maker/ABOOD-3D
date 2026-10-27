@@ -297,3 +297,32 @@
 .image2-portal-shell .product-summary { flex: 0 0 auto; }
 .image2-portal-shell .product-status-tag { backdrop-filter: none; }
 @media (max-width: 760px) { .image2-portal-shell .image2-topnav { flex-direction: row; justify-content: space-between; } .image2-portal-shell .image2-nav-actions { margin-inline-start: 0; } }
+
+/* Shared illustrated backdrop and readable dialog controls. */
+.image2-portal-shell { background: linear-gradient(100deg,rgba(8,11,18,.91),rgba(8,15,25,.96)),url('/background-city.png') center/cover fixed; }
+.image2-portal-shell[data-theme="light"] { background: linear-gradient(100deg,rgba(247,249,252,.91),rgba(239,246,252,.96)),url('/background-city.png') center/cover fixed; }
+.image2-portal-shell .image2-page-desc { font-size: 14px; }
+.image2-portal-shell .image2-action-text { font-size: 15px; font-weight: 550; }
+.image2-portal-shell .image2-stat-label { font-size: 13px; }
+.image2-portal-shell .product-key-label, .image2-portal-shell .product-key-value { font-size: 12px; }
+.image2-portal-shell .details-btn { font-size: 13px; }
+.image2-portal-shell .btn-lux-reset { font-size: 12px; }
+.image2-portal-shell :is(.modal-card,.guide-modal-card,.reset-modal-card) { padding: 0; max-height: calc(100dvh - 40px); overflow: auto; box-shadow: 0 24px 80px #00000040; }
+.image2-portal-shell .modal-header { display: flex; align-items: center; gap: 16px; padding: 24px; border-bottom: 1px solid var(--border); }
+.image2-portal-shell .modal-header h2 { font-size: 22px; line-height: 1.6; margin: 4px 0 0; }
+.image2-portal-shell .modal-close { display: grid; place-items: center; width: 40px; height: 40px; min-width: 40px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); border-radius: 11px; }
+.image2-portal-shell .modal-close:hover { background: var(--accent-soft); color: var(--accent); }
+.image2-portal-shell .modal-body-scroll { padding: 24px; }
+.image2-portal-shell .modal-actions { padding: 18px 24px; border-top: 1px solid var(--border); }
+.image2-portal-shell .modal-card :is(p,label,textarea,input,select) { font-size: 14px; line-height: 1.9; }
+.image2-portal-shell .modal-card :is(input,textarea,select) { color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 11px; }
+.image2-portal-shell .modal-card :is(.secondary-button,.primary-button) { min-height: 42px; border-radius: 11px; padding: 10px 16px; font-size: 14px; }
+.image2-portal-shell .modal-card .instructions-card { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 12px; }
+.image2-portal-shell .modal-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.9; }
+.guide-shortcuts button { font-size: 14px; min-height: 44px; }
+.guide-library-grid small { font-size: 13px; }
+@media (max-width: 760px) {
+  .image2-portal-shell, .image2-portal-shell[data-theme="light"] { background-attachment: scroll; }
+  .image2-portal-shell .modal-header, .image2-portal-shell .modal-body-scroll { padding: 20px; }
+  .image2-portal-shell .modal-header h2 { font-size: 20px; }
+}

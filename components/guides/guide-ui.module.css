@@ -942,3 +942,8 @@
 
 .card { background: transparent; box-shadow: none; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; }
 .card:hover { transform: none; box-shadow: none; }
+
+.cardText, .muted, .videoCaption { font-size: 14px; line-height: 1.9; }
+.cardTitle { font-size: 18px; font-weight: 600; }
+.dialogTitle { font-size: 22px; line-height: 1.6; }
+.iconButton { min-width: 40px; min-height: 40px; border-radius: 11px; }
