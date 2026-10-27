@@ -205,3 +205,95 @@
 .image2-portal-shell .category-header-title h2 { color: var(--text); }
 .image2-portal-shell .category-subtitle { color: var(--text-secondary); }
 .image2-portal-shell .expired-section .empty-subtle-box { background: transparent; color: var(--text-secondary); }
+
+/* Product library: a clear hierarchy with one primary action per card. */
+.image2-portal-shell { --card-shadow: 0 8px 28px rgba(0,0,0,.12); --card-hover-shadow: 0 16px 40px rgba(0,0,0,.2); }
+.image2-portal-shell[data-theme="light"] { --card-shadow: 0 6px 24px rgba(30,60,90,.045); --card-hover-shadow: 0 12px 32px rgba(30,60,90,.08); }
+.image2-portal-shell .portal-main { width: 100%; padding-top: 24px; }
+.image2-portal-shell .image2-container { max-width: 1200px; }
+.image2-portal-shell .image2-topnav { min-height: 84px; }
+.image2-portal-shell .image2-brand-logo { width: 38px; height: 38px; border-radius: 12px; }
+.image2-portal-shell .image2-nav-links { gap: 6px; }
+.image2-portal-shell .image2-nav-link { padding: 11px 15px; border-radius: 12px; color: var(--text-secondary); font-weight: 550; }
+.image2-portal-shell .image2-nav-link.active { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.image2-portal-shell .image2-page-head { padding-block: 28px 16px; }
+.image2-portal-shell .image2-header-title { font-size: clamp(25px,3vw,32px); }
+.image2-portal-shell .products-view-container { display: grid; gap: 30px; }
+.image2-portal-shell .products-search-bar { padding: 0; border: 0; background: transparent; }
+.image2-portal-shell .products-search-bar .search { min-height: 50px; border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding-inline: 16px; }
+.image2-portal-shell .products-search-bar input { color: var(--text); font-size: 14px; }
+.image2-portal-shell .product-category-section { margin: 0; }
+.image2-portal-shell .product-category-section .category-section-header { padding-block: 14px 20px; margin-bottom: 22px; }
+.image2-portal-shell .category-header-title { align-items: center; gap: 10px; }
+.image2-portal-shell .category-header-title h2 { font-size: 20px; font-weight: 650; line-height: 1.6; }
+.image2-portal-shell .category-subtitle { margin-top: 5px; font-size: 13px; }
+.image2-portal-shell .category-badge { border: 0; border-radius: 10px; background: var(--accent-soft); color: var(--accent); width: 34px; height: 34px; }
+.image2-portal-shell .section-count { background: var(--accent-soft); border: 0; color: var(--accent); font-size: 11px; min-width: 24px; border-radius: 7px; }
+.image2-portal-shell .product-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; align-items: stretch; }
+.image2-portal-shell .real-product {
+  display: flex; flex-direction: column; min-width: 0; padding: 0; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: var(--card-shadow); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.image2-portal-shell .real-product:hover { border-color: var(--border-hover); box-shadow: var(--card-hover-shadow); transform: translateY(-3px); }
+.image2-portal-shell .real-product-art {
+  position: relative; display: grid; place-items: center; height: 184px; width: 100%; margin: 0; border-radius: 0;
+  background: radial-gradient(ellipse at 50% 45%,var(--accent-soft),transparent 65%), var(--bg-secondary); border-bottom: 1px solid var(--border); overflow: hidden;
+}
+.image2-portal-shell .real-product-art > img { width: 100%; height: 100%; object-fit: contain; padding: 20px; }
+.image2-portal-shell .product-placeholder-icon { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); color: var(--accent); box-shadow: 0 10px 30px #00000008; }
+.image2-portal-shell .product-placeholder-icon svg { stroke-width: 1.3; }
+.image2-portal-shell .product-status-tag { position: absolute; top: 14px; inset-inline-start: 14px; inset-inline-end: auto; display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); padding: 5px 10px; font-size: 11px; font-weight: 600; box-shadow: none; }
+.image2-portal-shell .product-status-tag.tag-active { color: var(--success); }
+.image2-portal-shell .product-status-tag.tag-expired { color: var(--text-secondary); }
+.image2-portal-shell .product-copy { display: flex; flex: 1; flex-direction: column; padding: 22px; gap: 12px; min-width: 0; }
+.image2-portal-shell .product-category-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.image2-portal-shell .sample-label { color: var(--accent); font-size: 10px; font-weight: 650; letter-spacing: .8px; background: transparent; border: 0; padding: 0; }
+.image2-portal-shell .duration-pill { color: var(--text-secondary); background: var(--bg-secondary); border: 0; border-radius: 7px; padding: 3px 8px; font-size: 10px; }
+.image2-portal-shell .product-copy h3 { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.55; overflow-wrap: anywhere; }
+.image2-portal-shell .product-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: -4px 0 0; font-size: 13px; color: var(--text-secondary); line-height: 1.85; }
+.image2-portal-shell .product-meta { display: flex; flex-direction: column; flex: 1; gap: 15px; min-width: 0; }
+.image2-portal-shell .expiry-indicator { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-size: 12px; }
+.image2-portal-shell .product-key-display-pill { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; background: var(--bg); box-shadow: none; }
+.image2-portal-shell .product-key-label { color: var(--text-secondary); font-size: 10px; flex-shrink: 0; }
+.image2-portal-shell .product-key-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace,monospace; font-size: 11px; color: var(--text); }
+.image2-portal-shell .product-key-copy-action { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 0; background: transparent; color: var(--accent); border-radius: 7px; }
+.image2-portal-shell .product-key-copy-action:hover { background: var(--accent-soft); }
+.image2-portal-shell .product-card-actions { margin-top: auto; display: grid; gap: 12px; padding-top: 4px; }
+.image2-portal-shell .product-actions-three-btn-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.image2-portal-shell .btn-lux-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; min-height: 42px; padding: 10px 8px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text); font-size: 12px; font-weight: 550; box-shadow: none; }
+.image2-portal-shell .btn-lux-download { background: var(--accent); border-color: var(--accent); color: #071b24; }
+.image2-portal-shell[data-theme="light"] .btn-lux-download { color: white; }
+.image2-portal-shell .btn-lux-guide { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+.image2-portal-shell .btn-lux-reset { grid-column: 1/-1; color: var(--text-secondary); min-height: 34px; padding-block: 7px; border: 0; font-size: 11px; }
+.image2-portal-shell .btn-lux-action:hover { filter: brightness(1.05); transform: none; box-shadow: none; }
+.image2-portal-shell .product-actions-sub-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px; }
+.image2-portal-shell .details-btn { border: 0; padding: 5px 0; background: transparent; color: var(--text-secondary); font-size: 11px; box-shadow: none; }
+.image2-portal-shell .launch-btn { border: 0; background: transparent; width: 30px; height: 30px; }
+.image2-portal-shell .expired-product { opacity: .8; }
+.image2-portal-shell .expired-product .real-product-art { filter: saturate(.45); }
+.image2-portal-shell .products-section-divider { margin: 0; background: var(--border); opacity: .5; }
+.image2-portal-shell .compact-empty { padding: 52px 20px; text-align: center; }
+.image2-portal-shell .compact-empty h3 { color: var(--text); font-weight: 600; margin-top: 16px; }
+.image2-portal-shell .compact-empty p { color: var(--text-secondary); font-size: 14px; line-height: 1.9; }
+.image2-portal-shell .large-icon { background: var(--accent-soft); color: var(--accent); border-radius: 18px; width: 58px; height: 58px; }
+.image2-portal-shell .luxe-profile-hero { padding-top: 10px; }
+.image2-portal-shell .luxe-hero-main-row { padding-bottom: 8px; }
+.image2-portal-shell .luxe-card-title { font-size: 18px; font-weight: 600; }
+.image2-portal-shell .luxe-option-row { padding-block: 22px; }
+@media (max-width: 1024px) { .image2-portal-shell .product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) {
+  .image2-portal-shell .portal-main { padding-top: 18px; }
+  .image2-portal-shell .image2-nav-link { padding: 10px 2px; }
+  .image2-portal-shell .product-grid { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .image2-portal-shell .real-product-art { height: 190px; }
+  .image2-portal-shell .product-copy { padding: 20px; }
+  .image2-portal-shell .image2-page-head { padding-top: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .image2-portal-shell .real-product { transition: none; } .image2-portal-shell .real-product:hover { transform: none; } }
+.image2-portal-shell .product-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); }
+.image2-portal-shell .product-meta { align-items: stretch; justify-content: flex-start; }
+.image2-portal-shell .product-card-actions { width: 100%; align-items: stretch; }
+.image2-portal-shell .product-summary { flex: 0 0 auto; }
+.image2-portal-shell .product-status-tag { backdrop-filter: none; }
+@media (max-width: 760px) { .image2-portal-shell .image2-topnav { flex-direction: row; justify-content: space-between; } .image2-portal-shell .image2-nav-actions { margin-inline-start: 0; } }

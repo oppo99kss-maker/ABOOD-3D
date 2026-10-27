@@ -446,3 +446,15 @@
 .filterBar { background: transparent; border: 0; padding-inline: 0; }
 .categoryCard { background: transparent; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; box-shadow: none; }
 .categoryCard:hover { background: var(--accent-soft); transform: none; }
+
+/* Airy category navigation and readable guide summaries. */
+.helpHeader { padding-bottom: 8px; }
+.helpHeader h2 { font-size: 26px; font-weight: 650; letter-spacing: -.4px; }
+.helpHeader p { line-height: 1.9; }
+.search { background: var(--luxe-panel); border-radius: 14px; min-height: 52px; }
+.categoryGrid { gap: 16px; }
+.categoryCard { padding: 20px 8px; gap: 14px; border-bottom-color: var(--luxe-line); }
+.categoryCard strong { font-size: 15px; font-weight: 600; }
+.categoryCard svg { width: 22px; height: 22px; stroke-width: 1.5; }
+.tab { padding-inline: 15px; min-height: 40px; border-radius: 10px; }
+.faq { border-radius: 14px; }

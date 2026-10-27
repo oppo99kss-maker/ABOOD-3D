@@ -1060,6 +1060,12 @@ function Avatar({ image, name, size = 32 }: { image?: string | null; name: strin
   );
 }
 
+function ProductArtwork({ src, name }: { src?: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  return src && !failed ? <img src={src} alt={name} loading="lazy" onError={() => setFailed(true)} /> : <div className="product-placeholder-icon"><Package size={38} aria-hidden="true" /></div>;
+}
+
 function ProductGrid({
   products,
   ar,
@@ -1118,13 +1124,7 @@ function ProductGrid({
         return (
           <article className={`panel product real-product ${isExpired ? "expired-product" : ""}`} key={p.id}>
             <div className="real-product-art">
-              {p.image_url ? (
-                <img src={p.image_url} alt={p.name} loading="lazy" />
-              ) : (
-                <div className="product-placeholder-icon">
-                  <Package size={38} />
-                </div>
-              )}
+              <ProductArtwork src={p.image_url} name={p.name} />
               <span className={`product-status-tag ${isExpired ? "tag-expired" : "tag-active"}`}>
                 <i className="status-dot" />
                 {isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
@@ -1144,6 +1144,7 @@ function ProductGrid({
               </div>
 
               <h3>{p.name}</h3>
+              {p.description && <p className="product-summary">{p.description}</p>}
 
               <div className="product-meta">
                 <div className="expiry-indicator">
@@ -1166,10 +1167,14 @@ function ProductGrid({
                     <button
                       type="button"
                       className="product-key-copy-action"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(p.license_key!);
-                        notify.success(t("تم نسخ المفتاح", "Key Copied"), p.license_key!);
+                        try {
+                          await navigator.clipboard.writeText(p.license_key!);
+                          notify.success(t("تم نسخ المفتاح", "Key copied"), t("المفتاح جاهز للصق.", "Your key is ready to paste."));
+                        } catch {
+                          notify.error(t("تعذّر النسخ", "Could not copy"), t("يمكنك تحديد المفتاح ونسخه يدويًا.", "Select the key and copy it manually."));
+                        }
                       }}
                       title={t("نسخ المفتاح للحافظة", "Copy key to clipboard")}
                     >
