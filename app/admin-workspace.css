@@ -1,0 +1,474 @@
+/* Admin visual adapters. The original operations, forms and tables keep their existing handlers. */
+.admin-workspace,
+.admin-workspace .saas-admin h1,
+.admin-workspace .saas-admin h2,
+.admin-workspace .saas-admin h3,
+.admin-workspace .saas-admin h4,
+.admin-workspace .saas-admin strong,
+.admin-workspace .saas-admin .ref-section-title,
+.admin-workspace .saas-admin .ref-big-heading,
+.admin-workspace .saas-admin .ref-card-main-title,
+.admin-workspace .saas-admin .ref-setting-title,
+.admin-workspace .saas-admin .ref-stat-number,
+.admin-workspace .saas-admin .ref-stock-prod-name,
+.admin-workspace .saas-admin .ref-timeline-title-text,
+.admin-workspace .saas-admin .ref-universal-powers-title,
+.admin-workspace .saas-admin .ref-sessions-headline,
+.admin-workspace .saas-admin .ref-sessions-main-title,
+.admin-workspace .saas-admin .ref-data-table td,
+.admin-workspace .saas-admin .ref-keys-table td,
+.admin-workspace .saas-admin .ref-reason-text,
+.admin-workspace .saas-admin .admin-overview-heading h1,
+.admin-workspace .saas-admin .admin-overview-stat strong,
+.admin-workspace .saas-admin .ref-overview-admin-header h2,
+.admin-workspace .saas-admin .ref-hero-card h2,
+.admin-workspace .saas-admin .ref-metric-card strong,
+.admin-workspace .saas-admin .ref-quick-actions-title,
+.admin-workspace .saas-admin .ref-lux-key-card strong,
+.admin-workspace .saas-admin .ref-setting-header-titles h3,
+.admin-workspace .saas-admin .ref-keys-add-title,
+.admin-workspace .saas-admin .ref-stock-modal-title,
+.admin-workspace .saas-admin .ref-stock-prod-name-row,
+.admin-workspace .saas-admin .ref-tab-section-heading strong,
+.admin-workspace .saas-admin .ref-customer-display-name,
+.admin-workspace .saas-admin .ref-card-product-name,
+.admin-workspace .saas-admin .ref-session-username,
+.admin-workspace .saas-admin .ref-metric-value,
+.admin-workspace .saas-admin .ref-brand-banner-name,
+.admin-workspace .saas-admin .ref-cf-title,
+.admin-workspace .saas-admin .ref-inline-title,
+.admin-workspace .saas-admin .ref-key-code-cell code,
+.admin-workspace .saas-admin .ref-lux-empty-keys h4,
+.admin-workspace .saas-admin .ref-products-header-text h3,
+.admin-workspace .saas-admin .ref-prod-card-title-row h4,
+.admin-workspace .saas-admin .ref-hero-info h2,
+.admin-workspace .saas-admin .ref-timeline-stat-pill strong,
+.admin-workspace .saas-admin .ref-event-title-stack strong,
+.admin-workspace .saas-admin .ref-event-user-details strong,
+.admin-workspace .saas-admin .ref-vip-user-info strong,
+.admin-workspace .saas-admin .ref-vip-stat strong,
+.admin-workspace .saas-admin .ref-stock-prod-name-row strong { color:var(--color-text); }
+.admin-workspace .saas-admin { background:transparent; color:var(--color-text); }
+.admin-workspace,
+.admin-workspace .saas-admin .ref-data-table tr:hover td,
+.admin-workspace .saas-admin .ref-keys-table tr:hover td { background:var(--color-bg); }
+.admin-workspace .saas-admin *,
+.admin-workspace .saas-admin *::before,
+.admin-workspace .saas-admin *::after { box-shadow:var(--shadow-card) !important; text-shadow:none; }
+.admin-workspace .saas-admin .admin-ref-nav-bar,
+.admin-workspace .saas-admin .ref-table-card,
+.admin-workspace .saas-admin .ref-keys-table-card,
+.admin-workspace .saas-admin .ref-keys-table-toolbar,
+.admin-workspace .saas-admin .ref-keys-table-footer,
+.admin-workspace .saas-admin .ref-stat-card,
+.admin-workspace .saas-admin .ref-setting-card,
+.admin-workspace .saas-admin .ref-admin-shortcut-card,
+.admin-workspace .saas-admin .ref-products-filter-bar,
+.admin-workspace .saas-admin .ref-reset-request-card,
+.admin-workspace .saas-admin .ref-universal-powers-card,
+.admin-workspace .saas-admin .ref-prod-card-exact,
+.admin-workspace .saas-admin .ref-inventory-product-card,
+.admin-workspace .saas-admin .ref-custom-field-card,
+.admin-workspace .saas-admin .ref-custom-fields-top-bar,
+.admin-workspace .saas-admin .ref-vip-card,
+.admin-workspace .saas-admin .ref-timeline-event-card,
+.admin-workspace .saas-admin .ref-key-preview-card,
+.admin-workspace .saas-admin .ref-stock-target-product-card,
+.admin-workspace .saas-admin .ref-stock-mode-tabs-bar,
+.admin-workspace .saas-admin .ref-edit-modal-tabs-header,
+.admin-workspace .saas-admin .ref-edit-image-card,
+.admin-workspace .saas-admin .modal-header,
+.admin-workspace .saas-admin .modal-form,
+.admin-workspace .saas-admin .ref-keys-add-box,
+.admin-workspace .saas-admin .ref-keys-add-header,
+.admin-workspace .saas-admin .ref-admin-recent-box,
+.admin-workspace .saas-admin .ref-admin-recent-header,
+.admin-workspace .saas-admin .ref-session-card-row,
+.admin-workspace .saas-admin .ref-logs-subnav-bar,
+.admin-workspace .saas-admin .ref-sessions-header-block,
+.admin-workspace .saas-admin .ref-timeline-header-block,
+.admin-workspace .saas-admin .ref-universal-title-row,
+.admin-workspace .saas-admin .ref-stock-header-title-wrap,
+.admin-workspace .saas-admin .drawer-profile-card,
+.admin-workspace .saas-admin .drawer-stat,
+.admin-workspace .saas-admin .drawer-section,
+.admin-workspace .saas-admin .drawer-lic-item { background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; }
+.admin-workspace .saas-admin .ref-stock-modal-card,
+.admin-workspace .saas-admin .ref-product-edit-modal-card,
+.admin-workspace .saas-admin .ref-modal-card { background:var(--color-surface) !important; border:1px solid var(--color-border) !important; border-radius:14px; box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .modal-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:14px; box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .drawer-content { border-radius:14px; box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .modal-backdrop { background:rgba(15, 23, 42, 0.32); }
+.admin-workspace .saas-admin .ref-view-section,
+.admin-workspace .saas-admin .admin-ref-main-view,
+.admin-workspace .saas-admin .admin-overview,
+.admin-workspace .saas-admin .ref-reset-requests-list,
+.admin-workspace .saas-admin .ref-timeline-cards-list,
+.admin-workspace .saas-admin .ref-recent-logs-list,
+.admin-workspace .saas-admin .ref-sessions-list { background:transparent; border:0; }
+.admin-workspace .saas-admin .ref-section-subtitle,
+.admin-workspace .saas-admin .ref-sub-desc,
+.admin-workspace .saas-admin .ref-setting-desc,
+.admin-workspace .saas-admin .ref-stat-label,
+.admin-workspace .saas-admin .ref-stat-sub,
+.admin-workspace .saas-admin .ref-toolbar-text-wrap,
+.admin-workspace .saas-admin .ref-inv-category,
+.admin-workspace .saas-admin .ref-image-hint,
+.admin-workspace .saas-admin .ref-field-label,
+.admin-workspace .saas-admin .ref-tab-section-heading,
+.admin-workspace .saas-admin .ref-universal-powers-desc,
+.admin-workspace .saas-admin .ref-sessions-subdesc,
+.admin-workspace .saas-admin .text-muted,
+.admin-workspace .saas-admin input::placeholder,
+.admin-workspace .saas-admin textarea::placeholder,
+.admin-workspace .saas-admin .ref-reason-label-row,
+.admin-workspace .saas-admin .admin-overview-kicker,
+.admin-workspace .saas-admin .admin-overview-heading p,
+.admin-workspace .saas-admin .admin-overview-stat span,
+.admin-workspace .saas-admin .ref-metric-card span,
+.admin-workspace .saas-admin .ref-hero-card p,
+.admin-workspace .saas-admin .ref-quick-action-row .ref-action-text,
+.admin-workspace .saas-admin .ref-quick-action-row span,
+.admin-workspace .saas-admin .ref-summary-value,
+.admin-workspace .saas-admin .ref-unit-label,
+.admin-workspace .saas-admin .ref-modal-subdesc,
+.admin-workspace .saas-admin .ref-image-label,
+.admin-workspace .saas-admin .ref-stock-modal-subdesc,
+.admin-workspace .saas-admin .ref-inline-tools-cluster span,
+.admin-workspace .saas-admin .inv-stat-item,
+.admin-workspace .saas-admin .ref-field-group label,
+.admin-workspace .saas-admin .ref-label-row label,
+.admin-workspace .saas-admin .ref-stock-duration-group label,
+.admin-workspace .saas-admin .ref-customer-email,
+.admin-workspace .saas-admin .ref-salla-title-label { color:var(--color-muted); }
+.admin-workspace .saas-admin .admin-ref-nav-pill { background:transparent; border:1px solid transparent; border-radius:8px; color:var(--color-muted); font-weight:600; }
+.admin-workspace .saas-admin .admin-ref-nav-pill:hover { background:var(--color-bg); color:var(--color-text); }
+.admin-workspace .saas-admin .admin-ref-nav-pill.active,
+.admin-workspace .saas-admin .ref-filter-chip.active,
+.admin-workspace .saas-admin .ref-modal-tab-pill.active,
+.admin-workspace .saas-admin .ref-logs-tab-pill.active,
+.admin-workspace .saas-admin .ref-stock-tab-btn.active,
+.admin-workspace .saas-admin .ref-duration-pill.active { background:var(--color-surface-hover); border-color:var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .admin-ref-nav-pill.active svg,
+.admin-workspace .saas-admin .ref-hero-avatar-fallback,
+.admin-workspace .saas-admin .text-cyan { color:var(--color-primary); }
+.admin-workspace .saas-admin .nav-pill-counter { background:var(--color-border); color:var(--color-muted); font-weight:600; }
+.admin-workspace .saas-admin .admin-ref-nav-pill.active .nav-pill-counter { background:#DBEAFE; color:var(--color-primary); }
+.admin-workspace .saas-admin .ref-filter-chip,
+.admin-workspace .saas-admin .ref-keys-filter-chip,
+.admin-workspace .saas-admin .ref-modal-tab-pill,
+.admin-workspace .saas-admin .ref-logs-tab-pill,
+.admin-workspace .saas-admin .ref-stock-tab-btn,
+.admin-workspace .saas-admin .ref-duration-pill,
+.admin-workspace .saas-admin .ref-tab-counter-badge,
+.admin-workspace .saas-admin .ref-chip-count { background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-muted); font-weight:600; }
+.admin-workspace .saas-admin .ref-filter-chip:hover,
+.admin-workspace .saas-admin .ref-keys-filter-chip:hover,
+.admin-workspace .saas-admin .ref-modal-tab-pill:hover,
+.admin-workspace .saas-admin .ref-logs-tab-pill:hover,
+.admin-workspace .saas-admin .ref-stock-tab-btn:hover,
+.admin-workspace .saas-admin .ref-btn-batch-subtle:hover,
+.admin-workspace .saas-admin .ref-btn-manage-stock:hover,
+.admin-workspace .saas-admin .ref-btn-customer-manage:hover,
+.admin-workspace .saas-admin .ref-btn-row-lock:hover,
+.admin-workspace .saas-admin .ref-btn-quick-qty:hover,
+.admin-workspace .saas-admin .ref-btn-dice-random:hover,
+.admin-workspace .saas-admin .ref-btn-paste-clipboard:hover,
+.admin-workspace .saas-admin .ref-btn-pick-image:hover,
+.admin-workspace .saas-admin .ref-btn-cyan-insert:hover,
+.admin-workspace .saas-admin .ref-btn-card-dark:hover,
+.admin-workspace .saas-admin .ref-btn-modal-cancel-exact:hover,
+.admin-workspace .saas-admin .ref-btn-cancel-modal:hover,
+.admin-workspace .saas-admin .ref-keys-page-nav-btn:hover,
+.admin-workspace .saas-admin .ref-timeline-refresh-btn:hover,
+.admin-workspace .saas-admin .ref-key-action-icon-btn:hover,
+.admin-workspace .saas-admin .ref-cf-icon-btn:hover,
+.admin-workspace .saas-admin .ref-vip-btn-cyan:hover,
+.admin-workspace .saas-admin .ref-modal-close-icon:hover,
+.admin-workspace .saas-admin .drawer-close:hover,
+.admin-workspace .image2-back-home-btn:hover,
+.admin-workspace .image2-ctrl-btn:hover { background:var(--color-bg); border-color:var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .ref-duration-pill:hover { background:var(--color-surface-hover); border:1px solid var(--color-border); border-color:var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .ref-keys-filter-chip.active { background:var(--color-surface-hover) !important; border-color:var(--color-border) !important; color:var(--color-text) !important; }
+.admin-workspace .saas-admin .ref-filter-chip.active-warning { background:color-mix(in srgb,var(--color-warning) 8%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-warning) 25%,transparent); color:var(--color-warning); }
+.admin-workspace .saas-admin .ref-filter-chip.active-green { background:color-mix(in srgb,var(--color-success) 8%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-success) 25%,transparent); color:var(--color-success); }
+.admin-workspace .saas-admin .ref-filter-chip.active-danger { background:color-mix(in srgb,var(--color-danger) 8%,var(--color-surface)); border-color:color-mix(in srgb,var(--color-danger) 25%,transparent); color:var(--color-danger); }
+.admin-workspace .saas-admin .ref-btn-batch-subtle,
+.admin-workspace .saas-admin .ref-btn-manage-stock,
+.admin-workspace .saas-admin .ref-btn-customer-manage,
+.admin-workspace .saas-admin .ref-btn-row-lock,
+.admin-workspace .saas-admin .ref-btn-icon-mute,
+.admin-workspace .saas-admin .ref-btn-clear-input,
+.admin-workspace .saas-admin .ref-btn-quick-qty,
+.admin-workspace .saas-admin .ref-btn-dice-random,
+.admin-workspace .saas-admin .ref-btn-paste-clipboard,
+.admin-workspace .saas-admin .ref-btn-pick-image,
+.admin-workspace .saas-admin .ref-btn-card-dark,
+.admin-workspace .saas-admin .ref-btn-modal-cancel-exact,
+.admin-workspace .saas-admin .ref-btn-cancel-modal,
+.admin-workspace .saas-admin .ref-keys-page-nav-btn,
+.admin-workspace .saas-admin .ref-timeline-refresh-btn,
+.admin-workspace .saas-admin .ref-key-action-icon-btn,
+.admin-workspace .saas-admin .ref-cf-icon-btn,
+.admin-workspace .saas-admin .ref-vip-btn-cyan,
+.admin-workspace .saas-admin .ref-modal-close-icon,
+.admin-workspace .saas-admin .drawer-close { background:var(--color-surface); border:1px solid var(--color-border); border-radius:8px; color:var(--color-muted); font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-batch-danger,
+.admin-workspace .saas-admin .ref-btn-row-trash,
+.admin-workspace .saas-admin .ref-btn-danger-icon { background:var(--color-surface); border:1px solid var(--color-border); border-color:color-mix(in srgb,var(--color-danger) 25%,transparent); border-radius:8px; color:var(--color-danger); font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-cyan-insert { background:var(--color-primary) !important; border:1px solid var(--color-primary) !important; border-radius:8px; box-shadow:var(--shadow-card) !important; color:var(--color-surface) !important; font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-primary-stock,
+.admin-workspace .saas-admin .ref-btn-primary-gradient,
+.admin-workspace .saas-admin .ref-btn-create-product,
+.admin-workspace .saas-admin .ref-btn-modal-save-exact,
+.admin-workspace .saas-admin .ref-btn-add-prod-blue,
+.admin-workspace .saas-admin .ref-btn-add-field-blue,
+.admin-workspace .saas-admin .ref-btn-add-keys-submit,
+.admin-workspace .saas-admin .ref-btn-card-blue,
+.admin-workspace .saas-admin .ref-vip-btn,
+.admin-workspace .saas-admin .ref-salla-btn-insert,
+.admin-workspace .saas-admin .ref-btn-inline-submit { background:var(--color-primary); border:1px solid var(--color-primary); border-radius:8px; color:var(--color-surface); font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-primary-stock:hover,
+.admin-workspace .saas-admin .ref-btn-primary-gradient:hover,
+.admin-workspace .saas-admin .ref-btn-create-product:hover,
+.admin-workspace .saas-admin .ref-btn-modal-save-exact:hover,
+.admin-workspace .saas-admin .ref-btn-add-prod-blue:hover,
+.admin-workspace .saas-admin .ref-btn-add-field-blue:hover,
+.admin-workspace .saas-admin .ref-btn-add-keys-submit:hover,
+.admin-workspace .saas-admin .ref-btn-card-blue:hover,
+.admin-workspace .saas-admin .ref-vip-btn:hover,
+.admin-workspace .saas-admin .ref-salla-btn-insert:hover:not(:disabled),
+.admin-workspace .saas-admin .ref-btn-inline-submit:hover:not(:disabled) { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-surface); }
+.admin-workspace .saas-admin .ref-btn-approve-reset { background:color-mix(in srgb,var(--color-success) 8%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 25%,transparent); border-radius:8px; color:var(--color-success); font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-approve-reset:hover:not(:disabled) { background:#D1FADF; border-color:#75E0A7; color:#05603A; }
+.admin-workspace .saas-admin .ref-btn-reject-reset { background:var(--color-surface); border:1px solid color-mix(in srgb,var(--color-danger) 25%,transparent); border-radius:8px; color:var(--color-danger); font-weight:600; }
+.admin-workspace .saas-admin .ref-btn-reject-reset:hover:not(:disabled) { background:color-mix(in srgb,var(--color-danger) 8%,var(--color-surface)); border-color:#FDA29B; }
+.admin-workspace .saas-admin input:not([type="checkbox"]):not([type="radio"]),
+.admin-workspace .saas-admin textarea,
+.admin-workspace .saas-admin select,
+.admin-workspace .saas-admin .ref-text-input,
+.admin-workspace .saas-admin .ref-textarea-input,
+.admin-workspace .saas-admin .ref-number-input,
+.admin-workspace .saas-admin .ref-bulk-keys-textarea,
+.admin-workspace .saas-admin .ref-keys-bulk-textarea,
+.admin-workspace .saas-admin .ref-key-code-input,
+.admin-workspace .saas-admin .ref-cf-value-input,
+.admin-workspace .saas-admin .ref-image-url-input,
+.admin-workspace .saas-admin .ref-hero-search-input,
+.admin-workspace .saas-admin .ref-keys-control-select,
+.admin-workspace .saas-admin .ref-stock-change-prod-select { background:var(--color-surface); border:1px solid var(--color-border); border-radius:10px; color:var(--color-text); }
+.admin-workspace .saas-admin input:focus,
+.admin-workspace .saas-admin textarea:focus,
+.admin-workspace .saas-admin select:focus,
+.admin-workspace .saas-admin .ref-inline-key-field:focus,
+.admin-workspace .saas-admin .ref-salla-codes-textarea:focus,
+.admin-workspace .saas-admin .ref-lux-search-input:focus { border-color:var(--color-primary); box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .ref-data-table th,
+.admin-workspace .saas-admin .ref-keys-table th { background:var(--color-bg); color:var(--color-muted); }
+.admin-workspace .saas-admin .ref-table-responsive-container,
+.admin-workspace .admin-brand-mark { background:var(--color-surface); border:1px solid var(--color-border); border-radius:10px; }
+.admin-workspace .saas-admin .ref-reset-request-card.pending,
+.admin-workspace .saas-admin .ref-reset-request-card.approved,
+.admin-workspace .saas-admin .ref-reset-request-card.rejected,
+[dir="rtl"] .admin-workspace .saas-admin .ref-reset-request-card.pending,
+[dir="rtl"] .admin-workspace .saas-admin .ref-reset-request-card.approved,
+[dir="rtl"] .admin-workspace .saas-admin .ref-reset-request-card.rejected { background:var(--color-surface); border:1px solid var(--color-border); }
+.admin-workspace .saas-admin .ref-reset-request-card:hover,
+.admin-workspace .saas-admin .ref-stat-card:hover,
+.admin-workspace .saas-admin .ref-setting-card:hover,
+.admin-workspace .saas-admin .ref-admin-shortcut-card:hover { background:var(--color-surface); border-color:var(--color-border); }
+.admin-workspace .saas-admin .ref-status-badge-pill,
+.admin-workspace .saas-admin .ref-toggle-pill { border-radius:9999px; font-weight:600; }
+.admin-workspace .saas-admin .ref-status-badge-pill.pending,
+.admin-workspace .saas-admin .ref-low-stock-alert-box,
+.admin-workspace .saas-admin .ref-key-status-pill.pending { background:color-mix(in srgb,var(--color-warning) 8%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-warning) 25%,transparent); color:var(--color-warning); }
+.admin-workspace .saas-admin .ref-status-badge-pill.approved,
+.admin-workspace .saas-admin .ref-stock-healthy-box,
+.admin-workspace .saas-admin .ref-admin-live-pulse-badge,
+.admin-workspace .saas-admin .ref-detected-counter.active,
+.admin-workspace .saas-admin .ref-toggle-pill.active-green,
+.admin-workspace .saas-admin .ref-key-status-pill.available,
+.admin-workspace .saas-admin .ref-lux-status-pill.status-green,
+.admin-workspace .saas-admin .ref-stock-pill.ok { background:color-mix(in srgb,var(--color-success) 8%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 25%,transparent); color:var(--color-success); }
+.admin-workspace .saas-admin .ref-status-badge-pill.rejected,
+.admin-workspace .saas-admin .ref-stock-pill.low { background:color-mix(in srgb,var(--color-danger) 8%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-danger) 25%,transparent); color:var(--color-danger); }
+.admin-workspace .saas-admin .ref-reset-prod-pill,
+.admin-workspace .saas-admin .ref-reset-key-pill,
+.admin-workspace .saas-admin .ref-stock-pill,
+.admin-workspace .saas-admin .ref-stock-cat-pill,
+.admin-workspace .saas-admin .ref-prod-card-cat-badge,
+.admin-workspace .saas-admin .ref-prod-card-stock-pill,
+.admin-workspace .saas-admin .ref-role-pill,
+.admin-workspace .saas-admin .ref-status-tag,
+.admin-workspace .saas-admin .ref-key-status-pill,
+.admin-workspace .saas-admin .ref-keys-status-badge,
+.admin-workspace .saas-admin .ref-sub-tag,
+.admin-workspace .saas-admin .ref-event-action-pill,
+.admin-workspace .saas-admin .ref-timeline-stat-pill,
+.admin-workspace .saas-admin .ref-connected-badge,
+.admin-workspace .saas-admin .ref-cf-tag-key,
+.admin-workspace .saas-admin .ref-cf-tag-type,
+.admin-workspace .saas-admin .ref-readonly-pill-input { background:var(--color-bg); border:1px solid var(--color-border); color:var(--color-muted); font-weight:600; }
+.admin-workspace .saas-admin .ref-stock-live-badge { background:color-mix(in srgb,var(--color-success) 8%,var(--color-surface)); border:1px solid color-mix(in srgb,var(--color-success) 25%,transparent); color:var(--color-success); font-weight:600; }
+.admin-workspace .saas-admin .ref-reset-reason-bubble { background:var(--color-bg); border:1px solid var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .ref-reset-audit-note-box { background:var(--color-bg); border:1px dashed var(--color-border); color:var(--color-muted); }
+.admin-workspace .saas-admin .ref-stat-icon-wrap,
+.admin-workspace .saas-admin .shortcut-icon-box,
+.admin-workspace .saas-admin .ref-setting-icon-cube,
+.admin-workspace .saas-admin .ref-stock-icon-cube,
+.admin-workspace .saas-admin .ref-prod-card-icon-box,
+.admin-workspace .saas-admin .ref-card-img-placeholder,
+.admin-workspace .saas-admin .ref-stock-prod-thumb,
+.admin-workspace .saas-admin .ref-stock-prod-thumb-fallback,
+.admin-workspace .saas-admin .ref-preview-placeholder,
+.admin-workspace .saas-admin .ref-inv-art { background:var(--color-surface-hover); border:1px solid var(--color-border); color:var(--color-muted); }
+.admin-workspace .saas-admin .ref-timeline-empty,
+.admin-workspace .saas-admin .ref-empty-admin-state,
+.admin-workspace .saas-admin .drawer-empty { background:var(--color-surface); border:1px dashed var(--color-border); color:var(--color-muted); }
+.admin-workspace .saas-admin .ref-setting-toggle-wrap .ref-toggle-pill { background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-muted); }
+.admin-workspace .image2-back-home-btn { background:var(--color-surface); border:1px solid var(--color-border); border-radius:10px; color:var(--color-muted); font-weight:600; }
+.admin-workspace .image2-header-title { color:var(--color-text); font-weight:700; }
+.admin-workspace .image2-ctrl-btn { background:var(--color-surface); border:1px solid var(--color-border); border-radius:10px; color:var(--color-muted); }
+.admin-workspace .image2-divider { border-color:var(--color-border); }
+.admin-workspace .admin-brand-mark img { border-radius:8px; }
+.admin-workspace .image2-ctrl-btn.ghost-link { background:transparent; border-color:transparent; color:var(--color-muted); }
+.admin-workspace .image2-ctrl-btn.ghost-link:hover { background:var(--color-surface-hover); border-color:transparent; color:var(--color-text); }
+.admin-workspace .saas-admin .ref-overview-admin-header,
+.admin-workspace .saas-admin .admin-overview-heading,
+.admin-workspace .saas-admin .admin-overview-stat,
+.admin-workspace .saas-admin .ref-product-card,
+.admin-workspace .saas-admin .ref-product-keys-info-card,
+.admin-workspace .saas-admin .ref-keys-stats-mini-bar .stat-item,
+.admin-workspace .saas-admin .ref-hero-card,
+.admin-workspace .saas-admin .ref-metric-card,
+.admin-workspace .saas-admin .ref-quick-actions-card,
+.admin-workspace .saas-admin .ref-bottom-brand-banner,
+.admin-workspace .saas-admin .ref-quick-action-row,
+.admin-workspace .saas-admin .ref-power-action-btn,
+.admin-workspace .saas-admin .ref-btn-modal-duplicate,
+.admin-workspace .saas-admin .ref-count-chip,
+.admin-workspace .saas-admin .ref-count-manual-input,
+.admin-workspace .saas-admin .ref-generated-textarea,
+.admin-workspace .saas-admin .ref-salla-codes-card,
+.admin-workspace .saas-admin .ref-salla-codes-textarea,
+.admin-workspace .saas-admin .ref-salla-duration-chip,
+.admin-workspace .saas-admin .ref-salla-wide-add-btn,
+.admin-workspace .saas-admin .ref-inline-single-key-panel,
+.admin-workspace .saas-admin .ref-inline-key-field,
+.admin-workspace .saas-admin .ref-inline-duration-select,
+.admin-workspace .saas-admin .ref-lux-keys-container,
+.admin-workspace .saas-admin .ref-lux-search-input,
+.admin-workspace .saas-admin .ref-lux-tab-chip,
+.admin-workspace .saas-admin .ref-lux-key-card,
+.admin-workspace .saas-admin .ref-lux-key-code-block,
+.admin-workspace .saas-admin .ref-table-stock-badge-btn,
+.admin-workspace .saas-admin .ref-btn-icon-action,
+.admin-workspace .saas-admin .ref-btn-stock-trigger-secondary,
+.admin-workspace .saas-admin .ref-card-media-banner,
+.admin-workspace .saas-admin .ref-prod-card-banner,
+.admin-workspace .saas-admin .ref-prod-card-actions-2btn,
+.admin-workspace .saas-admin .ref-keys-duration-select,
+.admin-workspace .saas-admin .ref-keys-search-wrap input,
+.admin-workspace .saas-admin .ref-field-group input,
+.admin-workspace .saas-admin .ref-field-group select,
+.admin-workspace .saas-admin .ref-field-group textarea { background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .ref-quick-action-row:hover,
+.admin-workspace .saas-admin .ref-lux-key-card:hover,
+.admin-workspace .saas-admin .ref-salla-wide-add-btn:hover,
+.admin-workspace .saas-admin .ref-btn-icon-action:hover,
+.admin-workspace .saas-admin .ref-btn-stock-trigger-secondary:hover { background:var(--color-bg); border-color:var(--color-border); }
+.admin-workspace .saas-admin .ref-hero-avatar-wrap,
+.admin-workspace .saas-admin .ref-metric-icon-wrap,
+.admin-workspace .saas-admin .ref-brand-banner-icon,
+.admin-workspace .saas-admin .ref-action-icon-pill,
+.admin-workspace .saas-admin .ref-avatar-fallback,
+.admin-workspace .saas-admin .ref-event-avatar-fallback,
+.admin-workspace .saas-admin .ref-session-avatar-fallback,
+.admin-workspace .saas-admin .ref-vip-avatar-fallback,
+.admin-workspace .saas-admin .ref-salla-duration-chip.active,
+.admin-workspace .saas-admin .ref-lux-tab-chip.active,
+.admin-workspace .saas-admin .ref-lux-tab-chip:hover,
+.admin-workspace .saas-admin .ref-count-chip:hover { background:var(--color-surface-hover); border:1px solid var(--color-border); color:var(--color-text); }
+.admin-workspace .saas-admin .ref-hero-pulse-dot { background:var(--color-primary); color:var(--color-primary); }
+.admin-workspace .saas-admin .text-success { color:var(--color-success); }
+.admin-workspace .saas-admin .text-warning { color:var(--color-warning); }
+.admin-workspace .saas-admin .ref-detected-counter.active .ref-toggle-thumb,
+.admin-workspace .saas-admin .ref-toggle-pill.active-green .ref-toggle-thumb,
+.admin-workspace .saas-admin .ref-lux-status-pill.status-green .status-dot { background:var(--color-success); color:var(--color-success); }
+.admin-workspace .saas-admin .ref-inv-stats-row { background:var(--color-bg); border:1px solid var(--color-border); color:var(--color-muted); }
+.admin-workspace .saas-admin .ref-modal-bottom-actions-exact,
+.admin-workspace .saas-admin .ref-modal-bottom-bar { background:var(--color-surface); }
+.admin-workspace .saas-admin .ref-btn-primary-action { background:var(--color-primary) !important; border:1px solid var(--color-primary) !important; border-radius:8px !important; color:var(--color-surface) !important; font-weight:600 !important; }
+.admin-workspace .saas-admin .ref-btn-primary-action:hover,
+.admin-workspace .saas-admin .ref-btn-cyan-insert:hover:not(:disabled) { background:var(--color-primary) !important; border-color:var(--color-primary) !important; box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .ref-btn-secondary-action { background:var(--color-surface) !important; border:1px solid var(--color-border) !important; border-radius:8px !important; color:var(--color-muted) !important; }
+.admin-workspace .saas-admin .ref-btn-secondary-action:hover { background:var(--color-bg) !important; border-color:var(--color-border) !important; color:var(--color-text) !important; }
+.admin-workspace .saas-admin .ref-modal-tab-pill.active-blue { background:var(--color-primary) !important; box-shadow:var(--shadow-card) !important; color:var(--color-surface) !important; }
+.admin-workspace .saas-admin .ref-modal-tab-pill.active-cyan { background:var(--color-surface-hover) !important; border-color:var(--color-border) !important; box-shadow:var(--shadow-card) !important; color:var(--color-text) !important; }
+.admin-workspace .saas-admin .ref-product-card.selected { border-color:var(--color-primary) !important; box-shadow:var(--shadow-card) !important; }
+.admin-workspace .saas-admin .ref-lux-key-code { color:var(--color-text); text-shadow:none !important; }
+
+/* Sidebar, content canvas, tables and forms. */
+.admin-workspace { padding-inline:28px; }
+.admin-workspace .saas-admin { display:grid; grid-template-columns:220px minmax(0,1fr); gap:28px; width:100%; max-width:1480px; padding:28px 0 60px; margin:auto; background:transparent; }
+.admin-workspace .saas-admin.admin-collapsed { grid-template-columns:72px minmax(0,1fr); }
+.admin-workspace .admin-ref-nav-bar { display:block; position:sticky; top:20px; align-self:start; padding:12px; margin:0; border:1px solid var(--color-border); border-radius:18px; background:var(--color-surface); box-shadow:none; min-width:0; }
+.admin-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:50px; padding:0 7px 10px; border-bottom:1px solid var(--color-border); margin-bottom:12px; }
+.admin-sidebar-heading > span { color:var(--color-muted); font-size:11px; font-weight:600; letter-spacing:.6px; }
+.admin-sidebar-heading button { display:grid; place-items:center; width:32px; height:32px; background:transparent; color:var(--color-muted); border:1px solid var(--color-border); border-radius:8px; cursor:pointer; }
+.admin-workspace .admin-ref-nav-track { display:flex; flex-direction:column; align-items:stretch; gap:6px; overflow:visible; padding:0; min-width:0; }
+.admin-workspace .admin-ref-nav-pill { display:flex; align-items:center; gap:10px; min-height:45px; padding:11px 12px; width:100%; background:transparent; border:1px solid transparent; color:var(--color-muted); border-radius:10px; font-size:13px; font-weight:500; text-align:start; }
+.admin-workspace .admin-ref-nav-pill > svg { flex-shrink:0; stroke-width:1.6; }
+.admin-workspace .admin-ref-nav-pill.active { background:var(--color-primary-soft); border-color:var(--luxe-accent-line); color:var(--color-primary); }
+.admin-workspace .admin-ref-nav-pill:hover { background:var(--color-surface-hover); }
+.admin-workspace .nav-pill-counter { margin-inline-start:auto; font-size:10px; border:0; background:var(--color-surface-hover); color:var(--color-muted); border-radius:6px; }
+.admin-workspace .admin-collapsed .admin-sidebar-heading > span,.admin-workspace .admin-collapsed .admin-ref-nav-pill > span { display:none; }
+.admin-workspace .admin-collapsed .admin-sidebar-heading { justify-content:center; padding-inline:0; }
+.admin-workspace .admin-collapsed .admin-ref-nav-pill { justify-content:center; padding-inline:0; }
+.admin-workspace .admin-ref-main-view { min-width:0; width:100%; padding:0; }
+.admin-workspace .ref-view-section { animation:workspace-enter .2s ease both; }
+.admin-workspace :is(.ref-overview-admin-header,.ref-section-toolbar,.ref-products-header-clean,.admin-overview-heading) { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:0 0 24px; border:0; border-bottom:1px solid var(--color-border); border-radius:0; margin-bottom:24px; background:transparent; }
+.admin-workspace :is(.ref-section-title,.admin-overview-heading h1,.ref-overview-admin-header h2) { color:var(--color-text); font-size:clamp(20px,2vw,27px); line-height:1.6; font-weight:600; letter-spacing:-.4px; }
+.admin-workspace :is(.ref-section-subtitle,.ref-setting-desc,.ref-modal-subdesc) { color:var(--color-muted); font-size:13px; line-height:1.9; max-width:720px; }
+.admin-workspace :is(.ref-toolbar-actions,.ref-products-filters,.ref-filter-row,.ref-keys-toolbar) { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.admin-workspace :is(.ref-hero-card,.ref-metric-card,.ref-quick-actions-card,.ref-inventory-product-card,.ref-setting-card,.ref-product-card,.ref-prod-card,.admin-overview-stat) { background:var(--color-surface); border:1px solid var(--color-border); border-radius:18px; box-shadow:var(--shadow-card); overflow:hidden; }
+.admin-workspace :is(.ref-metric-card,.admin-overview-stat,.ref-setting-card) { padding:24px; }
+.admin-workspace :is(.ref-metric-card strong,.admin-overview-stat strong) { font-size:28px; font-weight:650; color:var(--color-text); }
+.admin-workspace .ref-inventory-product-cards-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.admin-workspace .ref-inventory-product-card { padding:20px; }
+.admin-workspace .ref-inv-art { width:48px; height:48px; border-radius:12px; background:var(--color-surface-hover); color:var(--color-primary); }
+.admin-workspace .ref-inv-art img { width:100%; height:100%; object-fit:contain; }
+.admin-workspace :is(.ref-settings-grid,.ref-stats-grid) { gap:20px; }
+.admin-workspace :is(.ref-setting-card-header,.ref-setting-card-body) { background:transparent; border-color:var(--color-border); }
+.admin-workspace .ref-setting-title { font-size:16px; color:var(--color-text); font-weight:600; }
+.admin-workspace :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { min-height:42px; padding:10px 12px; background:var(--color-bg); border:1px solid var(--color-border); color:var(--color-text); border-radius:10px; font-family:inherit; font-size:13px; line-height:1.7; box-shadow:none; min-width:0; }
+.admin-workspace input[type="checkbox"],.admin-workspace input[type="radio"] { accent-color:var(--color-primary); }
+.admin-workspace :is(input,select,textarea)::placeholder { color:var(--color-muted); opacity:.8; }
+.admin-workspace :is(.ref-field-label,.ref-field-group label,.ref-label-row label) { color:var(--color-muted); font-size:12px; font-weight:500; }
+.admin-workspace :is(.ref-btn-primary-gradient,.ref-btn-primary,.ref-btn-save,.ref-stock-btn-save,.ref-salla-btn-insert,.ref-btn-inline-submit) { min-height:42px; padding:10px 16px; border:1px solid var(--color-primary); border-radius:10px; background:var(--color-primary); color:#06202b; box-shadow:none; font-size:13px; font-weight:600; }
+.admin-workspace[data-theme="light"] :is(.ref-btn-primary-gradient,.ref-btn-primary,.ref-btn-save,.ref-stock-btn-save,.ref-salla-btn-insert,.ref-btn-inline-submit) { color:#fff; }
+.admin-workspace :is(.ref-btn-secondary,.ref-btn-ghost,.ref-filter-btn,.ref-btn-modal-duplicate) { min-height:40px; border-radius:10px; border-color:var(--color-border); background:var(--color-surface); color:var(--color-muted); font-size:13px; }
+.admin-workspace .saas-admin .ref-btn-primary-action { background:var(--color-primary) !important; color:#06202b !important; border-color:var(--color-primary) !important; box-shadow:none !important; }
+.admin-workspace[data-theme="light"] .saas-admin .ref-btn-primary-action { color:#fff !important; }
+.admin-workspace .saas-admin :is(.ref-modal-card,.ref-stock-modal-card,.ref-product-edit-modal-card) { background:var(--color-surface) !important; border-color:var(--color-border) !important; box-shadow:0 24px 70px #00000040 !important; }
+.admin-workspace :is(.ref-table-container,.ref-table-wrapper,.ref-keys-table-wrapper,.ref-customers-table-wrapper,.ref-orders-table-wrapper) { width:100%; max-width:100%; overflow-x:auto; border:1px solid var(--color-border); border-radius:14px; background:var(--color-surface); }
+.admin-workspace table { width:100%; border-collapse:collapse; background:var(--color-surface); color:var(--color-text); font-size:13px; }
+.admin-workspace table th { background:var(--color-surface-hover); color:var(--color-muted); padding:14px 16px; text-align:start; font-size:11px; font-weight:600; white-space:nowrap; border-bottom:1px solid var(--color-border); }
+.admin-workspace table td { padding:15px 16px; border-bottom:1px solid var(--color-border); color:var(--color-text); }
+.admin-workspace table tr:last-child td { border-bottom:0; }
+.admin-workspace table tbody tr:hover { background:var(--color-primary-soft); }
+.admin-workspace table :is(button,a) { min-height:32px; }
+.admin-workspace .ref-lux-key-code,.admin-workspace .ref-key-code-cell code { color:var(--color-text); font-family:ui-monospace,monospace; }
+.admin-workspace :is(.ref-modal-card,.ref-stock-modal-card) :is(h3,h4,strong) { color:var(--color-text); }
+.admin-workspace .modal-form { display:grid; gap:20px; }
+.admin-workspace .form-field { display:grid; gap:8px; }
+.admin-workspace .drawer-backdrop { position:fixed; inset:0; z-index:95; background:#030711a8; backdrop-filter:blur(4px); }
+.admin-workspace .customer-drawer { background:var(--color-surface); border-color:var(--color-border); color:var(--color-text); width:min(620px,100vw); }
+.admin-workspace :is(.drawer-header,.drawer-section,.drawer-footer) { border-color:var(--color-border); background:transparent; }
+@media(max-width:1100px) { .admin-workspace .saas-admin { grid-template-columns:180px minmax(0,1fr); gap:20px; } .admin-workspace .ref-inventory-product-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) { .admin-workspace { padding-inline:18px; } .admin-workspace .saas-admin,.admin-workspace .saas-admin.admin-collapsed { display:block; padding-top:18px; } .admin-workspace .admin-ref-nav-bar { position:static; margin-bottom:24px; } .admin-workspace .admin-ref-nav-track { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-workspace .admin-collapsed .admin-ref-nav-track { display:none; } .admin-workspace .admin-collapsed .admin-sidebar-heading > span { display:block; } .admin-workspace .admin-collapsed .admin-sidebar-heading { justify-content:space-between; } .admin-workspace .admin-sidebar-heading { border:0; margin:0; padding-bottom:0; } .admin-workspace .admin-ref-nav-track { padding-top:12px; } .admin-workspace .admin-ref-main-view { overflow:visible; } .admin-workspace .ref-inventory-product-cards-grid { grid-template-columns:1fr; } .admin-workspace :is(.ref-section-toolbar,.ref-products-header-clean) { gap:14px; } .admin-workspace :is(.ref-toolbar-actions,.ref-products-filters) { width:100%; } .admin-workspace :is(.ref-btn-primary-gradient,.ref-text-input,.ref-search-input) { max-width:100%; } .admin-workspace :is(.ref-settings-grid,.ref-overview-stats-grid) { grid-template-columns:1fr; } }
+.admin-workspace .customer-drawer-panel { background:var(--color-surface); border-color:var(--color-border); color:var(--color-text); width:min(620px,100vw); }
+.admin-workspace .saas-admin .ref-overview-admin-header { background:transparent; border:0; border-bottom:1px solid var(--color-border); border-radius:0; padding:0 0 24px; }
+.admin-workspace .saas-admin .ref-stat-card { padding:22px; border:1px solid var(--color-border); border-radius:16px; background:var(--color-surface); }
+.admin-workspace .saas-admin :is(.ref-stat-label,.ref-stat-sub,.ref-action-desc,.ref-timeline-empty) { font-size:12px; line-height:1.9; }
+.admin-workspace .saas-admin .ref-stat-number { font-size:29px; font-weight:650; }

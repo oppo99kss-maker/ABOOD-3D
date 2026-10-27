@@ -1,0 +1,24 @@
+// Run only against an isolated local PostgreSQL-backed app, never production.
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const require=createRequire(import.meta.url);const {encode}=require('next-auth/jwt');
+const base=process.env.TEST_APP_URL;const secret=process.env.TEST_SESSION_SECRET;
+const target=new URL(base||'http://invalid');
+if(!['localhost','127.0.0.1'].includes(target.hostname)||!secret)throw new Error('An isolated local test app and TEST_SESSION_SECRET are required.');
+const cookie=async email=>'next-auth.session-token='+await encode({secret,token:{name:'Isolated QA',email,sub:email}});
+const admin=await cookie('redesign-admin@example.invalid'),customer=await cookie('redesign-customer@example.invalid'),other=await cookie('redesign-other@example.invalid');
+async function call(cookie,data,query='') {const response=await fetch(base+'/api/portal'+query,{method:data?'POST':'GET',headers:{Cookie:cookie,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})});return {status:response.status,data:await response.json()};}
+let checks=0;const check=(actual,expected)=>{assert.equal(actual,expected);checks++;};
+check((await fetch(base+'/api/portal')).status,401);
+check((await call(customer,{action:'createProduct',name:'forbidden'})).status,403);
+const created=await call(admin,{action:'createProduct',name:'Isolated license verification',description:'Test database only',category:'QA',defaultDurationDays:30});check(created.status,200);assert.ok(created.data.product.id);const id=created.data.product.id;
+const generated=await call(admin,{action:'generateKeys',productId:id,count:3,durationDays:30});check(generated.status,200);check(generated.data.keys.length,3);const keys=generated.data.keys;
+const invalid=await call(customer,{action:'redeem',code:'INVALID-LOCAL-KEY'});check(invalid.status,400);check(invalid.data.code,'KEY_NOT_FOUND');
+const valid=await call(customer,{action:'redeem',code:keys[0]});check(valid.status,200);check(valid.data.success,true);check(valid.data.product.id,id);
+const repeated=await call(customer,{action:'redeem',code:keys[0]});check(repeated.status,400);check(repeated.data.code,'KEY_ALREADY_USED');
+const library=await call(customer);check(library.status,200);check(library.data.products.some(p=>p.id===id),true);
+const isolated=await call(other);check(isolated.status,200);check(isolated.data.products.some(p=>p.id===id),false);
+const concurrent=await Promise.all([call(customer,{action:'redeem',code:keys[1]}),call(other,{action:'redeem',code:keys[1]})]);assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,400]);checks++;check(concurrent.filter(r=>r.data.success===true).length,1);
+const reset=await call(customer,{action:'requestKeyReset',productId:id,productName:'Isolated license verification',reason:'Local integration verification only'});check(reset.status,200);check(reset.data.ok,true);
+const settings=await call(admin,{action:'updateSettings',site_name:'Isolated SpooFx QA',description:'Test only',maintenance_mode:false,maintenance_message:'',allow_new_activations:true,low_stock_threshold:5});check(settings.status,200);
+console.log(JSON.stringify({checks,result:'passed',scope:'isolated local PostgreSQL',tested:['product creation','key generation','invalid key','valid redemption','reuse denial','account isolation','concurrent single-use','reset request','settings','server admin permission']}));

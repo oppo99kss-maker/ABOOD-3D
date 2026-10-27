@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 export function usePreferences() {
   const [lang, setLang] = useState<"ar" | "en">("ar");
-  const [isDark, setDark] = useState(false);
+  const [isDark, setDark] = useState(true);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
       setLang(localStorage.getItem("abood.language") === "en" ? "en" : "ar");
-      setDark(localStorage.getItem("abood.theme") === "dark");
+      setDark(localStorage.getItem("abood.theme") !== "light");
     } catch {}
     setReady(true);
   }, []);

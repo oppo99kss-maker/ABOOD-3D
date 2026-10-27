@@ -1,4 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+async function navigateTo(page: Page, name: string) {
+  const menu = page.getByRole("button", { name: "فتح القائمة", exact: true });
+  if (await menu.isVisible()) await menu.click();
+  await page.locator(".image2-nav-links").getByRole("button", { name, exact: true }).click();
+}
+
 
 test("login is clear when Google is not configured", async ({ page }) => {
   const errors: string[] = [];
@@ -99,8 +105,10 @@ test("parseRawKeyList correctly parses multiline, comma, numbered, and prefixed 
 
 
 
-test("login preferences persist with a light Arabic default", async ({ page }) => {
+test("login preferences persist with a dark Arabic default", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "الوضع الفاتح", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.getByRole("button", { name: "الوضع الداكن", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -117,6 +125,7 @@ test("portal stays open and responsive across themes and languages", async ({ br
   const { encode } = await import("next-auth/jwt");
   const token = await encode({ secret: "local-playwright-session-secret-not-for-production", token: { name: "Test Customer", email: "customer@example.invalid", sub: "local-ui-test" } });
   const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.setItem("abood.theme", "light"));
   await context.addCookies([{ name: "next-auth.session-token", value: token, domain: "localhost", path: "/" }]);
   const page = await context.newPage();
   const errors: string[] = [];
@@ -124,10 +133,10 @@ test("portal stays open and responsive across themes and languages", async ({ br
   await page.route("**/api/portal", route => route.fulfill({ json: { products: [], inventory: [], guides: [], isAdmin: false } }));
   await page.goto("http://localhost:3101/portal");
   await expect(page.locator(".image2-portal-shell")).toBeVisible();
-  for (const width of [1440, 390]) {
+  for (const width of [1600, 1280, 820, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.getByRole("button", { name: "حسابي", exact: true }).click();
-    await expect(page.locator(".luxe-card").first()).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await navigateTo(page, "حسابي");
+    await expect(page.locator(".luxe-card").first()).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(page.locator(".luxe-user-name")).toHaveCSS("color", "rgb(21, 38, 62)");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
@@ -138,7 +147,7 @@ test("portal stays open and responsive across themes and languages", async ({ br
     await page.locator(".image2-nav-actions .lang-pill").click();
     await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
     for (const name of ["تفعيل مفتاح", "منتجاتي", "مركز المساعدة", "الرئيسية"]) {
-      await page.locator(".image2-nav-links").getByRole("button", { name, exact: true }).click();
+      await navigateTo(page, name);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
   }
@@ -156,8 +165,8 @@ test("product guide opens local media and article library", async ({ browser, re
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/api/portal", route => route.fulfill({ json: { products: [{ id: "ui-guide-fixture", name: "SpooFX", instructions: "تعليمات المنتج", files: [], license_key: "TEST-ONLY" }], inventory: [], guides: [], isAdmin: false } }));
   await page.goto("http://localhost:3101/portal");
-  await page.locator(".image2-nav-links").getByRole("button", { name: "منتجاتي", exact: true }).click();
-  await expect(page.locator(".image2-nav-links [aria-current='page']")).toHaveCount(1);
+  await navigateTo(page, "منتجاتي");
+  await expect(page.locator(".workspace-nav-links [aria-current='page']")).toHaveCount(1);
   await page.getByRole("button", { name: "دليل المنتج", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "تشغيل شرح شرح المنتج الأساسي", exact: true }).click();

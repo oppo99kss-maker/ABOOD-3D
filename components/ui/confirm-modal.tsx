@@ -1,6 +1,7 @@
 "use client";
+import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmModalProps {
@@ -28,20 +29,10 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    cancelBtnRef.current?.focus();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onCancel]);
-
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onCancel}>
+    <ModalBackdrop className="modal-backdrop" onClick={onCancel}>
       <div
         className="modal-card confirm-modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -90,6 +81,6 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   );
 }

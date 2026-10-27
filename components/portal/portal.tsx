@@ -1,4 +1,5 @@
 "use client";
+import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
@@ -43,7 +44,9 @@ import {
   BookOpen,
   Copy,
 } from "lucide-react";
-import { PortalNavigation, type PortalTab } from "./portal-navigation";
+import { type PortalTab } from "./portal-navigation";
+import { WorkspaceNavigation } from "./workspace-navigation";
+import { WorkspaceOverview } from "./workspace-overview";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
 import { notify } from "@/lib/notify";
@@ -251,14 +254,16 @@ export function Portal({ user }: { user: PortalUser }) {
       body: JSON.stringify(payload),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || result.message || "SERVICE_UNAVAILABLE");
+    if (!response.ok) throw new Error(result.error || result.code || "SERVICE_UNAVAILABLE");
     return result;
   }
 
   function errorText(error: unknown) {
     const code = error instanceof Error ? error.message : "SERVICE_UNAVAILABLE";
     if (code === "INVALID_KEY") return t("صيغة المفتاح غير صحيحة، يرجى التأكد من الرمز المدخل.", "Invalid key format, please check the entered code.");
-    if (code === "KEY_UNAVAILABLE") return t("المفتاح غير موجود، تم استخدامه مسبقاً، أو غير متاح.", "This key does not exist, has already been redeemed, or is unavailable.");
+    if (code === "KEY_NOT_FOUND" || code === "KEY_UNAVAILABLE") return t("المفتاح غير موجود، تم استخدامه مسبقاً، أو غير متاح.", "This key does not exist, has already been redeemed, or is unavailable.");
+    if (code === "KEY_ALREADY_USED") return t("تم استخدام هذا المفتاح مسبقًا.", "This key has already been used.");
+    if (code === "PRODUCT_INACTIVE") return t("المنتج غير متاح للتفعيل حاليًا.", "This product is currently unavailable for activation.");
     if (code === "KEY_BLOCKED") return t("هذا المفتاح تم حظره لأسباب أمنية. تواصل مع الدعم الفني.", "This key has been blocked for security reasons. Contact support.");
     if (code === "KEY_EXPIRED") return t("هذا المفتاح انتهت صلاحيته.", "This key has expired.");
     if (code === "REDEMPTIONS_DISABLED") return t("التفعيل متوقف مؤقتاً لأعمال الصيانة.", "Redemptions are temporarily suspended for maintenance.");
@@ -293,7 +298,7 @@ export function Portal({ user }: { user: PortalUser }) {
         setKey(text.trim());
       }
     } catch {
-      // clipboard permission denied
+      notify.error(t("تعذّر اللصق", "Could not paste"), t("الصق المفتاح يدويًا في الحقل.", "Paste the key manually into the field."));
     }
   }
 
@@ -308,7 +313,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
   const activeProducts = useMemo(() => {
     return data.products.filter((p) => {
-      const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
+      const isExpired = Boolean(p.expires_at && new Date(p.expires_at) <= new Date()) || Boolean(p.license_status && p.license_status !== "ACTIVE");
       if (isExpired) return false;
       if (!query.trim()) return true;
       return (p.name + (p.description || "") + (p.category || "")).toLowerCase().includes(query.toLowerCase());
@@ -317,7 +322,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
   const expiredProducts = useMemo(() => {
     return data.products.filter((p) => {
-      const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
+      const isExpired = Boolean(p.expires_at && new Date(p.expires_at) <= new Date()) || Boolean(p.license_status && p.license_status !== "ACTIVE");
       if (!isExpired) return false;
       if (!query.trim()) return true;
       return (p.name + (p.description || "") + (p.category || "")).toLowerCase().includes(query.toLowerCase());
@@ -325,65 +330,14 @@ export function Portal({ user }: { user: PortalUser }) {
   }, [data.products, query]);
 
   const activeProductsCount = useMemo(() => {
-    return data.products.filter((p) => !p.expires_at || new Date(p.expires_at) > new Date()).length;
+    return data.products.filter((p) => (!p.license_status || p.license_status === "ACTIVE") && (!p.expires_at || new Date(p.expires_at) > new Date())).length;
   }, [data.products]);
 
 
   if (activeTab === "admin" && data.isAdmin) {
-    // The admin workspace always renders in the light identity, regardless of the
-    // portal theme, so the control space keeps one calm look.
     return (
-      <div className="portal-admin-wrapper" data-theme="light" dir={ar ? "rtl" : "ltr"}>
-        <div className="image2-container" style={{ padding: "0 24px" }}>
-          <header className="image2-header-row" style={{ paddingBottom: "16px" }}>
-            <div className="image2-header-title-wrap">
-              <span className="admin-brand-mark">
-                <Image src="/logo.png" alt="SpooFx" width={28} height={28} priority />
-              </span>
-              <h1 className="image2-header-title">{t("لوحة الإدارة", "Admin Dashboard")}</h1>
-            </div>
-
-            <div className="image2-header-controls">
-              <button
-                type="button"
-                className="image2-ctrl-btn ghost-link"
-                onClick={() => navigate("overview")}
-                title={t("العودة للرئيسية", "Back to Home")}
-              >
-                {ar ? <ArrowRight size={15} /> : <ArrowLeft size={15} />}
-                <span>{t("الرئيسية", "Home")}</span>
-              </button>
-              <button
-                type="button"
-                className="image2-ctrl-btn icon-only"
-                onClick={toggleTheme}
-                title={isDark ? t("الوضع الفاتح", "Light Mode") : t("الوضع الداكن", "Dark Mode")}
-                aria-label="Toggle theme"
-              >
-                {isDark ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-              <button
-                type="button"
-                className="image2-ctrl-btn lang-pill"
-                onClick={() => setLang(ar ? "en" : "ar")}
-                title={t("تغيير اللغة", "Switch Language")}
-              >
-                <span>{ar ? "EN" : "عربي"}</span>
-                <Globe size={14} />
-              </button>
-              <button
-                type="button"
-                className="image2-ctrl-btn icon-only logout-btn"
-                onClick={() => void signOut({ callbackUrl: "/" })}
-                title={t("تسجيل الخروج", "Sign Out")}
-                aria-label="Sign Out"
-              >
-                <LogOut size={15} />
-              </button>
-            </div>
-          </header>
-          <hr className="image2-divider" style={{ marginBottom: "20px" }} />
-        </div>
+      <div className="portal-admin-wrapper admin-workspace" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+        <WorkspaceNavigation activeTab="admin" onNavigate={navigate} lang={lang} isDark={isDark} isAdmin={data.isAdmin} user={user} onToggleTheme={toggleTheme} onToggleLanguage={() => setLang(ar ? "en" : "ar")} onLogout={() => void signOut({ callbackUrl: "/" })} />
         <AdminControlSpace
           products={data.allProducts && data.allProducts.length > 0 ? data.allProducts : (data.inventory && data.inventory.length > 0 ? data.inventory : data.products)}
           inventory={data.inventory}
@@ -407,111 +361,9 @@ export function Portal({ user }: { user: PortalUser }) {
   return (
     <div className="image2-portal-shell" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
       <div className="image2-container">
-        {/* Top Navigation Bar: brand + links + account controls */}
-        <nav className="image2-topnav" aria-label={t("التنقل الرئيسي", "Main navigation")}>
-          <button
-            type="button"
-            className="image2-brand"
-            onClick={() => navigate("overview")}
-            title={t("الصفحة الرئيسية", "Home")}
-          >
-            <Image src="/logo.png" alt="SpooFx" width={34} height={34} className="image2-brand-logo" priority />
-            <span className="image2-brand-name">SpooFx</span>
-          </button>
+        <WorkspaceNavigation activeTab={activeTab} onNavigate={navigate} lang={lang} isDark={isDark} isAdmin={data.isAdmin} user={user} onToggleTheme={toggleTheme} onToggleLanguage={() => setLang(ar ? "en" : "ar")} onLogout={() => void signOut({ callbackUrl: "/" })} />
 
-          <div className="image2-nav-links">
-            <button
-              type="button"
-              className={`image2-nav-link ${activeTab === "overview" ? "active" : ""}`}
-              aria-current={activeTab === "overview" ? "page" : undefined}
-              onClick={() => navigate("overview")}
-            >
-              <House size={17} aria-hidden="true" /><span>{t("الرئيسية", "Home")}</span>
-            </button>
-            <button
-              type="button"
-              className={`image2-nav-link ${activeTab === "redeem" ? "active" : ""}`}
-              aria-current={activeTab === "redeem" ? "page" : undefined}
-              onClick={() => navigate("redeem")}
-            >
-              <KeyRound size={17} aria-hidden="true" /><span>{t("تفعيل مفتاح", "Activate Key")}</span>
-            </button>
-            <button
-              type="button"
-              className={`image2-nav-link ${activeTab === "my-products" ? "active" : ""}`}
-              aria-current={activeTab === "my-products" ? "page" : undefined}
-              onClick={() => navigate("my-products")}
-            >
-              <Package size={17} aria-hidden="true" /><span>{t("منتجاتي", "My Products")}</span>
-            </button>
-            <button
-              type="button"
-              className={`image2-nav-link ${activeTab === "tickets" ? "active" : ""}`}
-              aria-current={activeTab === "tickets" ? "page" : undefined}
-              onClick={() => navigate("tickets")}
-            >
-              <LifeBuoy size={17} aria-hidden="true" /><span>{t("مركز المساعدة", "Help Center")}</span>
-            </button>
-            <button
-              type="button"
-              className={`image2-nav-link ${activeTab === "profile" ? "active" : ""}`}
-              aria-current={activeTab === "profile" ? "page" : undefined}
-              onClick={() => navigate("profile")}
-            >
-              <UserRound size={17} aria-hidden="true" /><span>{t("حسابي", "My Account")}</span>
-            </button>
-          </div>
-
-          <div className="image2-nav-actions">
-            {data.isAdmin && (
-              <button
-                type="button"
-                className="image2-ctrl-btn admin-pill"
-                onClick={() => navigate("admin")}
-                title={t("لوحة الإدارة", "Admin Dashboard")}
-              >
-                <ShieldCheck size={15} />
-                <span>{t("الإدارة", "Admin")}</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="image2-ctrl-btn icon-only"
-              onClick={toggleTheme}
-              title={isDark ? t("الوضع الفاتح", "Light Mode") : t("الوضع الداكن", "Dark Mode")}
-              aria-label="Toggle theme"
-            >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <button
-              type="button"
-              className="image2-ctrl-btn lang-pill"
-              onClick={() => setLang(ar ? "en" : "ar")}
-              title={t("تغيير اللغة", "Switch Language")}
-            >
-              <span>{ar ? "EN" : "عربي"}</span>
-              <Globe size={14} />
-            </button>
-            <button
-              type="button"
-              className="image2-logout-btn"
-              onClick={() => void signOut({ callbackUrl: "/" })}
-              title={t("تسجيل الخروج", "Sign Out")}
-            >
-              <LogOut size={14} />
-              <span>{t("تسجيل خروج", "Sign Out")}</span>
-            </button>
-          </div>
-        </nav>
-
-        {activeTab !== "overview" && activeTab !== "my-products" && (
-          <div className="image2-page-head">
-            <h1 className="image2-header-title">{titles[activeTab].title}</h1>
-            {activeTab !== "profile" && <p className="image2-page-desc">{titles[activeTab].desc}</p>}
-          </div>
-        )}
-        {activeTab !== "profile" && activeTab !== "my-products" && <hr className="image2-divider" />}
-
+        {activeTab !== "overview" && <div className="workspace-page-heading"><p className="workspace-eyebrow">SPOOFX / {t("مساحتك الرقمية", "YOUR WORKSPACE")}</p><h1>{titles[activeTab].title}</h1><p>{titles[activeTab].desc}</p></div>}
         <main className="portal-main">
 
           {loading && (
@@ -532,160 +384,12 @@ export function Portal({ user }: { user: PortalUser }) {
           )}
 
           {!loading && !loadError && (
-            <>
+            <div className="workspace-view" key={activeTab}>
               {/* ==================================================== */}
               {/* TAB 1: OVERVIEW MATCHING IMAGE 2 EXACTLY */}
               {/* ==================================================== */}
-              {activeTab === "overview" && (
-                <div className="image2-main-grid">
-                  {/* Left Column: Quick Actions Card */}
-                  <div className="image2-left-col">
-                    <section className="image2-quick-actions-card">
-                      <h3 className="image2-quick-actions-title">{t("إجراءات سريعة", "Quick Actions")}</h3>
-                      <div className="image2-actions-list">
-                        {/* 1. Activate Key */}
-                        <button
-                          type="button"
-                          className="image2-action-row"
-                          onClick={() => navigate("redeem")}
-                        >
-                          <div className="image2-action-lead">
-                            <span className="image2-action-icon-box">
-                              <KeyRound size={16} />
-                            </span>
-                            <span className="image2-action-text">{t("تفعيل مفتاح", "Activate Key")}</span>
-                          </div>
-                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                        </button>
+              {activeTab === "overview" && <WorkspaceOverview user={user} ar={ar} activeCount={activeProductsCount} totalCount={data.products.length} isAdmin={data.isAdmin} storeUrl={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"} discordUrl={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"} onNavigate={navigate} />}
 
-                        {/* 2. Store */}
-                        <a
-                          href={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="image2-action-row"
-                        >
-                          <div className="image2-action-lead">
-                            <span className="image2-action-icon-box">
-                              <ShoppingCart size={16} />
-                            </span>
-                            <span className="image2-action-text">{t("المتجر", "Store")}</span>
-                          </div>
-                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                        </a>
-
-                        {/* 3. Join Discord */}
-                        <a
-                          href={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="image2-action-row"
-                        >
-                          <div className="image2-action-lead">
-                            <span className="image2-action-icon-box">
-                              <DiscordIcon size={16} />
-                            </span>
-                            <span className="image2-action-text">{t("انضم إلى ديسكورد", "Join Discord")}</span>
-                          </div>
-                          <ArrowLeft size={15} className={`image2-action-arrow ${!ar ? "rotate-180" : ""}`} />
-                        </a>
-                      </div>
-                    </section>
-                  </div>
-
-                  {/* Right Column: Hero Welcome Card + 3 Stat Cards */}
-                  <div className="image2-right-col">
-                    {/* Hero Welcome Card */}
-                    <section className="image2-hero-card">
-                      <div className="image2-hero-content">
-                        <div
-                          className="image2-avatar-wrap"
-                          onClick={() => navigate("profile")}
-                          role="button"
-                          tabIndex={0}
-                          title={t("الملف الشخصي", "Profile")}
-                          style={{ cursor: "pointer" }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              navigate("profile");
-                            }
-                          }}
-                        >
-                          {user.image ? (
-                            <img
-                              src={user.image}
-                              alt={user.name}
-                              className="image2-avatar-img"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="image2-avatar-fallback">
-                              {user.name ? user.name[0].toUpperCase() : "U"}
-                            </div>
-                          )}
-                        </div>
-                        <div className="image2-hero-text">
-                          <div className="image2-status-tag">
-                            <span className="image2-status-dot" />
-                            <span>{t("حسابك متصل", "Account Connected")}</span>
-                          </div>
-                          <h2 className="image2-hero-title">
-                            {t("مرحباً بعودتك،", "Welcome back,")} {user.name}!
-                          </h2>
-                          <p className="image2-hero-sub">
-                            {activeProducts.length > 0
-                              ? t(
-                                  `لديك ${activeProducts.length} منتجات مفعلة بحسابك.`,
-                                  `You have ${activeProducts.length} active products in your account.`
-                                )
-                              : t(
-                                  "لا توجد منتجات مفعلة بحسابك حالياً.",
-                                  "No active products in your account currently."
-                                )}
-                          </p>
-                        </div>
-                      </div>
-                    </section>
-
-                    {/* 3 Stat Cards directly underneath */}
-                    <div className="image2-stats-row">
-                      {/* Card 1: Active Products */}
-                      <div className="image2-stat-card">
-                        <div className="image2-stat-icon-badge">
-                          <Package size={18} />
-                        </div>
-                        <strong className="image2-stat-value">{activeProducts.length}</strong>
-                        <span className="image2-stat-label">{t("منتجات مفعلة", "Active Products")}</span>
-                      </div>
-
-                      {/* Card 2: Account Status */}
-                      <div className="image2-stat-card">
-                        <div className="image2-stat-icon-badge">
-                          <CheckCircle2 size={18} />
-                        </div>
-                        <strong className="image2-stat-value">{t("فعال", "Active")}</strong>
-                        <span className="image2-stat-label">{t("حالة الحساب", "Account Status")}</span>
-                      </div>
-
-                      {/* Card 3: Member Since */}
-                      <div className="image2-stat-card">
-                        <div className="image2-stat-icon-badge">
-                          <Clock size={18} />
-                        </div>
-                        <strong className="image2-stat-value">
-                          {new Date().toLocaleDateString("ar", { month: "long", year: "numeric" })}
-                        </strong>
-                        <span className="image2-stat-label">{t("عضو منذ", "Member Since")}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ==================================================== */}
-              {/* TAB 2: MY PRODUCTS */}
-              {/* ==================================================== */}
               {activeTab === "my-products" && (
                 <div className="products-view-container">
                   {/* Search Toolbar */}
@@ -750,12 +454,12 @@ export function Portal({ user }: { user: PortalUser }) {
                           <Clock size={16} />
                         </span>
                         <h2>
-                          {t("منتجاتي المنتهية", "My Expired Products")}
+                          {t("منتجات غير نشطة", "Inactive Products")}
                           <span className="section-count expired-count">{expiredProducts.length}</span>
                         </h2>
                       </div>
                       <p className="category-subtitle">
-                        {t("تراخيص سابقة انتهت مدة صلاحيتها.", "Previous licenses that have expired.")}
+                        {t("تراخيص منتهية أو موقوفة حسب حالة النظام.", "Expired or suspended licenses, as reported by the system.")}
                       </p>
                     </div>
 
@@ -791,9 +495,9 @@ export function Portal({ user }: { user: PortalUser }) {
                         <span className="redeem-eyebrow">{t("تفعيل الترخيص", "License activation")}</span>
                         <h2 id="redeem-title">{t("استرداد مفتاح", "Redeem a key")}</h2>
                       </div>
+                      <span className="workspace-key-icon"><KeyRound size={24} /></span>
                     </header>
-
-
+                    <p className="workspace-redeem-description">{t("أدخل مفتاح الترخيص لربط منتجك بحسابك الحالي.", "Enter a license key to link your product to this account.")}</p>
                     <form onSubmit={redeem}>
                       <div className="label-with-format">
                         <label htmlFor="license-key">{t("رمز مفتاح الترخيص", "License Key")}</label>
@@ -807,6 +511,7 @@ export function Portal({ user }: { user: PortalUser }) {
                           onChange={(e) => setKey(e.target.value.trim())}
                           placeholder="KEY-XXXX-XXXX-XXXX"
                           required
+                          minLength={4}
                           maxLength={48}
                           autoComplete="off"
                           spellCheck={false}
@@ -988,7 +693,7 @@ export function Portal({ user }: { user: PortalUser }) {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
       </div>
@@ -1120,14 +825,14 @@ function ProductGrid({
   return (
     <div className="product-grid">
       {products.map((p) => {
-        const isExpired = p.expires_at && new Date(p.expires_at) <= new Date();
+        const isExpired = Boolean(p.expires_at && new Date(p.expires_at) <= new Date()) || Boolean(p.license_status && p.license_status !== "ACTIVE");
         return (
           <article className={`panel product real-product ${isExpired ? "expired-product" : ""}`} key={p.id}>
             <div className="real-product-art">
               <ProductArtwork src={p.image_url} name={p.name} />
               <span className={`product-status-tag ${isExpired ? "tag-expired" : "tag-active"}`}>
                 <i className="status-dot" />
-                {isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
+                {p.license_status === "SUSPENDED" ? t("موقوف", "Suspended") : p.license_status === "REVOKED" ? t("ملغى", "Revoked") : isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
               </span>
             </div>
 
@@ -1193,7 +898,7 @@ function ProductGrid({
 
                   const hasGuide = Boolean(onOpenGuide);
 
-                  const hasReset = !isExpired;
+                  const hasReset = !p.expires_at || new Date(p.expires_at) > new Date();
 
                   return (
                     <div className="product-card-actions">
@@ -1309,7 +1014,7 @@ function ProductDetailModal({
   }, [product.files]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <ModalBackdrop className="modal-backdrop" onClick={onClose}>
       <div className="modal-card product-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-header-info">
@@ -1417,7 +1122,7 @@ function ProductDetailModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   );
 }
 
@@ -1456,7 +1161,7 @@ function KeyResetModal({
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <ModalBackdrop className="modal-backdrop" onClick={onClose}>
       <div className="modal-card reset-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-header-info">
@@ -1554,7 +1259,7 @@ function KeyResetModal({
           </div>
         </form>
       </div>
-    </div>
+    </ModalBackdrop>
   );
 }
 

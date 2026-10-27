@@ -10,7 +10,7 @@
   background: #edf1f5;
 }
 .ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(90deg,#060d1966 0%,#07101da6 55%,#07101de6 100%),url('/background-city.png') left center/cover no-repeat;
+  background: linear-gradient(90deg,#060d1940 0%,#07101d88 55%,#07101dd1 100%),url('/background-city.png') left center/cover no-repeat;
 }
 .page[data-theme="light"] .ambient { background: linear-gradient(90deg,#eaf0f51a 0%,#eaf0f570 50%,#eaf0f5db 100%),url('/background-city.png') left center/cover no-repeat; }
 .header { padding: 24px 32px; }
@@ -58,3 +58,13 @@
 }
 @media (max-width: 360px) { .headerInner { flex-wrap: wrap; } .headerActions { margin-inline-start: auto; } }
 @media (prefers-reduced-motion: reduce) { .primary { transition: none; } .spinner { animation: none; } }
+
+.welcomeCopy { position:absolute; bottom:48px; left:clamp(28px,5.5vw,120px); max-width:460px; padding:20px 24px; color:#fff; text-align:center; text-shadow:0 2px 14px #00000080; }
+.welcomeCopy h1 { margin:10px 0 6px; font-size:clamp(25px,2.4vw,36px); font-weight:650; letter-spacing:-.5px; line-height:1.6; }
+.welcomeCopy p { margin:0; font-size:16px; color:#e1ebf8; line-height:1.9; }
+.welcomeLine { display:block; width:42px; height:3px; background:#68d7f5; margin:0 auto 8px; border-radius:3px; }
+.ambient::after { content:""; position:absolute; inset:55% 0 0; background:linear-gradient(transparent,#060d198f); }
+.page[data-theme="light"] .welcomeCopy { color:#15263e; text-shadow:0 1px 15px #ffffffb0; }
+.page[data-theme="light"] .welcomeCopy p { color:#243e5a; }
+.page[data-theme="light"] .ambient::after { background:linear-gradient(transparent,#eef4fa8f); }
+@media(max-width:760px) { .content { padding-bottom:20px; } .welcomeCopy { position:relative; bottom:auto; left:auto; max-width:none; margin:0 20px 30px; padding:12px 0; } .welcomeCopy h1 { font-size:25px; } .welcomeCopy p { font-size:14px; } }

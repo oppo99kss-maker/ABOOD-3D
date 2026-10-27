@@ -1,4 +1,5 @@
 "use client";
+import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
 import { useState, useMemo, useEffect, useCallback, useRef, type FormEvent } from "react";
 import {
@@ -49,6 +50,8 @@ import {
   Wrench,
   X,
   LayoutDashboard,
+  PanelRightClose,
+  PanelRightOpen,
   Database,
   BarChart3,
 } from "lucide-react";
@@ -126,6 +129,7 @@ export function AdminControlSpace({
 
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [busy, setBusy] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
 
   // Key Reset Requests State
   const [resetRequestsList, setResetRequestsList] = useState<KeyResetRequest[]>(initialResetRequests);
@@ -1636,9 +1640,10 @@ export function AdminControlSpace({
   ];
 
   return (
-    <div className="admin-reference-container" data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
+    <div className={`admin-reference-container saas-admin ${navCollapsed ? "admin-collapsed" : ""}`} data-theme={isDark ? "dark" : "light"} dir={ar ? "rtl" : "ltr"}>
       {/* NAVIGATION BAR WITH CLEAN EXIT PILL */}
-      <nav className="admin-ref-nav-bar">
+      <nav className="admin-ref-nav-bar" aria-label={t("أقسام الإدارة", "Admin sections")}>
+        <div className="admin-sidebar-heading"><span>{t("إدارة المنصة", "WORKSPACE")}</span><button type="button" onClick={() => setNavCollapsed(v => !v)} aria-expanded={!navCollapsed} aria-label={navCollapsed ? t("توسيع أقسام الإدارة", "Expand admin navigation") : t("طي أقسام الإدارة", "Collapse admin navigation")} title={navCollapsed ? t("توسيع القائمة", "Expand menu") : t("طي القائمة", "Collapse menu")}>{navCollapsed ? <PanelRightOpen size={18}/> : <PanelRightClose size={18}/>}</button></div>
         <div className="admin-ref-nav-track">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -1650,6 +1655,8 @@ export function AdminControlSpace({
               <button
                 key={item.id}
                 className={`admin-ref-nav-pill ${active ? "active" : ""}`}
+                aria-current={active ? "page" : undefined}
+                title={t(item.ar, item.en)}
                 onClick={() => {
                   setActiveSection(item.id);
                   if (item.id === "customers") {
@@ -3046,7 +3053,7 @@ export function AdminControlSpace({
       {/* 5. EDIT PRODUCT MODAL (MATCHING IMAGES 2 & 3 ACCURATELY) */}
       {/* ==================================================== */}
       {showProductModal && (
-        <div className="modal-backdrop" onClick={() => setShowProductModal(false)}>
+        <ModalBackdrop className="modal-backdrop" onClick={() => setShowProductModal(false)}>
           <div className="modal-card ref-product-edit-modal-card" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header with 3 Tabs (Images 1 & 3: Keys tab first) */}
             <div className="ref-edit-modal-tabs-header">
@@ -3714,12 +3721,12 @@ export function AdminControlSpace({
               </button>
             </div>
           </div>
-        </div>
+        </ModalBackdrop>
       )}
 
       {/* STOCK FILLING MODAL (SINGLE KEY & BULK KEYS - LARGER & BETTER ORGANIZED) */}
       {showStockModal && (
-        <div className="modal-backdrop" onClick={() => setShowStockModal(false)}>
+        <ModalBackdrop className="modal-backdrop" onClick={() => setShowStockModal(false)}>
           <div className="modal-card ref-stock-modal-card" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="ref-stock-modal-header">
@@ -4036,12 +4043,12 @@ export function AdminControlSpace({
 
 
           </div>
-        </div>
+        </ModalBackdrop>
       )}
 
       {/* COMPENSATION MODAL */}
       {showCompensationModal && (
-        <div className="modal-backdrop" onClick={() => setShowCompensationModal(false)}>
+        <ModalBackdrop className="modal-backdrop" onClick={() => setShowCompensationModal(false)}>
           <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
@@ -4111,12 +4118,12 @@ export function AdminControlSpace({
               </div>
             </form>
           </div>
-        </div>
+        </ModalBackdrop>
       )}
 
       {/* CUSTOMER DRAWER */}
       {showCustomerDrawer && customerDetails && (
-        <div className="drawer-backdrop" onClick={() => setShowCustomerDrawer(false)}>
+        <ModalBackdrop className="drawer-backdrop" onClick={() => setShowCustomerDrawer(false)}>
           <div className="customer-drawer-panel" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <div className="drawer-title-group">
@@ -4167,14 +4174,7 @@ export function AdminControlSpace({
                         </div>
                         <div className="lic-mid">
                           <code dir="ltr">
-                            {(() => {
-                              let c = lic.raw_code || lic.masked_code || "";
-                              if (!c || c.includes("*")) {
-                                const repl = (lic.id ? lic.id.replace(/-/g, "").slice(0, 6) : "8F2B1A").toUpperCase();
-                                c = c ? c.replace(/\*+/g, repl) : `KEY-${repl}-${lic.code_suffix || "XXXX"}`;
-                              }
-                              return c;
-                            })()}
+                            {lic.raw_code || lic.masked_code || "—"}
                           </code>
                         </div>
                         <div className="lic-bot">
@@ -4189,12 +4189,12 @@ export function AdminControlSpace({
               </div>
             </div>
           </div>
-        </div>
+        </ModalBackdrop>
       )}
 
       {/* SEND MESSAGE MODAL */}
       {messageModalState.isOpen && (
-        <div className="modal-backdrop" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
+        <ModalBackdrop className="modal-backdrop" onClick={() => setMessageModalState((prev) => ({ ...prev, isOpen: false }))}>
           <div className="modal-card ref-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2><Mail size={20} /> {t("إرسال رسالة بريد للعميل", "Send Customer Email")}</h2>
@@ -4246,7 +4246,7 @@ export function AdminControlSpace({
               </div>
             </form>
           </div>
-        </div>
+        </ModalBackdrop>
       )}
 
       {/* UNIVERSAL CONFIRM MODAL */}

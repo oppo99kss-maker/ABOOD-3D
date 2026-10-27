@@ -141,6 +141,11 @@ export function LoginPage() {
 
         </section>
       </main>
+      <aside className={styles.welcomeCopy}>
+        <span className={styles.welcomeLine} aria-hidden="true" />
+        <h1>{ar ? "سجّل دخولك الآن" : "Your next step starts here"}</h1>
+        <p>{ar ? "منتجاتك وتراخيصك الفعّالة، في مكان واحد." : "Your products and active licenses, in one place."}</p>
+      </aside>
 
     </div>
   );
