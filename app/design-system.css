@@ -87,7 +87,7 @@ body { background:var(--color-bg); color:var(--color-text); font-family:"Vazirma
 .workspace-metric > p { margin:8px 0 0; color:var(--color-muted); font-size:12px; }
 .workspace-section-heading h2 { font-size:22px; font-weight:600; margin:0; }
 .workspace-section-heading { margin:12px 0 22px; }
-.workspace-quick-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.workspace-quick-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .workspace-quick-grid > :is(a,button) { display:flex; flex-direction:column; align-items:flex-start; position:relative; padding:24px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-card); color:var(--color-text); text-decoration:none; text-align:start; cursor:pointer; transition:border-color var(--transition-fast),background var(--transition-fast); }
 .workspace-quick-grid > :is(a,button):hover { border-color:var(--luxe-accent-line); background:var(--color-surface-hover); }
 .workspace-action-icon { display:grid; place-items:center; width:40px; height:40px; color:var(--color-primary); background:var(--color-primary-soft); border-radius:12px; margin-bottom:20px; }

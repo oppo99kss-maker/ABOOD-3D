@@ -390,7 +390,7 @@ export function Portal({ user }: { user: PortalUser }) {
               {/* ==================================================== */}
               {/* TAB 1: OVERVIEW MATCHING IMAGE 2 EXACTLY */}
               {/* ==================================================== */}
-              {activeTab === "overview" && <WorkspaceOverview user={user} ar={ar} activeCount={activeProductsCount} totalCount={data.products.length} isAdmin={data.isAdmin} storeUrl={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"} discordUrl={(data.settings as any)?.discord_url || "https://discord.gg/spoofx"} onNavigate={navigate} />}
+              {activeTab === "overview" && <WorkspaceOverview user={user} ar={ar} activeCount={activeProductsCount} totalCount={data.products.length} isAdmin={data.isAdmin} storeUrl={(data.settings as any)?.store_url || "https://spoofx.rmz.gg/"} onNavigate={navigate} />}
 
               {activeTab === "my-products" && (
                 <div className="products-view-container">
