@@ -1679,7 +1679,7 @@ export function AdminControlSpace({
       </nav>
 
       {/* 4. DYNAMIC VIEW CONTENT */}
-      <main className="admin-ref-main-view">
+      <main id="spoo-workspace-main" tabIndex={-1} className="admin-ref-main-view">
         {/* ==================================================== */}
         {/* VIEW 0: نظرة عامة على قاعدة البيانات (Live DB Stats) */}
         {/* ==================================================== */}

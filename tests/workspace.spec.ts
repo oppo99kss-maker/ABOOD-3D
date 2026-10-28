@@ -76,7 +76,33 @@ test("all admin sections remain navigable with a collapsible sidebar in both the
   await page.getByRole("button",{name:"طي أقسام الإدارة",exact:true}).click();await expect(page.locator(".saas-admin")).toHaveClass(/admin-collapsed/);await page.getByRole("button",{name:"توسيع أقسام الإدارة",exact:true}).click();
  }
  await page.locator(".admin-ref-nav-track").getByRole("button",{name:"المنتجات",exact:false}).click();await page.getByRole("button",{name:"إضافة منتج جديد",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
- await page.getByRole("button",{name:"Toggle theme",exact:true}).click();await expect(page.locator(".admin-workspace")).toHaveAttribute("data-theme","light");await noOverflow(page);
+ await page.getByRole("button",{name:"تغيير المظهر",exact:true}).click();await expect(page.locator(".admin-workspace")).toHaveAttribute("data-theme","light");await noOverflow(page);
  await page.locator(".workspace-controls .lang-pill").click();await expect(page.locator("html")).toHaveAttribute("dir","ltr");await noOverflow(page);
  expect(errors).toEqual([]);await context.close();
+});
+
+test("failed data loads recover with a visible pending state and keyboard skip link",async({browser})=>{
+ const {context,page}=await session(browser,390);let attempts=0;let release:()=>void=()=>{};
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ await page.route("**/api/portal",async route=>{
+  attempts++;
+  if(attempts===1)return route.fulfill({status:503,json:{error:"UNAVAILABLE"}});
+  await pending;
+  return route.fulfill({json:{products:[product],settings,isAdmin:false}});
+ });
+ await page.goto("http://localhost:3101/portal");
+ await expect(page.locator(".workspace-load-error")).toContainText("تعذّر تحميل البيانات");
+ await expect(page.locator(".workspace-overview")).toHaveCount(0);
+ await page.getByRole("button",{name:"إعادة المحاولة",exact:true}).click();
+ await expect(page.locator("main")).toHaveAttribute("aria-busy","true");
+ await expect(page.getByRole("status")).toContainText("جارٍ تحميل حسابك");
+ await expect(page.getByRole("button",{name:"إعادة المحاولة",exact:true})).toHaveCount(0);
+ release();
+ await expect(page.locator(".workspace-overview")).toBeVisible();
+ await expect(page.locator("main")).toHaveAttribute("aria-busy","false");
+ expect(attempts).toBe(2);
+ const skip=page.getByRole("link",{name:"انتقل إلى المحتوى",exact:true});await skip.focus();await page.keyboard.press("Enter");await expect(page.locator("main")).toBeFocused();
+ await page.locator(".workspace-controls .lang-pill").click();
+ await expect(page.getByRole("link",{name:"Skip to content",exact:true})).toHaveAttribute("href","#spoo-workspace-main");
+ await noOverflow(page);await context.close();
 });

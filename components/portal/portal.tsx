@@ -364,20 +364,22 @@ export function Portal({ user }: { user: PortalUser }) {
         <WorkspaceNavigation activeTab={activeTab} onNavigate={navigate} lang={lang} isDark={isDark} isAdmin={data.isAdmin} user={user} onToggleTheme={toggleTheme} onToggleLanguage={() => setLang(ar ? "en" : "ar")} onLogout={() => void signOut({ callbackUrl: "/" })} />
 
         {activeTab !== "overview" && <div className="workspace-page-heading"><p className="workspace-eyebrow">SPOOFX / {t("مساحتك الرقمية", "YOUR WORKSPACE")}</p><h1>{titles[activeTab].title}</h1><p>{titles[activeTab].desc}</p></div>}
-        <main className="portal-main">
+        <main id="spoo-workspace-main" tabIndex={-1} className="portal-main" aria-busy={loading}>
 
           {loading && (
-            <div className="panel empty" role="status">
+            <div className="workspace-load-state" role="status" aria-live="polite">
               <LoaderCircle className="spin" size={32} />
               <p>{t("جارٍ تحميل حسابك ومنتجاتك…", "Loading your account and products…")}</p>
             </div>
           )}
 
           {!loading && loadError && (
-            <div className="panel empty" role="alert">
+            <div className="workspace-load-state workspace-load-error" role="alert">
+              <span className="workspace-load-symbol" aria-hidden="true"><ShieldAlert size={26} /></span>
               <h2>{t("تعذّر تحميل البيانات", "Unable to load data")}</h2>
               <p>{t("تحقق من اتصالك بالإنترنت ثم أعد المحاولة.", "Check your connection and try again.")}</p>
-              <button className="secondary-button" onClick={() => void refresh()}>
+              <button type="button" className="secondary-button" onClick={() => { setLoading(true); void refresh(); }}>
+                <RotateCcw size={16} aria-hidden="true" />
                 {t("إعادة المحاولة", "Try again")}
               </button>
             </div>

@@ -38,11 +38,12 @@ export function WorkspaceNavigation({activeTab,onNavigate,lang,isDark,isAdmin,us
   const navigate = (tab:PortalTab) => { onNavigate(tab); setOpen(false); };
   const links = () => items.map(({id,label,icon:Icon}) => <button key={id} type="button" className={`workspace-nav-link ${activeTab === id ? "active" : ""}`} aria-current={activeTab === id ? "page" : undefined} onClick={() => navigate(id as PortalTab)}><Icon size={18} aria-hidden="true"/><span>{label}</span></button>);
   return <header className="workspace-header">
+    <a className="workspace-skip-link" href="#spoo-workspace-main">{t("انتقل إلى المحتوى", "Skip to content")}</a>
     <div className="workspace-header-inner">
       <button className="workspace-brand" type="button" onClick={() => navigate("overview")} aria-label="SpooFx"><img src="/logo.png" width="38" height="38" alt=""/><strong dir="ltr">Spoo<span>Fx</span></strong></button>
       <nav className="workspace-nav-links image2-nav-links" aria-label={t("التنقل الرئيسي","Main navigation")}>{links()}</nav>
       <div className="workspace-controls image2-nav-actions">
-        <button className="workspace-icon" type="button" aria-label="Toggle theme" title={isDark?t("الوضع الفاتح","Light mode"):t("الوضع الداكن","Dark mode")} onClick={onToggleTheme}>{isDark?<Sun size={18}/>:<Moon size={18}/>}</button>
+        <button className="workspace-icon" type="button" aria-label={t("تغيير المظهر", "Toggle theme")} aria-pressed={isDark} title={isDark?t("الوضع الفاتح","Light mode"):t("الوضع الداكن","Dark mode")} onClick={onToggleTheme}>{isDark?<Sun size={18}/>:<Moon size={18}/>}</button>
         <button className="workspace-icon lang-pill" type="button" aria-label={ar?"Switch to English":"التبديل للعربية"} onClick={onToggleLanguage}><Globe size={16}/><span>{ar?"EN":"عربي"}</span></button>
         <button className="workspace-user" type="button" onClick={() => navigate("profile")} title={user.name} aria-label={t("فتح حسابي","Open account")}>{user.image?<img src={user.image} alt="" referrerPolicy="no-referrer"/>:<span>{user.name.slice(0,1).toUpperCase()}</span>}</button>
         <button className="workspace-icon workspace-signout" type="button" onClick={onLogout} aria-label={t("تسجيل الخروج","Sign out")} title={t("تسجيل الخروج","Sign out")}><LogOut size={17}/></button>

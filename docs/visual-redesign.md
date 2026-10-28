@@ -27,3 +27,7 @@ Rollback by reverting the redesign commit; the baseline tag remains available.
 
 ## Limits
 The complete Google provider sign-in round trip requires a human Google account and was not completed automatically. OAuth request configuration and actual local NextAuth logout/session removal were tested. Production write operations were deliberately not used for verification. Visual tests use explicit fixtures; database behavior is covered separately by the real PostgreSQL integration checks.
+
+## Follow-up — 2026-10-28
+Raised and widened the login caption, moved the desktop login card slightly left, refined its surface and added short staggered entrance animations. Mobile layout remains centered; reduced-motion disables entrance and hover movement. Manually checked 1600px, 820px and 390px with no horizontal overflow.
+Added localized keyboard skip navigation, busy announcements and a clearer retry/loading state. All 15 browser tests and production build pass, including failure/retry recovery. Server authentication, database and license contracts remain unchanged.

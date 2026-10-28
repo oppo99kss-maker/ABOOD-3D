@@ -25,16 +25,17 @@
 .headerActions button, .storeLink { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--control); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
 .headerActions button:hover, .storeLink:hover { border-color: var(--accent); color: var(--accent); }
 .content { flex: 1; width: 100%; max-width: 1200px; margin-inline: auto; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 30px 32px 100px; }
-.card { width: min(100%,410px); justify-self: center; padding: 40px 34px 34px; display: flex; flex-direction: column; align-items: center;
-  background: var(--card); border: 1px solid var(--line); border-radius: 26px;
-  box-shadow: 0 24px 70px #00000026; backdrop-filter: blur(14px); text-align: center;
+.card { position:relative; left:clamp(-48px,-2.6vw,-20px); width: min(100%,410px); justify-self: center; padding: 40px 34px 34px; display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,transparent),transparent 52%),var(--card); border: 1px solid var(--line); border-radius: 26px;
+  box-shadow: 0 28px 80px #00000038,inset 0 1px 0 #ffffff0b; backdrop-filter: blur(18px); text-align: center; animation:cardArrival .65s cubic-bezier(.2,.7,.2,1) both;
 }
+.card::before { content:""; position:absolute; top:-1px; left:20%; right:20%; height:1px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:.65; }
 .cardLogo { display: grid; place-items: center; width: 94px; height: 94px; margin-bottom: 24px; border-radius: 24px; background: #09121f; border: 1px solid #ffffff13; }
 .cardLogoImg { width: 78px; height: 78px; object-fit: contain; border-radius: 17px; }
 .cardTitle { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -.5px; line-height: 1.6; color: var(--ink); }
 .cardDesc { margin: 10px 0 30px; max-width: 290px; color: var(--muted); font-size: 15px; line-height: 1.9; }
-.primary { width: 100%; min-height: 52px; display: flex; justify-content: center; align-items: center; gap: 12px; padding: 13px 20px; background: var(--button); color: var(--button-ink); border: 1px solid transparent; border-radius: 13px; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; transition: opacity .18s, box-shadow .18s; }
-.primary:hover:not(:disabled) { box-shadow: 0 4px 18px #0000001a; opacity: .92; }
+.primary { width: 100%; min-height: 52px; display: flex; justify-content: center; align-items: center; gap: 12px; padding: 13px 20px; background: var(--button); color: var(--button-ink); border: 1px solid transparent; border-radius: 13px; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; transition: opacity .18s, box-shadow .18s,transform .18s; }
+.primary:hover:not(:disabled) { box-shadow: 0 8px 24px #00000024; opacity: .96; transform:translateY(-2px); }
 .primary:disabled { opacity: .65; cursor: wait; }
 .primary svg { flex-shrink: 0; }
 .errorAlert { display: flex; align-items: flex-start; gap: 8px; margin-top: 18px; padding: 12px; width: 100%; border-radius: 11px; background: #f8717110; border: 1px solid #f8717140; color: #f28d99; font-size: 13px; line-height: 1.85; text-align: start; }
@@ -52,19 +53,23 @@
   .brandLogoWrap, .brandLogoImg { width: 32px; height: 32px; }
   .brand { gap: 7px; }
   .content { grid-template-columns: minmax(0,1fr); padding: 30px 20px 70px; }
-  .card { max-width: 410px; padding: 32px 24px; border-radius: 23px; }
+  .card { left:0; max-width: 410px; padding: 32px 24px; border-radius: 23px; }
   .ambient { background-position: left center; }
   .page[data-theme="light"] .ambient { background-position: left center; }
 }
 @media (max-width: 360px) { .headerInner { flex-wrap: wrap; } .headerActions { margin-inline-start: auto; } }
 @media (prefers-reduced-motion: reduce) { .primary { transition: none; } .spinner { animation: none; } }
 
-.welcomeCopy { position:absolute; bottom:48px; left:clamp(28px,5.5vw,120px); max-width:460px; padding:20px 24px; color:#fff; text-align:center; text-shadow:0 2px 14px #00000080; }
-.welcomeCopy h1 { margin:10px 0 6px; font-size:clamp(25px,2.4vw,36px); font-weight:650; letter-spacing:-.5px; line-height:1.6; }
-.welcomeCopy p { margin:0; font-size:16px; color:#e1ebf8; line-height:1.9; }
-.welcomeLine { display:block; width:42px; height:3px; background:#68d7f5; margin:0 auto 8px; border-radius:3px; }
+.welcomeCopy { position:absolute; bottom:clamp(92px,12vh,140px); left:clamp(28px,5.5vw,120px); width:clamp(360px,32vw,520px); max-width:calc(100% - 56px); padding:20px 24px; color:#fff; text-align:center; text-shadow:0 2px 14px #00000080; }
+.welcomeCopy h1 { margin:14px 0 10px; font-size:clamp(28px,2.65vw,40px); font-weight:700; letter-spacing:0; text-wrap:balance; animation:textArrival .7s cubic-bezier(.2,.7,.2,1) .08s both; line-height:1.6; }
+.welcomeCopy p { margin:0; font-size:clamp(15px,1.1vw,18px); text-wrap:balance; animation:textArrival .7s cubic-bezier(.2,.7,.2,1) .18s both; color:#e1ebf8; line-height:1.9; }
+.welcomeLine { display:block; width:62px; height:3px; background:#68d7f5; margin:0 auto 8px; border-radius:3px; }
 .ambient::after { content:""; position:absolute; inset:55% 0 0; background:linear-gradient(transparent,#060d198f); }
 .page[data-theme="light"] .welcomeCopy { color:#15263e; text-shadow:0 1px 15px #ffffffb0; }
 .page[data-theme="light"] .welcomeCopy p { color:#243e5a; }
 .page[data-theme="light"] .ambient::after { background:linear-gradient(transparent,#eef4fa8f); }
-@media(max-width:760px) { .content { padding-bottom:20px; } .welcomeCopy { position:relative; bottom:auto; left:auto; max-width:none; margin:0 20px 30px; padding:12px 0; } .welcomeCopy h1 { font-size:25px; } .welcomeCopy p { font-size:14px; } }
+@media(max-width:760px) { .content { padding-bottom:20px; } .welcomeCopy { position:relative; bottom:auto; left:auto; width:auto; max-width:none; margin:0 20px 30px; padding:12px 0; } .welcomeCopy h1 { font-size:25px; } .welcomeCopy p { font-size:14px; } }
+
+@keyframes cardArrival { from { opacity:0; transform:translateY(18px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes textArrival { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .card,.welcomeCopy h1,.welcomeCopy p { animation:none; } .primary:hover:not(:disabled) { transform:none; } }

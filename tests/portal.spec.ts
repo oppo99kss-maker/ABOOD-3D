@@ -139,13 +139,13 @@ test("portal stays open and responsive across themes and languages", async ({ br
     await expect(page.locator(".luxe-card").first()).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(page.locator(".luxe-user-name")).toHaveCSS("color", "rgb(21, 38, 62)");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
+    await page.getByRole("button", { name: "تغيير المظهر", exact: true }).click();
     await expect(page.locator(".image2-portal-shell")).toHaveAttribute("data-theme", "dark");
     await page.locator(".image2-nav-actions .lang-pill").click();
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.locator(".image2-nav-actions .lang-pill").click();
-    await page.getByRole("button", { name: "Toggle theme", exact: true }).click();
+    await page.getByRole("button", { name: "تغيير المظهر", exact: true }).click();
     for (const name of ["تفعيل مفتاح", "منتجاتي", "مركز المساعدة", "الرئيسية"]) {
       await navigateTo(page, name);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
