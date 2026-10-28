@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Globe, House, KeyRound, LifeBuoy, LogOut, Menu, Moon, Package, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import type { PortalTab } from "./portal-navigation";
 
@@ -36,12 +36,15 @@ export function WorkspaceNavigation({activeTab,onNavigate,lang,isDark,isAdmin,us
     return () => { node?.removeEventListener("keydown",keepFocus); node?.close(); document.body.style.overflow = overflow; window.removeEventListener("resize",resize); trigger.current?.focus(); };
   },[open]);
   const navigate = (tab:PortalTab) => { onNavigate(tab); setOpen(false); };
-  const links = () => items.map(({id,label,icon:Icon}) => <button key={id} type="button" className={`workspace-nav-link ${activeTab === id ? "active" : ""}`} aria-current={activeTab === id ? "page" : undefined} onClick={() => navigate(id as PortalTab)}><Icon size={18} aria-hidden="true"/><span>{label}</span></button>);
+  const links = () => items.map(({id,label,icon:Icon}) => <button key={id} type="button" className={`workspace-nav-link ${activeTab === id ? "active" : ""}`} aria-current={activeTab === id ? "page" : undefined} onClick={() => navigate(id as PortalTab)}><span className="workspace-nav-icon"><Icon size={18} aria-hidden="true"/></span><span>{label}</span></button>);
+  const activeIndex = Math.max(0,items.findIndex(item => item.id === activeTab));
+  const position = ((ar ? items.length - activeIndex - .5 : activeIndex + .5) / items.length) * 100;
+  const navStyle = { "--spoo-nav-x": `${position}%`, "--spoo-nav-count": items.length } as CSSProperties;
   return <header className="workspace-header">
     <a className="workspace-skip-link" href="#spoo-workspace-main">{t("انتقل إلى المحتوى", "Skip to content")}</a>
     <div className="workspace-header-inner">
       <button className="workspace-brand" type="button" onClick={() => navigate("overview")} aria-label="SpooFx"><img src="/logo.png" width="38" height="38" alt=""/><strong dir="ltr">Spoo<span>Fx</span></strong></button>
-      <nav className="workspace-nav-links image2-nav-links" aria-label={t("التنقل الرئيسي","Main navigation")}>{links()}</nav>
+      <nav className="workspace-nav-links workspace-floating-nav image2-nav-links" style={navStyle} aria-label={t("التنقل الرئيسي","Main navigation")}><span className="workspace-nav-surface" aria-hidden="true"/><span className="workspace-nav-bubble" aria-hidden="true"/>{links()}</nav>
       <div className="workspace-controls image2-nav-actions">
         <button className="workspace-icon" type="button" aria-label={t("تغيير المظهر", "Toggle theme")} aria-pressed={isDark} title={isDark?t("الوضع الفاتح","Light mode"):t("الوضع الداكن","Dark mode")} onClick={onToggleTheme}>{isDark?<Sun size={18}/>:<Moon size={18}/>}</button>
         <button className="workspace-icon lang-pill" type="button" aria-label={ar?"Switch to English":"التبديل للعربية"} onClick={onToggleLanguage}><Globe size={16}/><span>{ar?"EN":"عربي"}</span></button>

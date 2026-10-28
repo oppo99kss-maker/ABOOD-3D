@@ -42,7 +42,7 @@ test("activation form sends existing payload, blocks duplicate submits and repor
 test("product library is bounded and accessible across screen sizes",async({browser})=>{
  const {context,page}=await session(browser);const products=Array.from({length:4},(_,i)=>({...product,id:`test-product-${i}`,name:`SpooFx Product ${i+1}`}));
  await page.route("**/api/portal",route=>route.fulfill({json:{products,settings,isAdmin:false}}));await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");
- for(const width of [1600,1280,820,390]){await page.setViewportSize({width,height:1000});await noOverflow(page);const box=await page.locator(".real-product").first().boundingBox();expect(box!.width).toBeLessThan(421);}
+ for(const width of [1600,1280,820,390]){await page.setViewportSize({width,height:1000});await noOverflow(page);const box=await page.locator(".real-product").first().boundingBox();expect(box!.width).toBeLessThan(421);expect(box!.width).toBeGreaterThan(250);}
  await expect(page.getByLabel("ابحث في منتجاتك")).toHaveCount(0);
  await expect(page.getByRole("button",{name:"التفاصيل",exact:true})).toHaveCount(0);
  await expect(page.locator(".product-actions-sub-row")).toHaveCount(0);

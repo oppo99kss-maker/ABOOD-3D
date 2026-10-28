@@ -836,6 +836,7 @@ function ProductGrid({
           <article className={`panel product real-product ${isExpired ? "expired-product" : ""}`} key={p.id}>
             <div className="real-product-art">
               <ProductArtwork src={p.image_url} name={p.name} />
+              <div className="product-license-timer"><Clock size={12} aria-hidden="true"/><LicenseCountdown expiresAt={p.expires_at} ar={ar} /></div>
               <span className={`product-status-tag ${isExpired ? "tag-expired" : "tag-active"}`}>
                 <i className="status-dot" />
                 {p.license_status === "SUSPENDED" ? t("موقوف", "Suspended") : p.license_status === "REVOKED" ? t("ملغى", "Revoked") : isExpired ? t("منتهي", "Expired") : t("نشط", "Active")}
@@ -843,6 +844,7 @@ function ProductGrid({
             </div>
 
             <div className="product-copy">
+              <h3>{p.name}</h3>
               <div className="product-category-row">
                 <span className="sample-label">{p.category || "SPOOFX"}</span>
                 {p.default_duration_days && (
@@ -854,19 +856,14 @@ function ProductGrid({
                 )}
               </div>
 
-              <h3>{p.name}</h3>
               {p.description && <p className="product-summary">{p.description}</p>}
 
               <div className="product-meta">
-                <div className="expiry-indicator">
-                  <CheckCircle2 size={13} className={isExpired ? "text-danger" : "text-success"} />
-                  <LicenseCountdown expiresAt={p.expires_at} ar={ar} />
-                </div>
 
                 {/* License Key Display on Card */}
                 {p.license_key && (
                   <div className="product-key-display-pill">
-                    <span className="product-key-label">{t("المفتاح:", "Key:")}</span>
+                    <span className="product-key-label">{t("مفتاح الترخيص", "License key")}</span>
                     <code className="product-key-value" dir="ltr">{p.license_key}</code>
                     <button
                       type="button"
