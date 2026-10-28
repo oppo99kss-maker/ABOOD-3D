@@ -131,7 +131,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
       <header className={css.helpHeader}>
         <div>
           <h2>{ar ? "مركز المساعدة" : "Help center"}</h2>
-          <p>{ar ? "ابحث عن المشكلة أو اختر القسم المناسب." : "Search for an issue or choose a category."}</p>
+          
         </div>
 
       </header>
@@ -226,7 +226,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
               <item.icon size={19} strokeWidth={1.7} />
               <div>
                 <strong>{item.label}</strong>
-                <p>{item.text}</p>
+                
                 <small>
                   {item.id === "admin" ? HELP_FAQS.length : GUIDE_ARTICLES.filter((a) => a.category === item.id).length}{" "}
                   {item.id === "admin" ? "أسئلة" : "شروحات"}

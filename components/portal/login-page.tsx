@@ -100,11 +100,7 @@ export function LoginPage() {
             {ar ? "تسجيل الدخول" : "Welcome back"}
           </h2>
 
-          <p className={styles.cardDesc}>
-            {ar
-              ? "تابع بحساب Google للوصول إلى منتجاتك."
-              : "Continue with Google to access your products."}
-          </p>
+          
 
           <button
             type="button"
@@ -145,7 +141,7 @@ export function LoginPage() {
       <aside className={styles.welcomeCopy}>
         <span className={styles.welcomeLine} aria-hidden="true" />
         <h1>{ar ? "سجّل دخولك الآن" : "Your next step starts here"}</h1>
-        <p>{ar ? "منتجاتك وتراخيصك الفعّالة، في مكان واحد." : "Your products and active licenses, in one place."}</p>
+        
       </aside>
 
     </div>

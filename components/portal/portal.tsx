@@ -381,7 +381,7 @@ export function Portal({ user }: { user: PortalUser }) {
       <div className="image2-container">
         <WorkspaceNavigation activeTab={activeTab} onNavigate={navigate} lang={lang} isDark={isDark} isAdmin={data.isAdmin} user={user} onToggleTheme={toggleTheme} onToggleLanguage={() => setLang(ar ? "en" : "ar")} onLogout={() => void signOut({ callbackUrl: "/" })} />
 
-        {activeTab !== "overview" && <div className="workspace-page-heading"><p className="workspace-eyebrow">SPOOFX / {t("مساحتك الرقمية", "YOUR WORKSPACE")}</p><h1>{titles[activeTab].title}</h1><p>{titles[activeTab].desc}</p></div>}
+        {activeTab !== "overview" && <div className="workspace-page-heading"><h1>{titles[activeTab].title}</h1></div>}
         <main id="spoo-workspace-main" tabIndex={-1} className="portal-main" aria-busy={loading}>
 
           {loading && (
@@ -425,9 +425,7 @@ export function Portal({ user }: { user: PortalUser }) {
                           <span className="section-count active-count">{activeProducts.length}</span>
                         </h2>
                       </div>
-                      <p className="category-subtitle">
-                        {t("التراخيص الفعالة المتاحة للاستخدام المباشر.", "Active licenses available for immediate access.")}
-                      </p>
+                      
                     </div>
 
                     <ProductGrid
@@ -459,9 +457,7 @@ export function Portal({ user }: { user: PortalUser }) {
                           <span className="section-count expired-count">{expiredProducts.length}</span>
                         </h2>
                       </div>
-                      <p className="category-subtitle">
-                        {t("تراخيص منتهية أو موقوفة حسب حالة النظام.", "Expired or suspended licenses, as reported by the system.")}
-                      </p>
+                      
                     </div>
 
                     {expiredProducts.length > 0 ? (
@@ -498,7 +494,7 @@ export function Portal({ user }: { user: PortalUser }) {
                       </div>
                       <span className="workspace-key-icon"><KeyRound size={24} /></span>
                     </header>
-                    <p className="workspace-redeem-description">{t("أدخل مفتاح الترخيص لربط منتجك بحسابك الحالي.", "Enter a license key to link your product to this account.")}</p>
+                    
                     <form onSubmit={redeem}>
                       <div className="label-with-format">
                         <label htmlFor="license-key">{t("رمز مفتاح الترخيص", "License Key")}</label>
@@ -639,7 +635,7 @@ export function Portal({ user }: { user: PortalUser }) {
                         </div>
                         <div>
                           <h3 className="luxe-card-title">Google</h3>
-                          <p className="luxe-card-sub">{t("حساب Google المرتبط وجلسة تسجيل الدخول", "Connected Google account and active session")}</p>
+                          
                         </div>
                       </div>
 

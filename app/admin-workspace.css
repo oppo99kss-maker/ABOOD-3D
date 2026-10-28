@@ -410,7 +410,7 @@
 
 /* Sidebar, content canvas, tables and forms. */
 .admin-workspace { padding-inline:28px; }
-.admin-workspace .saas-admin { display:grid; grid-template-columns:220px minmax(0,1fr); gap:28px; width:100%; max-width:1480px; padding:28px 0 60px; margin:auto; background:transparent; }
+.admin-workspace .saas-admin { display:grid; grid-template-columns:200px minmax(0,1fr); gap:28px; width:100%; max-width:1480px; padding:28px 0 60px; margin:auto; background:transparent; }
 .admin-workspace .saas-admin.admin-collapsed { grid-template-columns:72px minmax(0,1fr); }
 .admin-workspace .admin-ref-nav-bar { display:block; position:sticky; top:20px; align-self:start; padding:12px; margin:0; border:1px solid var(--color-border); border-radius:18px; background:var(--color-surface); box-shadow:none; min-width:0; }
 .admin-sidebar-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:50px; padding:0 7px 10px; border-bottom:1px solid var(--color-border); margin-bottom:12px; }
@@ -427,12 +427,12 @@
 .admin-workspace .admin-collapsed .admin-ref-nav-pill { justify-content:center; padding-inline:0; }
 .admin-workspace .admin-ref-main-view { min-width:0; width:100%; padding:0; }
 .admin-workspace .ref-view-section { animation:workspace-enter .2s ease both; }
-.admin-workspace :is(.ref-overview-admin-header,.ref-section-toolbar,.ref-products-header-clean,.admin-overview-heading) { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:0 0 24px; border:0; border-bottom:1px solid var(--color-border); border-radius:0; margin-bottom:24px; background:transparent; }
+.admin-workspace :is(.ref-overview-admin-header,.ref-section-toolbar,.ref-products-header-clean,.admin-overview-heading) { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:0 0 18px; border:0; border-bottom:1px solid var(--color-border); border-radius:0; margin-bottom:24px; background:transparent; }
 .admin-workspace :is(.ref-section-title,.admin-overview-heading h1,.ref-overview-admin-header h2) { color:var(--color-text); font-size:clamp(20px,2vw,27px); line-height:1.6; font-weight:600; letter-spacing:-.4px; }
 .admin-workspace :is(.ref-section-subtitle,.ref-setting-desc,.ref-modal-subdesc) { color:var(--color-muted); font-size:13px; line-height:1.9; max-width:720px; }
 .admin-workspace :is(.ref-toolbar-actions,.ref-products-filters,.ref-filter-row,.ref-keys-toolbar) { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 .admin-workspace :is(.ref-hero-card,.ref-metric-card,.ref-quick-actions-card,.ref-inventory-product-card,.ref-setting-card,.ref-product-card,.ref-prod-card,.admin-overview-stat) { background:var(--color-surface); border:1px solid var(--color-border); border-radius:18px; box-shadow:var(--shadow-card); overflow:hidden; }
-.admin-workspace :is(.ref-metric-card,.admin-overview-stat,.ref-setting-card) { padding:24px; }
+.admin-workspace :is(.ref-metric-card,.admin-overview-stat,.ref-setting-card) { padding:18px; }
 .admin-workspace :is(.ref-metric-card strong,.admin-overview-stat strong) { font-size:28px; font-weight:650; color:var(--color-text); }
 .admin-workspace .ref-inventory-product-cards-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
 .admin-workspace .ref-inventory-product-card { padding:20px; }
@@ -468,26 +468,39 @@
 @media(max-width:1100px) { .admin-workspace .saas-admin { grid-template-columns:180px minmax(0,1fr); gap:20px; } .admin-workspace .ref-inventory-product-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:760px) { .admin-workspace { padding-inline:18px; } .admin-workspace .saas-admin,.admin-workspace .saas-admin.admin-collapsed { display:block; padding-top:18px; } .admin-workspace .admin-ref-nav-bar { position:static; margin-bottom:24px; } .admin-workspace .admin-ref-nav-track { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-workspace .admin-collapsed .admin-ref-nav-track { display:none; } .admin-workspace .admin-collapsed .admin-sidebar-heading > span { display:block; } .admin-workspace .admin-collapsed .admin-sidebar-heading { justify-content:space-between; } .admin-workspace .admin-sidebar-heading { border:0; margin:0; padding-bottom:0; } .admin-workspace .admin-ref-nav-track { padding-top:12px; } .admin-workspace .admin-ref-main-view { overflow:visible; } .admin-workspace .ref-inventory-product-cards-grid { grid-template-columns:1fr; } .admin-workspace :is(.ref-section-toolbar,.ref-products-header-clean) { gap:14px; } .admin-workspace :is(.ref-toolbar-actions,.ref-products-filters) { width:100%; } .admin-workspace :is(.ref-btn-primary-gradient,.ref-text-input,.ref-search-input) { max-width:100%; } .admin-workspace :is(.ref-settings-grid,.ref-overview-stats-grid) { grid-template-columns:1fr; } }
 .admin-workspace .customer-drawer-panel { background:var(--color-surface); border-color:var(--color-border); color:var(--color-text); width:min(620px,100vw); }
-.admin-workspace .saas-admin .ref-overview-admin-header { background:transparent; border:0; border-bottom:1px solid var(--color-border); border-radius:0; padding:0 0 24px; }
+.admin-workspace .saas-admin .ref-overview-admin-header { background:transparent; border:0; border-bottom:1px solid var(--color-border); border-radius:0; padding:0 0 18px; }
 .admin-workspace .saas-admin .ref-stat-card { padding:22px; border:1px solid var(--color-border); border-radius:16px; background:var(--color-surface); }
 .admin-workspace .saas-admin :is(.ref-stat-label,.ref-stat-sub,.ref-action-desc,.ref-timeline-empty) { font-size:12px; line-height:1.9; }
-.admin-workspace .saas-admin .ref-stat-number { font-size:29px; font-weight:650; }
+.admin-workspace .saas-admin .ref-stat-number { font-size:25px; font-weight:650; }
 
 /* A quiet violet identity separates administration from the customer workspace. */
 .admin-workspace[data-theme="dark"],.admin-workspace .saas-admin[data-theme="dark"] { --color-bg:#0d0b14; --color-surface:#171421; --color-surface-hover:#211c30; --color-border:#332b45; --color-primary:#b8a0ff; --color-primary-soft:#b8a0ff10; --color-muted:#aea4c0; --color-text:#f4f0fc; }
 .admin-workspace[data-theme="light"],.admin-workspace .saas-admin[data-theme="light"] { --color-bg:#f6f3fa; --color-surface:#fff; --color-surface-hover:#eee8f7; --color-border:#e2d9ed; --color-primary:#7150b4; --color-primary-soft:#7150b410; --color-muted:#72647f; --color-text:#2d203e; }
-.admin-workspace .saas-admin { gap:34px; }
-.admin-workspace .admin-ref-nav-track { gap:10px; }
-.admin-workspace .admin-ref-nav-pill { min-height:48px; gap:12px; }
-.admin-workspace .admin-ref-nav-pill > svg { box-sizing:content-box; padding:7px; border-radius:9px; color:var(--color-primary); background:var(--color-primary-soft); }
+.admin-workspace .saas-admin { gap:24px; }
+.admin-workspace .admin-ref-nav-track { gap:6px; }
+.admin-workspace .admin-ref-nav-pill { min-height:42px; gap:9px; padding:8px 10px; }
+.admin-workspace .admin-ref-nav-pill > svg { box-sizing:content-box; padding:5px; border-radius:8px; color:var(--color-primary); background:var(--color-primary-soft); }
 .admin-workspace .admin-ref-nav-pill:nth-child(3n+2) > svg { color:#43b9cc; background:#43b9cc12; }
 .admin-workspace .admin-ref-nav-pill:nth-child(3n) > svg { color:#d89666; background:#d8966612; }
 .admin-workspace[data-theme="light"] .admin-ref-nav-pill:nth-child(3n+2) > svg { color:#147887; }
 .admin-workspace[data-theme="light"] .admin-ref-nav-pill:nth-child(3n) > svg { color:#97572a; }
-.admin-workspace .saas-admin .ref-admin-stats-grid { gap:18px; margin-block:30px; }
-.admin-workspace .saas-admin .ref-stat-card { padding:24px; background:linear-gradient(140deg,var(--color-primary-soft),transparent 80%),var(--color-surface); }
+.admin-workspace .saas-admin .ref-admin-stats-grid { gap:12px; margin-block:18px; }
+.admin-workspace .saas-admin .ref-stat-card { padding:16px; background:linear-gradient(140deg,var(--color-primary-soft),transparent 80%),var(--color-surface); }
 .admin-workspace .saas-admin .ref-stat-icon-wrap.blue,.admin-workspace .saas-admin .ref-stat-icon-wrap.purple { color:var(--color-primary); background:var(--color-primary-soft); border-color:var(--luxe-accent-line); }
 .admin-workspace .saas-admin .ref-stat-icon-wrap.cyan { color:#43b9cc; background:#43b9cc12; border-color:#43b9cc30; }
 .admin-workspace .saas-admin .ref-stat-icon-wrap.green { color:var(--color-success); background:color-mix(in srgb,var(--color-success) 8%,transparent); border-color:color-mix(in srgb,var(--color-success) 20%,transparent); }
 .admin-workspace .saas-admin .ref-stat-icon-wrap.orange,.admin-workspace .saas-admin .ref-stat-icon-wrap.yellow { color:var(--color-warning); background:color-mix(in srgb,var(--color-warning) 8%,transparent); border-color:color-mix(in srgb,var(--color-warning) 20%,transparent); }
 @media(max-width:900px) { .admin-workspace .saas-admin { gap:22px; } }
+
+/* Compact sections keep actions and form labels visible without promotional captions. */
+.admin-workspace .saas-admin .ref-setting-card { gap:12px; border-radius:14px; }
+.admin-workspace .saas-admin .ref-settings-grid { gap:16px; align-items:start; }
+.admin-workspace .saas-admin .ref-admin-shortcut-card { padding:12px 14px; min-height:58px; }
+.admin-workspace .saas-admin .ref-reset-request-card { padding:16px; }
+.admin-workspace .saas-admin .ref-section-toolbar { margin-bottom:18px; gap:14px; }
+.admin-workspace .saas-admin .ref-stat-icon-wrap { width:34px; height:34px; flex-shrink:0; }
+.admin-workspace .saas-admin .ref-setting-icon-cube { width:36px; height:36px; flex-shrink:0; }
+.admin-workspace .saas-admin .ref-setting-title { font-size:15px; }
+.admin-workspace .saas-admin .ref-universal-action-btn { min-height:48px; }
+.admin-workspace .admin-sidebar-heading { min-height:42px; margin-bottom:8px; }
+@media (pointer:coarse) { .admin-workspace .admin-ref-nav-pill { min-height:44px; } }

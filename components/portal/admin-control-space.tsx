@@ -1689,7 +1689,7 @@ export function AdminControlSpace({
             <div className="ref-overview-admin-header">
               <div className="ref-admin-hero-title">
                 <h2>{t("لوحة الإدارة", "Admin workspace")}</h2>
-                <p className="ref-admin-hero-desc">{t("منتجاتك ومفاتيحك وطلبات عملائك.", "Products, licenses and customer requests.")}</p>
+                
               </div>
 
               <div className="ref-admin-hero-actions">
@@ -1716,12 +1716,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number">
                     {dashboardStats?.products?.total_products ?? products.length}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t(
-                      `منها ${dashboardStats?.products?.active_products ?? products.filter((p) => p.is_active).length} منتج نشط`,
-                      `${dashboardStats?.products?.active_products ?? products.filter((p) => p.is_active).length} active products`
-                    )}
-                  </span>
+                  
                 </div>
               </div>
 
@@ -1735,12 +1730,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number text-cyan">
                     {dashboardStats?.keys?.available_keys ?? 0}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t(
-                      `من إجمالي ${dashboardStats?.keys?.total_keys ?? 0} مفتاح`,
-                      `out of ${dashboardStats?.keys?.total_keys ?? 0} total keys`
-                    )}
-                  </span>
+                  
                 </div>
               </div>
 
@@ -1754,9 +1744,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number text-success">
                     {dashboardStats?.keys?.redeemed_keys ?? 0}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t("تراخيص مرتبطة بحسابات العملاء", "Active linked licenses")}
-                  </span>
+                  
                 </div>
               </div>
 
@@ -1770,9 +1758,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number">
                     {dashboardStats?.customers?.total_customers ?? customerTotalCount ?? customers.length}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t("حسابات حقيقية مسجلة بالنظام", "Real registered accounts")}
-                  </span>
+                  
                 </div>
               </div>
 
@@ -1786,9 +1772,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number">
                     {dashboardStats?.activationsToday ?? 0}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t("تفعيلات خلال الـ 24 ساعة الماضية", "Activations last 24h")}
-                  </span>
+                  
                 </div>
               </div>
 
@@ -1802,9 +1786,7 @@ export function AdminControlSpace({
                   <strong className="ref-stat-number text-warning">
                     {resetRequestsList.filter((r) => r.status === "PENDING").length}
                   </strong>
-                  <span className="ref-stat-sub">
-                    {t("طلبات تبديل HWID بانتظار التدقيق", "Awaiting review")}
-                  </span>
+                  
                 </div>
               </div>
             </div>
@@ -1819,7 +1801,6 @@ export function AdminControlSpace({
                 <div className="shortcut-icon-box blue"><Package size={18} /></div>
                 <div className="shortcut-info">
                   <strong>{t("إدارة المنتجات", "Manage Products")}</strong>
-                  <span>{t("تعديل وإضافة باقات المنتجات والملفات والشروحات", "Create, edit and manage packages")}</span>
                 </div>
                 <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
               </button>
@@ -1832,7 +1813,6 @@ export function AdminControlSpace({
                 <div className="shortcut-icon-box cyan"><KeyRound size={18} /></div>
                 <div className="shortcut-info">
                   <strong>{t("المخزون والمفاتيح", "Manage Inventory")}</strong>
-                  <span>{t("فحص أرصدة المخزون وتوليد واستيراد المفاتيح", "Generate, import and monitor keys")}</span>
                 </div>
                 <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
               </button>
@@ -1848,7 +1828,6 @@ export function AdminControlSpace({
                 <div className="shortcut-icon-box purple"><Users size={18} /></div>
                 <div className="shortcut-info">
                   <strong>{t("إدارة العملاء", "Manage Customers")}</strong>
-                  <span>{t("فحص التراخيص والبحث وتعديل حالات الحسابات", "Inspect licenses and manage users")}</span>
                 </div>
                 <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
               </button>
@@ -1861,7 +1840,6 @@ export function AdminControlSpace({
                 <div className="shortcut-icon-box yellow"><RotateCcw size={18} /></div>
                 <div className="shortcut-info">
                   <strong>{t("الطلبات ورستات المفاتيح", "Orders & Key Resets")}</strong>
-                  <span>{t("مراجعة وقبول أو رفض طلبات تبديل HWID", "Review HWID reset requests")}</span>
                 </div>
                 <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
               </button>
@@ -1878,7 +1856,6 @@ export function AdminControlSpace({
                 <div className="shortcut-icon-box green"><ShieldCheck size={18} /></div>
                 <div className="shortcut-info">
                   <strong>{t("السجلات والنشاط", "Logs & Audit")}</strong>
-                  <span>{t("سجل التفعيلات الحقيقية والجلسات النشطة", "Real activations and active sessions")}</span>
                 </div>
                 <ArrowRight size={16} className={ar ? "rotate-180" : ""} />
               </button>
@@ -1949,12 +1926,7 @@ export function AdminControlSpace({
                   <KeyRound size={20} />
                   <span>{t("إدارة المخزون والمفاتيح", "Stock & License Keys")}</span>
                 </h3>
-                <p className="ref-section-subtitle">
-                  {t(
-                    "توليد واستيراد الأكواد، فحص الأرصدة المتاحة لكل منتج، والتحكم بمفاتيح التراخيص.",
-                    "Manage key stock, bulk generate or import keys for products."
-                  )}
-                </p>
+                
               </div>
             </div>
 
@@ -2022,12 +1994,7 @@ export function AdminControlSpace({
                   <Package size={20} />
                   <span>{t("منتجات المتجر والمخزون المتاح", "Store Products & Available Stock")}</span>
                 </h3>
-                <p className="ref-section-subtitle">
-                  {t(
-                    "انقر على أي منتج لفتحه وتعديله وتعبئة مفاتيحه",
-                    "Click on any product to open, edit, and fill its keys"
-                  )}
-                </p>
+                
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -2134,12 +2101,7 @@ export function AdminControlSpace({
                     <RotateCcw size={20} className="text-warning" />
                     <span>{t("إدارة الطلبات ورستات المفاتيح", "Orders & Key Reset Requests")}</span>
                   </h3>
-                  <p className="ref-section-subtitle">
-                    {t(
-                      "تظهر هنا طلبات العملاء لإعادة تعيين مفاتيحهم لأجهزة جديدة. يمكنك الموافقة أو الرفض فوراً مع إرسال ملاحظات تظهر للعميل.",
-                      "Customer requests to re-bind licenses to new hardware. Approve or reject with custom feedback visible to customer."
-                    )}
-                  </p>
+                  
                 </div>
 
                 <div className="ref-table-search-box">
@@ -2620,9 +2582,7 @@ export function AdminControlSpace({
                       <ShieldCheck size={22} />
                       <span>{t("سجل نشاط الموقع", "Site Activity Log")}</span>
                     </h3>
-                    <p className="ref-sub-desc">
-                      {t("عمليات العملاء والإدارة مرتبة من الأحدث، مع تفاصيل واضحة لكل حدث.", "Customer and management operations sorted by latest, with clear details.")}
-                    </p>
+                    
                   </div>
 
                   <button className="ref-timeline-refresh-btn" onClick={loadActivationLogs}>
@@ -2728,9 +2688,7 @@ export function AdminControlSpace({
                         <span>{activeSessions.length} {t("متصل الآن", "Online Now")}</span>
                       </span>
                     </div>
-                    <p className="ref-sessions-subdesc">
-                      {t("تظهر هنا الحسابات التي أرسلت نبض حضور خلال آخر دقيقتين. لا يتم عرض البريد أو عنوان الشبكة أو محتوى المحادثات.", "Accounts showing active presence in the last 2 minutes.")}
-                    </p>
+                    
                   </div>
 
                   <button className="ref-timeline-refresh-btn" onClick={loadLoginLogs}>
@@ -2788,12 +2746,7 @@ export function AdminControlSpace({
                   <Settings size={20} />
                   <span>{t("ضبط لوحة التحكم وإعدادات المتجر", "Control Panel & Store Settings")}</span>
                 </h3>
-                <p className="ref-section-subtitle">
-                  {t(
-                    "صلاحيات كاملة للتحكم في وضع الصيانة، إيقاف وتشغيل التفعيلات، الإجراءات الجماعية للمنتجات، وهوية المنصة.",
-                    "Full administrative control over maintenance mode, activation rules, batch product operations, and brand identity."
-                  )}
-                </p>
+                
               </div>
 
               <div className="ref-toolbar-actions">
@@ -2819,9 +2772,7 @@ export function AdminControlSpace({
                   </div>
                   <div className="ref-setting-header-titles">
                     <h4 className="ref-setting-title">{t("وضع الصيانة للمتجر", "Store Maintenance Mode")}</h4>
-                    <p className="ref-setting-desc">
-                      {t("إغلاق المتجر مؤقتاً أمام العملاء وإظهار رسالة صيانة رسمية.", "Temporarily close store for customers with official maintenance banner.")}
-                    </p>
+                    
                   </div>
                   <div className="ref-setting-toggle-wrap">
                     <button
@@ -2860,9 +2811,7 @@ export function AdminControlSpace({
                   </div>
                   <div className="ref-setting-header-titles">
                     <h4 className="ref-setting-title">{t("صلاحيات تفعيل التراخيص", "License Key Activations")}</h4>
-                    <p className="ref-setting-desc">
-                      {t("السماح للعملاء بإدخال واسترداد مفاتيح التفعيل وربطها بحساباتهم.", "Allow or pause customer key redemptions across the platform.")}
-                    </p>
+                    
                   </div>
                   <div className="ref-setting-toggle-wrap">
                     <button
@@ -2882,11 +2831,7 @@ export function AdminControlSpace({
                 </div>
 
                 <div className="ref-setting-card-body">
-                  <p className="ref-setting-tip">
-                    {settingsForm.allow_new_activations
-                      ? t("العملاء يمكنهم تفعيل المفاتيح واستلام ملفات SpooFX فوراً دون قيود.", "Customers can redeem keys and download SpooFX files instantly.")
-                      : t("التفعيلات مجمّدة مؤقتاً: أي محاولة تفعيل مفتاح ستُرفض لحين إعادة الفتح.", "Key redemptions paused: any attempt will be held until re-opened.")}
-                  </p>
+                  
                 </div>
               </div>
 
@@ -2898,9 +2843,7 @@ export function AdminControlSpace({
                   </div>
                   <div className="ref-setting-header-titles">
                     <h4 className="ref-setting-title">{t("حد تنبيه انخفاض المخزون", "Low Stock Alert Threshold")}</h4>
-                    <p className="ref-setting-desc">
-                      {t("تحديد عدد المفاتيح المتبقية التي يعتبر عندها المخزون حرجاً ويحتاج تعبئة.", "Keys threshold below which inventory is marked critical.")}
-                    </p>
+                    
                   </div>
                 </div>
 
@@ -2949,9 +2892,7 @@ export function AdminControlSpace({
                   </div>
                   <div className="ref-setting-header-titles">
                     <h4 className="ref-setting-title">{t("هوية المتجر وبيانات المنصة", "Store Brand & Identity")}</h4>
-                    <p className="ref-setting-desc">
-                      {t("اسم المنصة والوصف التعريفي الذي يظهر في العناوين والتقارير.", "Platform title and description in banners and reports.")}
-                    </p>
+                    
                   </div>
                 </div>
 
@@ -2986,9 +2927,7 @@ export function AdminControlSpace({
                   <Wrench size={20} className="text-cyan" />
                   <div>
                     <h4 className="ref-universal-powers-title">{t("صلاحيات التحكم الجماعي السريعة في المتجر", "Universal Store Batch Powers")}</h4>
-                    <p className="ref-universal-powers-desc">
-                      {t("إجراءات فورية تنطبق على كامل منتجات ومخزون وقاعدة بيانات المتجر بنقرة واحدة.", "Instant operations across all products, inventory, and database in 1 click.")}
-                    </p>
+                    
                   </div>
                 </div>
               </div>
@@ -3002,7 +2941,7 @@ export function AdminControlSpace({
                   <Eye size={16} />
                   <div>
                     <strong>{t("إظهار كافة المنتجات", "Show All Products")}</strong>
-                    <small>{t("جعل جميع المنتجات معروضة فوراً في المتجر", "Make 100% of products visible")}</small>
+                    
                   </div>
                 </button>
 
@@ -3014,7 +2953,7 @@ export function AdminControlSpace({
                   <EyeOff size={16} />
                   <div>
                     <strong>{t("إخفاء كافة المنتجات", "Hide All Products")}</strong>
-                    <small>{t("حجب جميع المنتجات عن المتجر مؤقتاً", "Hide all products from public view")}</small>
+                    
                   </div>
                 </button>
 
@@ -3026,7 +2965,7 @@ export function AdminControlSpace({
                   <Trash2 size={16} />
                   <div>
                     <strong>{t("تنظيف الأكواد المستهلكة", "Clear Consumed Keys")}</strong>
-                    <small>{t("حذف المفاتيح المستهلكة وإبقاء المخزون المتاح", "Purge sold keys, keep stock safe")}</small>
+                    
                   </div>
                 </button>
 
@@ -3038,7 +2977,7 @@ export function AdminControlSpace({
                   <RefreshCw size={16} className={busy ? "spin" : ""} />
                   <div>
                     <strong>{t("مزامنة وتحديث شامل", "Full System Sync")}</strong>
-                    <small>{t("تحديث الجلسات والتراخيص والإحصائيات", "Sync live sessions & licenses")}</small>
+                    
                   </div>
                 </button>
               </div>
@@ -3734,9 +3673,7 @@ export function AdminControlSpace({
                 </div>
                 <div>
                   <h2 className="ref-stock-modal-title">{t("إدارة وتعبئة مخزون المفاتيح", "Stock Keys Management")}</h2>
-                  <p className="ref-stock-modal-subdesc">
-                    {t("تعبئة المخزون يدوياً: إضافة مفتاح واحد، أو لصق قائمة مفاتيح دفعة واحدة من الحافظة.", "Manual stock filling: Add a single key, or paste bulk keys from clipboard.")}
-                  </p>
+                  
                 </div>
               </div>
 
