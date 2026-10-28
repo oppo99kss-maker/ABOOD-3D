@@ -940,7 +940,7 @@
   }
 }
 
-.card { background: transparent; box-shadow: none; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; }
+.card { background: var(--luxe-panel); box-shadow: none; border: 1px solid var(--luxe-line); border-radius: 18px; }
 .card:hover { transform: none; box-shadow: none; }
 
 .cardText, .muted, .videoCaption { font-size: 14px; line-height: 1.9; }

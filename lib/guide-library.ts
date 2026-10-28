@@ -11,11 +11,8 @@ export interface GuideArticle {
 }
 export const GUIDE_STAGES = ['قبل البدء', 'إعداد BIOS', 'تجهيز Windows', 'إعداد النظام', 'تشغيل المنتج', 'الخطوات النهائية', 'المشاكل الشائعة'];
 export const GUIDE_CATEGORIES: GuideCategory[] = ['Windows', 'BIOS', 'Network', 'VPN', 'RAID', 'Disk', 'تشغيل البرنامج', 'Visual C++', 'أخطاء البرنامج', 'Permanent Spoof'];
-const FILES = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663152548301/';
-const PERMANENT_IMAGE = 'https://3845978534-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FUSC6VrOP0gtVeq3Dc1gX%2Fuploads%2F4a9fbfPCtIWvMcv9rRZV%2Fspoof.png?alt=media&token=cfc99705-d4e5-443f-8d5f-ecd7953fad6f';
-export const DEFAULT_GUIDE_SECTIONS = ['bios', 'windows', 'raid', 'normal', 'asus', 'network', 'vpn', 'disk', 'runtime', 'connection', 'clock', 'menu'];
+export const DEFAULT_GUIDE_SECTIONS = ['bios', 'windows', 'raid', 'network', 'vpn', 'disk', 'runtime', 'connection', 'menu'];
 // Concise Arabic summaries of the seven requested pages. Technical option names retain their original spelling.
-// BIOS intentionally contains no ASUS instructions; ASUS Permanent Spoof is an independent opt-in article.
 export const GUIDE_ARTICLES: GuideArticle[] = [
   {
     id: 'bios', title: 'إعداد BIOS', description: 'إعدادات TPM والاتصال حسب اللوحة الأم.', category: 'BIOS', stage: 1,
@@ -56,27 +53,6 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     variants: [
       { id: 'am4', label: 'AMD AM4', steps: [{ title: 'مجلد التعريف', path: 'Put this folder on USB > NVMe_RAID / SATA_RAID', text: 'اختر مجلد نوع القرص عند تحميل التعريفين.' }] },
       { id: 'am5', label: 'AMD AM5', steps: [{ title: 'مجلد التعريف', path: 'Put this folder on USB', text: 'اختر هذا المجلد مباشرة عند تحميل التعريفين.' }] },
-    ],
-  },
-  {
-    id: 'normal', title: 'Normal Permanent Spoof', description: 'المسار العادي وخيار EFI عند عدم تغير الأرقام.', category: 'Permanent Spoof', stage: 4,
-    image: PERMANENT_IMAGE,
-    steps: [
-      { title: 'اكتمال العملية', text: 'عند ظهور رسالة اكتمال Permanent Spoof، أغلق الأداة وأعد تشغيل الجهاز.' },
-      { title: 'إذا لم تتغير الأرقام', path: 'Custom Spoofing > EFI SPOOF - Auto', text: 'انتظر انتهاء الخيار، ثم افتح BIOS وأقلع من UEFI OS أو UEFI Partition 1. اختر UEFI ثم افحص الأرقام مجددًا.' },
-      { title: 'المراجعة', text: 'قارن جميع الأرقام بصورة Serial Checker السابقة. يذكر المصدر MAC SPOOF - NIC لتغيير MAC الدائم.' },
-      { title: 'الأقراص', text: 'إذا لم تنفذ RAID Reinstallation، انتقل إلى قسم Disk Guide المستقل.' },
-    ],
-  },
-  {
-    id: 'asus', title: 'ASUS Permanent Spoof', description: 'مسار مستقل للمنتجات التي تدعم لوحات ASUS.', category: 'Permanent Spoof', stage: 4,
-    image: PERMANENT_IMAGE,
-    warning: 'يشترط المصدر استمرار الإقلاع عبر قسم UEFI الخاص بهذه الطريقة. هذا المسار يغيّر إعدادات الإقلاع ومفاتيح Secure Boot؛ اتبعه فقط للمنتج واللوحة المدعومين.',
-    steps: [
-      { title: 'بعد الاكتمال', text: 'أغلق الأداة عند اكتمال Permanent Spoof، وأعد التشغيل إلى BIOS. يذكر المصدر الأمر التالي من CMD بصلاحية المسؤول.', commands: ['shutdown /r /fw /t 0'] },
-      { title: 'ترتيب الإقلاع', path: 'Advanced Mode > Boot', value: 'Boot Option #1: UEFI OS', text: 'اجعل Windows Boot Manager الخيار الثاني.', image: 'https://content.gitbook.com/content/USC6VrOP0gtVeq3Dc1gX/blobs/4ab0hauRuFdZv2EWst01/image.png' },
-      { title: 'Secure Boot', value: 'Other OS', path: 'Secure Boot > Key Management', text: 'يطلب المصدر اختيار Other OS ثم مسح مفاتيح Secure Boot. بعد الإقلاع تظهر أوامر الطريقة على الشاشة.' },
-      { title: 'التحقق', text: 'قارن جميع الأرقام بالنسخة السابقة. يذكر المصدر MAC SPOOF - NIC، ثم Disk Guide إذا لم تستخدم RAID.' },
     ],
   },
   {
@@ -144,11 +120,6 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     image: '/guides/network-error-fix-thumb.png', video: '/guides/network-error-fix.mp4',
     steps: [{ title: 'طابق الخطأ', text: 'قارن الرسالة بالصورة، ثم اتبع فيديو الحل الموجود بالموقع.' }, { title: 'الاتصال', text: 'أداة Cloudflare WARP اختيارية للمساعدة في استعادة الاتصال، كما في الشرح الحالي.' }],
     links: [{ label: 'تحميل Cloudflare WARP', url: 'https://downloads.cloudflareclient.com/v1/download/windows/ga' }],
-  },
-  {
-    id: 'clock', title: 'خطأ الوقت والتحقق', description: 'تنبيه مزامنة وقت Windows أو التحقق من التوقيع.', category: 'أخطاء البرنامج', stage: 6,
-    image: '/guides/timer-error-fix-thumb.png', video: '/guides/timer-error-fix.mp4',
-    steps: [{ title: 'طابق الرسالة', text: 'قارن رسالة جهازك بالصورة المرفقة.' }, { title: 'شاهد الحل', text: 'تابع فيديو الموقع الخاص بالوقت والتحقق، ثم جرّب التشغيل وأرسل صورة للدعم إذا استمر الخطأ.' }],
   },
   {
     id: 'menu', title: 'مشكلة عدم ظهور قائمة البرنامج', description: 'يعمل WebUI لكن قائمة Spoofer لا تظهر.', category: 'تشغيل البرنامج', stage: 6,

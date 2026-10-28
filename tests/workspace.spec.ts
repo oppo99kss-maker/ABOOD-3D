@@ -39,14 +39,14 @@ test("activation form sends existing payload, blocks duplicate submits and repor
  await navigate(page,"منتجاتي");await expect(page.locator(".real-product")).toHaveCount(1);await noOverflow(page);await context.close();
 });
 
-test("product library is bounded, searchable and accessible across screen sizes",async({browser})=>{
+test("product library is bounded and accessible across screen sizes",async({browser})=>{
  const {context,page}=await session(browser);const products=Array.from({length:4},(_,i)=>({...product,id:`test-product-${i}`,name:`SpooFx Product ${i+1}`}));
  await page.route("**/api/portal",route=>route.fulfill({json:{products,settings,isAdmin:false}}));await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");
  for(const width of [1600,1280,820,390]){await page.setViewportSize({width,height:1000});await noOverflow(page);const box=await page.locator(".real-product").first().boundingBox();expect(box!.width).toBeLessThan(421);}
- await page.getByLabel("ابحث في منتجاتك").fill("Product 2");await expect(page.locator(".real-product")).toHaveCount(1);
- await page.getByRole("button",{name:"التفاصيل",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
- await expect(page.getByRole("button",{name:"التفاصيل",exact:true})).toBeFocused();
- await page.getByLabel("ابحث في منتجاتك").fill("not-found");await expect(page.getByText("لا توجد نتائج مطابقة",{exact:true})).toBeVisible();
+ await expect(page.getByLabel("ابحث في منتجاتك")).toHaveCount(0);
+ await page.getByRole("button",{name:"التفاصيل",exact:true}).first().click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
+ await expect(page.getByRole("button",{name:"التفاصيل",exact:true}).first()).toBeFocused();
+
  await context.close();
 });
 
@@ -105,4 +105,29 @@ test("failed data loads recover with a visible pending state and keyboard skip l
  await page.locator(".workspace-controls .lang-pill").click();
  await expect(page.getByRole("link",{name:"Skip to content",exact:true})).toHaveAttribute("href","#spoo-workspace-main");
  await noOverflow(page);await context.close();
+});
+
+test("reset reason is free text and genuine server review statuses reach the customer",async({browser})=>{
+ const {context,page}=await session(browser,390);let request:any=null;let status="PENDING";let notes="";
+ await page.route("**/api/portal",async route=>{
+  if(route.request().method()==="POST") {const payload=route.request().postDataJSON();expect(payload).toEqual({action:"requestKeyReset",productId:product.id,productName:product.name,reason:"أحتاج نقل الترخيص إلى جهازي الجديد"});request={id:"reset-ui-test",product_name:product.name,reason:payload.reason};return route.fulfill({json:{ok:true,request}});}
+  return route.fulfill({json:{products:[product],settings,isAdmin:false,customerNotifications:request?[{...request,status,admin_notes:notes}]:[]}});
+ });
+ await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");await expect(page.getByLabel("ابحث في منتجاتك")).toHaveCount(0);
+ await page.getByRole("button",{name:"طلب رستات المفتاح",exact:true}).click();
+ await expect(page.getByText("خيارات سريعة للسبب:",{exact:true})).toHaveCount(0);
+ const submit=page.getByRole("button",{name:"إرسال طلب الرستات للإدارة",exact:true});await expect(submit).toBeDisabled();
+ await page.getByLabel("سبب طلب الرستات بالتفصيل (مطلوب)").fill("أحتاج نقل الترخيص إلى جهازي الجديد");await submit.click();await expect(page.getByRole("dialog")).toHaveCount(0);
+ await expect(page.locator(".reset-update.pending")).toContainText("بانتظار مراجعة الإدارة");
+ status="APPROVED";notes="تمت الموافقة على طلبك";await page.getByRole("button",{name:"تحديث الحالة",exact:true}).click();await expect(page.locator(".reset-update.approved")).toContainText(notes);
+ status="REJECTED";notes="يرجى إرفاق معلومات إضافية";await page.getByRole("button",{name:"تحديث الحالة",exact:true}).click();await expect(page.locator(".reset-update.rejected")).toContainText(notes);await noOverflow(page);await context.close();
+});
+
+test("removed articles stay absent from both customer guide entry points",async({browser})=>{
+ const {context,page}=await session(browser,390);await page.route("**/api/portal",route=>route.fulfill({json:{products:[product],settings,isAdmin:false}}));await page.goto("http://localhost:3101/portal");await navigate(page,"مركز المساعدة");
+ for(const title of ["Normal Permanent Spoof","ASUS Permanent Spoof","خطأ الوقت والتحقق"])await expect(page.getByText(title,{exact:true})).toHaveCount(0);
+ await expect(page.getByRole("heading",{name:"مكتبة الشروحات والحلول",exact:true})).toBeVisible();await noOverflow(page);
+ await navigate(page,"منتجاتي");await page.getByRole("button",{name:"دليل المنتج",exact:true}).click();await page.getByRole("button",{name:"الشروحات",exact:true}).click();
+ for(const title of ["Normal Permanent Spoof","ASUS Permanent Spoof","خطأ الوقت والتحقق"])await expect(page.getByText(title,{exact:true})).toHaveCount(0);
+ await context.close();
 });

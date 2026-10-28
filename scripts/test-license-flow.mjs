@@ -20,5 +20,11 @@ const library=await call(customer);check(library.status,200);check(library.data.
 const isolated=await call(other);check(isolated.status,200);check(isolated.data.products.some(p=>p.id===id),false);
 const concurrent=await Promise.all([call(customer,{action:'redeem',code:keys[1]}),call(other,{action:'redeem',code:keys[1]})]);assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,400]);checks++;check(concurrent.filter(r=>r.data.success===true).length,1);
 const reset=await call(customer,{action:'requestKeyReset',productId:id,productName:'Isolated license verification',reason:'Local integration verification only'});check(reset.status,200);check(reset.data.ok,true);
+const pending=await call(customer);check(pending.data.customerNotifications.some(r=>r.id===reset.data.request.id&&r.status==='PENDING'),true);
+const approved=await call(admin,{action:'reviewKeyReset',id:reset.data.request.id,status:'APPROVED',adminNotes:'Approved in isolated verification'});check(approved.status,200);
+check((await call(customer)).data.customerNotifications.some(r=>r.id===reset.data.request.id&&r.status==='APPROVED'&&r.admin_notes==='Approved in isolated verification'),true);
+check((await call(other)).data.customerNotifications.some(r=>r.id===reset.data.request.id),false);
+const rejected=await call(admin,{action:'reviewKeyReset',id:reset.data.request.id,status:'REJECTED',adminNotes:'Rejected in isolated verification'});check(rejected.status,200);
+check((await call(customer)).data.customerNotifications.some(r=>r.id===reset.data.request.id&&r.status==='REJECTED'&&r.admin_notes==='Rejected in isolated verification'),true);
 const settings=await call(admin,{action:'updateSettings',site_name:'Isolated SpooFx QA',description:'Test only',maintenance_mode:false,maintenance_message:'',allow_new_activations:true,low_stock_threshold:5});check(settings.status,200);
 console.log(JSON.stringify({checks,result:'passed',scope:'isolated local PostgreSQL',tested:['product creation','key generation','invalid key','valid redemption','reuse denial','account isolation','concurrent single-use','reset request','settings','server admin permission']}));

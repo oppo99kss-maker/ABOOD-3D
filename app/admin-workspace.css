@@ -472,3 +472,22 @@
 .admin-workspace .saas-admin .ref-stat-card { padding:22px; border:1px solid var(--color-border); border-radius:16px; background:var(--color-surface); }
 .admin-workspace .saas-admin :is(.ref-stat-label,.ref-stat-sub,.ref-action-desc,.ref-timeline-empty) { font-size:12px; line-height:1.9; }
 .admin-workspace .saas-admin .ref-stat-number { font-size:29px; font-weight:650; }
+
+/* A quiet violet identity separates administration from the customer workspace. */
+.admin-workspace[data-theme="dark"],.admin-workspace .saas-admin[data-theme="dark"] { --color-bg:#0d0b14; --color-surface:#171421; --color-surface-hover:#211c30; --color-border:#332b45; --color-primary:#b8a0ff; --color-primary-soft:#b8a0ff10; --color-muted:#aea4c0; --color-text:#f4f0fc; }
+.admin-workspace[data-theme="light"],.admin-workspace .saas-admin[data-theme="light"] { --color-bg:#f6f3fa; --color-surface:#fff; --color-surface-hover:#eee8f7; --color-border:#e2d9ed; --color-primary:#7150b4; --color-primary-soft:#7150b410; --color-muted:#72647f; --color-text:#2d203e; }
+.admin-workspace .saas-admin { gap:34px; }
+.admin-workspace .admin-ref-nav-track { gap:10px; }
+.admin-workspace .admin-ref-nav-pill { min-height:48px; gap:12px; }
+.admin-workspace .admin-ref-nav-pill > svg { box-sizing:content-box; padding:7px; border-radius:9px; color:var(--color-primary); background:var(--color-primary-soft); }
+.admin-workspace .admin-ref-nav-pill:nth-child(3n+2) > svg { color:#43b9cc; background:#43b9cc12; }
+.admin-workspace .admin-ref-nav-pill:nth-child(3n) > svg { color:#d89666; background:#d8966612; }
+.admin-workspace[data-theme="light"] .admin-ref-nav-pill:nth-child(3n+2) > svg { color:#147887; }
+.admin-workspace[data-theme="light"] .admin-ref-nav-pill:nth-child(3n) > svg { color:#97572a; }
+.admin-workspace .saas-admin .ref-admin-stats-grid { gap:18px; margin-block:30px; }
+.admin-workspace .saas-admin .ref-stat-card { padding:24px; background:linear-gradient(140deg,var(--color-primary-soft),transparent 80%),var(--color-surface); }
+.admin-workspace .saas-admin .ref-stat-icon-wrap.blue,.admin-workspace .saas-admin .ref-stat-icon-wrap.purple { color:var(--color-primary); background:var(--color-primary-soft); border-color:var(--luxe-accent-line); }
+.admin-workspace .saas-admin .ref-stat-icon-wrap.cyan { color:#43b9cc; background:#43b9cc12; border-color:#43b9cc30; }
+.admin-workspace .saas-admin .ref-stat-icon-wrap.green { color:var(--color-success); background:color-mix(in srgb,var(--color-success) 8%,transparent); border-color:color-mix(in srgb,var(--color-success) 20%,transparent); }
+.admin-workspace .saas-admin .ref-stat-icon-wrap.orange,.admin-workspace .saas-admin .ref-stat-icon-wrap.yellow { color:var(--color-warning); background:color-mix(in srgb,var(--color-warning) 8%,transparent); border-color:color-mix(in srgb,var(--color-warning) 20%,transparent); }
+@media(max-width:900px) { .admin-workspace .saas-admin { gap:22px; } }

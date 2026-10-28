@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { type PortalTab } from "./portal-navigation";
 import { WorkspaceNavigation } from "./workspace-navigation";
+import { ResetRequestUpdates } from "./reset-request-updates";
 import { WorkspaceOverview } from "./workspace-overview";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
@@ -387,6 +388,7 @@ export function Portal({ user }: { user: PortalUser }) {
 
           {!loading && !loadError && (
             <div className="workspace-view" key={activeTab}>
+              {(activeTab === "overview" || activeTab === "my-products") && <ResetRequestUpdates requests={data.customerNotifications || []} ar={ar} onRefresh={refresh} />}
               {/* ==================================================== */}
               {/* TAB 1: OVERVIEW MATCHING IMAGE 2 EXACTLY */}
               {/* ==================================================== */}
@@ -394,26 +396,6 @@ export function Portal({ user }: { user: PortalUser }) {
 
               {activeTab === "my-products" && (
                 <div className="products-view-container">
-                  {/* Search Toolbar */}
-                  {data.products.length > 0 && (
-                    <div className="panel products-search-bar">
-                      <label className="search full-search">
-                        <Search size={16} />
-                        <input
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          aria-label={t("ابحث في منتجاتك", "Search products")}
-                          placeholder={t("ابحث في منتجاتك بالاسم أو الفئة…", "Search products by name or category…")}
-                        />
-                      </label>
-                      {query && (
-                        <button className="text-button" onClick={() => setQuery("")}>
-                          {t("مسح", "Clear")}
-                        </button>
-                      )}
-                    </div>
-                  )}
-
                   {/* SECTION 1: منتجاتي النشطة */}
                   <section className="product-category-section">
                     <div className="category-section-header">
@@ -939,7 +921,7 @@ function ProductGrid({
                               title={t("طلب رستات المفتاح (HWID Reset)", "Reset Device Key (HWID)")}
                             >
                               <RotateCcw size={14} />
-                              <span>{t("رستات مفتاح", "Reset Key")}</span>
+                              <span>{t("طلب رستات المفتاح", "Request Key Reset")}</span>
                             </button>
                           )}
                         </div>
@@ -1145,15 +1127,9 @@ function KeyResetModal({
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const quickTags = [
-    t("تغيير الجهاز بالكامل", "Full PC Change"),
-    t("فورمات للويندوز", "Windows Format"),
-    t("تغيير اللوحة الأم والمعالج", "Motherboard / CPU Change"),
-    t("تغيير كرت الشاشة", "GPU Upgrade"),
-  ];
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!reason.trim()) {
       setError(t("يرجى كتابة سبب طلب الرستات", "Please provide a reason for the reset request"));
       return;
@@ -1195,23 +1171,6 @@ function KeyResetModal({
               <span className="lic-status-badge">{t("ترخيص مسجل", "Registered License")}</span>
             </div>
 
-            {/* Quick reason suggestions */}
-            <div className="reset-quick-tags-wrap">
-              <label className="reset-label-text">{t("خيارات سريعة للسبب:", "Quick reason tags:")}</label>
-              <div className="reset-tags-row">
-                {quickTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    className="reset-tag-chip"
-                    onClick={() => setReason(tag)}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Reason Textarea */}
             <div className="reset-textarea-wrap">
               <label className="reset-label-text" htmlFor="reset-reason">
@@ -1227,8 +1186,8 @@ function KeyResetModal({
                   if (error) setError(null);
                 }}
                 placeholder={t(
-                  "مثال: قمت بتغيير اللوحة الأم والمعالج، أو قمت بعمل فورمات للويندوز والجهاز لا يتعرف على المفتاح القديم...",
-                  "e.g. Upgraded motherboard and CPU, or formatted Windows and previous device key is not recognized..."
+                  "اكتب سبب طلبك هنا بكلماتك…",
+                  "Describe your reason in your own words…"
                 )}
                 required
               />

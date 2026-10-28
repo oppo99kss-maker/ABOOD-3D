@@ -179,7 +179,7 @@ test("product guide opens local media and article library", async ({ browser, re
   await page.screenshot({ path: "../../outputs/guide-mobile.png", fullPage: true });
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  for (const path of ["/videos/product-guide-1016.mp4", "/guides/network-error-fix.mp4", "/guides/timer-error-fix.mp4", "/guides/wrp-guide.mp4"]) {
+  for (const path of ["/videos/product-guide-1016.mp4", "/guides/network-error-fix.mp4", "/guides/wrp-guide.mp4"]) {
     const response = await request.get(path, { headers: { Range: "bytes=0-31" } });
     expect(response.status()).toBe(206);
     expect(response.headers()["content-type"]).toContain("video/mp4");

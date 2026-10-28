@@ -1687,17 +1687,8 @@ export function AdminControlSpace({
           <div className="ref-view-section">
             <div className="ref-overview-admin-header">
               <div className="ref-admin-hero-title">
-                <div className="ref-admin-live-pulse-badge">
-                  <span className="pulse-green-dot" />
-                  <span>{t("قاعدة البيانات متصلة ومباشرة", "Live Database Connected")}</span>
-                </div>
-                <h2>{t("نظرة عامة على النظام وقاعدة البيانات", "System & Database Overview")}</h2>
-                <p className="ref-admin-hero-desc">
-                  {t(
-                    "إحصاءات حقيقية مباشرة مستخرجة من قاعدة البيانات للتحكم بالمنتجات والمخزون والعملاء والطلبات.",
-                    "Live database metrics for products, stock inventory, customers, and operations."
-                  )}
-                </p>
+                <h2>{t("لوحة الإدارة", "Admin workspace")}</h2>
+                <p className="ref-admin-hero-desc">{t("منتجاتك ومفاتيحك وطلبات عملائك.", "Products, licenses and customer requests.")}</p>
               </div>
 
               <div className="ref-admin-hero-actions">

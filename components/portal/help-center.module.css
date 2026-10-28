@@ -444,7 +444,7 @@
 /* Keep navigation and categories free from nested frames. */
 .hub { padding: 0; border: 0; background: transparent; border-radius: 0; }
 .filterBar { background: transparent; border: 0; padding-inline: 0; }
-.categoryCard { background: transparent; border: 0; border-bottom: 1px solid var(--luxe-line); border-radius: 0; box-shadow: none; }
+.categoryCard { background: var(--luxe-panel); border: 1px solid var(--luxe-line); border-radius: 16px; box-shadow: none; }
 .categoryCard:hover { background: var(--accent-soft); transform: none; }
 
 /* Airy category navigation and readable guide summaries. */
@@ -453,7 +453,7 @@
 .helpHeader p { line-height: 1.9; }
 .search { background: var(--luxe-panel); border-radius: 14px; min-height: 52px; }
 .categoryGrid { gap: 16px; }
-.categoryCard { padding: 20px 8px; gap: 14px; border-bottom-color: var(--luxe-line); }
+.categoryCard { padding: 22px; gap: 16px; border-bottom-color: var(--luxe-line); }
 .categoryCard strong { font-size: 15px; font-weight: 600; }
 .categoryCard svg { width: 22px; height: 22px; stroke-width: 1.5; }
 .tab { padding-inline: 15px; min-height: 40px; border-radius: 10px; }
@@ -461,3 +461,7 @@
 
 .categoryCard p, .categoryCard small, .tab { font-size: 13px; }
 .smallButton { font-size: 14px; min-height: 44px; }
+
+.categoryCard[aria-pressed="true"] { border-color:var(--luxe-accent); background:var(--accent-soft); }
+.categoryCard svg { box-sizing:content-box; padding:10px; border:1px solid var(--luxe-accent-line); border-radius:12px; background:var(--accent-soft); }
+.search:focus-within { border-color:var(--luxe-accent); }

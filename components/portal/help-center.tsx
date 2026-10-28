@@ -39,7 +39,7 @@ const sections = [
 ];
 
 /** Presentation order of the library: setup first, then the deep troubleshooting. */
-const rank = ["windows", "bios", "network", "vpn", "menu", "normal", "asus", "runtime", "connection", "clock"];
+const rank = ["windows", "bios", "network", "vpn", "menu", "runtime", "connection"];
 const articles = GUIDE_ARTICLES.filter((item) => item.id !== "disk" && item.id !== "raid").sort(
   (a, b) => rank.indexOf(a.id) - rank.indexOf(b.id)
 );
@@ -123,7 +123,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
   const chips = [
     { id: "all", label: ar ? "الكل" : "All" },
     ...sections.slice(0, 4),
-    ...sections.filter((item) => item.id === "Permanent Spoof" || item.id === "أخطاء البرنامج"),
+    ...sections.filter((item) => (item.id === "Permanent Spoof" || item.id === "أخطاء البرنامج") && articles.some(article => article.category === item.id)),
   ];
 
   return (
@@ -170,7 +170,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
             aria-pressed={more || !chips.some((item) => item.id === category)}
             onClick={() => setMore((open) => !open)}
           >
-            المزيد
+            {ar ? "المزيد" : "More"}
             <ChevronDown size={14} />
           </button>
         </nav>
@@ -185,7 +185,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
               exit={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }}
               transition={{ duration: reducedMotion ? 0 : 0.18, ease: "easeOut" }}
             >
-              {sections
+              {sections.filter(section => section.id === "admin" || articles.some(article => article.category === section.id))
                 .filter((section) => !chips.some((chip) => chip.id === section.id))
                 .map((item) => (
                   <button
@@ -214,7 +214,7 @@ export function HelpCenter({ lang, onNavigateTab }: HelpCenterProps) {
 
       {!query && category === "all" && (
         <div className={css.categoryGrid}>
-          {sections.map((item) => (
+          {sections.filter(section => section.id === "admin" || articles.some(article => article.category === section.id)).map((item) => (
             <button
               key={item.id}
               className={css.categoryCard}
