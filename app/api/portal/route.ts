@@ -208,10 +208,7 @@ export async function POST(request: NextRequest) {
     !origin ||
     origin === request.nextUrl.origin ||
     origin === expectedOrigin ||
-    origin === process.env.NEXTAUTH_URL ||
-    origin.endsWith(".up.railway.app") ||
-    origin.includes("localhost") ||
-    origin.includes("127.0.0.1");
+    origin === process.env.NEXTAUTH_URL;
 
   if (!isAllowedOrigin) return json({ error: "FORBIDDEN", message: "طلب غير مصرح به من هذا المصدر" }, 403);
 

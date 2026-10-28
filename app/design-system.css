@@ -330,3 +330,5 @@ body { background:var(--color-bg); color:var(--color-text); font-family:"Vazirma
 .guide-written-notes summary { cursor:pointer; padding:14px 16px; color:var(--color-text); }
 .guide-written-notes p { padding:0 16px 16px; white-space:pre-wrap; line-height:1.9; margin:0; }
 @media(max-width:420px) { .product-guide-reader > .guide-shortcuts button { font-size:12px; gap:5px; padding-inline:4px; } }
+
+@media(min-width:901px) { .workspace-quick-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }

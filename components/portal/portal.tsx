@@ -1,7 +1,7 @@
 "use client";
 import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -141,10 +141,21 @@ export function Portal({ user }: { user: PortalUser }) {
     isAdmin: false,
   });
 
-  const refresh = useCallback(async () => {
+  const refreshFlight = useRef<Promise<void> | null>(null);
+  const hasLoaded = useRef(false);
+  const refresh = useCallback((): Promise<void> => {
+    if (refreshFlight.current) return refreshFlight.current;
+    const task = (async () => {
     try {
-      const response = await fetch("/api/portal", { cache: "no-store" });
-      if (!response.ok) throw new Error("Failed to load portal");
+      let response: Response | undefined;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await fetch("/api/portal", { cache: "no-store", signal: AbortSignal.timeout(15000) });
+          if (response.ok || ![408,429,502,503,504].includes(response.status) || attempt === 1) break;
+        } catch (error) { if (attempt === 1) throw error; }
+        await new Promise(resolve => window.setTimeout(resolve,400));
+      }
+      if (!response?.ok) throw new Error("Failed to load portal");
       const json = await response.json();
       setData({
         products: json.products || [],
@@ -167,12 +178,17 @@ export function Portal({ user }: { user: PortalUser }) {
         isAdmin: Boolean(json.isAdmin),
         currentUser: json.currentUser || user.email,
       });
+      hasLoaded.current = true;
       setLoadError(false);
     } catch {
-      setLoadError(true);
+      if (!hasLoaded.current) setLoadError(true);
     } finally {
       setLoading(false);
     }
+    })();
+    refreshFlight.current = task;
+    void task.finally(() => { if (refreshFlight.current === task) refreshFlight.current = null; });
+    return task;
   }, [user.email]);
 
   useEffect(() => {

@@ -74,6 +74,7 @@ export function LoginPage() {
             </div>
           </Link>
           <div className={styles.headerActions}>
+            <a className={styles.storeLink} href="https://deluxe-concha-dfded1.netlify.app/#board" target="_blank" rel="noopener noreferrer">{ar ? "لم أفهم" : "Need guidance?"}<ArrowUpLeft size={15} /></a>
             <a className={styles.storeLink} href="https://spoofx.rmz.gg/" target="_blank" rel="noopener noreferrer">{ar ? "المتجر" : "Store"}<ArrowUpLeft size={15} /></a>
             <button type="button" onClick={toggleTheme} aria-label={ar ? (isDark ? "الوضع الفاتح" : "الوضع الداكن") : (isDark ? "Light mode" : "Dark mode")} aria-pressed={isDark}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
             <button type="button" onClick={() => setLang(ar ? "en" : "ar")} aria-label={ar ? "Switch to English" : "التبديل للعربية"}><Globe size={16} /><span>{ar ? "EN" : "عربي"}</span></button>

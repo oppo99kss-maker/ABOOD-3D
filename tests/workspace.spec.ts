@@ -88,7 +88,7 @@ test("failed data loads recover with a visible pending state and keyboard skip l
  const pending=new Promise<void>(resolve=>{release=resolve;});
  await page.route("**/api/portal",async route=>{
   attempts++;
-  if(attempts===1)return route.fulfill({status:503,json:{error:"UNAVAILABLE"}});
+  if(attempts<=2)return route.fulfill({status:503,json:{error:"UNAVAILABLE"}});
   await pending;
   return route.fulfill({json:{products:[product],settings,isAdmin:false}});
  });
@@ -102,7 +102,7 @@ test("failed data loads recover with a visible pending state and keyboard skip l
  release();
  await expect(page.locator(".workspace-overview")).toBeVisible();
  await expect(page.locator("main")).toHaveAttribute("aria-busy","false");
- expect(attempts).toBe(2);
+ expect(attempts).toBe(3);
  const skip=page.getByRole("link",{name:"انتقل إلى المحتوى",exact:true});await skip.focus();await page.keyboard.press("Enter");await expect(page.locator("main")).toBeFocused();
  await page.locator(".workspace-controls .lang-pill").click();
  await expect(page.getByRole("link",{name:"Skip to content",exact:true})).toHaveAttribute("href","#spoo-workspace-main");
@@ -158,4 +158,19 @@ test("compact overview and help use current SpooFx illustrations and scoped supp
  }
  await page.getByRole("button",{name:"تكبير الصورة: كيفية طلب رستات",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
  expect((await context.request.get("http://localhost:3101/help/faq-guides.png")).status()).toBe(404);await page.setViewportSize({width:390,height:844});await noOverflow(page);await context.close();
+});
+
+
+test("cross-origin writes reject lookalike origins and other Railway sites",async({browser})=>{
+ const {context}=await session(browser);
+ for(const origin of ["https://localhost.attacker.invalid","https://attacker.invalid/127.0.0.1","https://unrelated.up.railway.app"]) {
+  const response=await context.request.post("http://localhost:3101/api/portal",{headers:{Origin:origin},data:{action:"requestKeyReset",reason:"test"}});expect(response.status()).toBe(403);
+ }
+ await context.close();
+});
+
+test("background refresh failures retain the existing customer workspace",async({browser})=>{
+ const {context,page}=await session(browser);let failing=false;
+ await page.route("**/api/portal",route=>failing?route.fulfill({status:503,json:{error:"SERVICE_UNAVAILABLE"}}):route.fulfill({json:{products:[product],settings,isAdmin:false}}));
+ await page.goto("http://localhost:3101/portal");await expect(page.locator(".workspace-overview")).toBeVisible();failing=true;await navigate(page,"منتجاتي");await page.waitForTimeout(700);await expect(page.locator(".real-product")).toHaveCount(1);await expect(page.locator(".workspace-load-error")).toHaveCount(0);await context.close();
 });
