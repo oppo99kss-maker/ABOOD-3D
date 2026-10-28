@@ -318,3 +318,15 @@ body { background:var(--color-bg); color:var(--color-text); font-family:"Vazirma
 .image2-portal-shell .paste-input-btn { border-radius:13px; }
 .image2-portal-shell .submit-redeem { margin-top:8px; min-height:50px; font-weight:700; }
 @media(max-width:600px) { .image2-portal-shell :is(.real-product,.redeem-card) { border-radius:28px; } .image2-portal-shell .redeem-card { padding:24px 20px; } .image2-portal-shell .product-copy { padding:17px; } }
+
+/* Product guide: one compact navigation row and a clean video area. */
+.product-guide-reader > .guide-shortcuts { position:sticky; top:0; z-index:2; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:6px; border:1px solid var(--color-border); border-radius:16px; background:var(--color-surface); }
+.product-guide-reader > .guide-shortcuts button { border:0; border-radius:11px; min-width:0; min-height:44px; padding:10px 8px; font-size:13px; }
+.product-guide-reader > .guide-shortcuts button.selected { background:var(--color-primary-soft); color:var(--color-primary); box-shadow:inset 0 0 0 1px var(--luxe-accent-line); }
+.product-guide-reader .guide-library-grid button { padding:18px; border-radius:16px; background:var(--color-surface); }
+.product-guide-reader .guide-library-grid button > svg:first-child { box-sizing:content-box; padding:9px; border-radius:11px; background:var(--color-primary-soft); }
+.product-guide-reader .guide-library-grid small { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.guide-written-notes { border:1px solid var(--color-border); border-radius:13px; color:var(--color-muted); font-size:14px; }
+.guide-written-notes summary { cursor:pointer; padding:14px 16px; color:var(--color-text); }
+.guide-written-notes p { padding:0 16px 16px; white-space:pre-wrap; line-height:1.9; margin:0; }
+@media(max-width:420px) { .product-guide-reader > .guide-shortcuts button { font-size:12px; gap:5px; padding-inline:4px; } }

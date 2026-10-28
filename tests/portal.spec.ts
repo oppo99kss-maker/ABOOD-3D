@@ -163,12 +163,15 @@ test("product guide opens local media and article library", async ({ browser, re
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.route("**/api/portal", route => route.fulfill({ json: { products: [{ id: "ui-guide-fixture", name: "SpooFX", instructions: "تعليمات المنتج", files: [], license_key: "TEST-ONLY" }], inventory: [], guides: [], isAdmin: false } }));
+  await page.route("**/api/portal", route => route.fulfill({ json: { products: [{ id: "ui-guide-fixture", name: "SpooFX", instructions: JSON.stringify({sku:"INTERNAL-METADATA-ONLY",version:"",stockType:"digital_keys"}), files: [], license_key: "TEST-ONLY" }], inventory: [], guides: [], isAdmin: false } }));
   await page.goto("http://localhost:3101/portal");
   await navigateTo(page, "منتجاتي");
   await expect(page.locator(".workspace-nav-links [aria-current='page']")).toHaveCount(1);
   await page.getByRole("button", { name: "دليل المنتج", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByText("INTERNAL-METADATA-ONLY", {exact:false})).toHaveCount(0);
+  await expect(page.getByRole("button", {name:"تحميل المنتج",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("button", {name:"تصفح الشروحات",exact:true})).toHaveCount(0);
   await page.getByRole("button", { name: "تشغيل شرح شرح المنتج الأساسي", exact: true }).click();
   await expect(page.locator("video")).toHaveAttribute("src", "/videos/product-guide-1016.mp4");
   await page.getByRole("button", { name: "الشروحات", exact: true }).click();

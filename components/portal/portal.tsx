@@ -693,12 +693,7 @@ export function Portal({ user }: { user: PortalUser }) {
           product={guideModalProduct}
           ar={ar}
           onClose={() => setGuideModalProduct(null)}
-          onDownload={() => handleDownloadProduct(guideModalProduct)}
-          onOpenReset={() => {
-            const p = guideModalProduct;
-            setGuideModalProduct(null);
-            setResetModalProduct(p);
-          }}
+
         />
       )}
 
