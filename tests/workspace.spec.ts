@@ -44,9 +44,8 @@ test("product library is bounded and accessible across screen sizes",async({brow
  await page.route("**/api/portal",route=>route.fulfill({json:{products,settings,isAdmin:false}}));await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");
  for(const width of [1600,1280,820,390]){await page.setViewportSize({width,height:1000});await noOverflow(page);const box=await page.locator(".real-product").first().boundingBox();expect(box!.width).toBeLessThan(421);}
  await expect(page.getByLabel("ابحث في منتجاتك")).toHaveCount(0);
- await page.getByRole("button",{name:"التفاصيل",exact:true}).first().click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
- await expect(page.getByRole("button",{name:"التفاصيل",exact:true}).first()).toBeFocused();
-
+ await expect(page.getByRole("button",{name:"التفاصيل",exact:true})).toHaveCount(0);
+ await expect(page.locator(".product-actions-sub-row")).toHaveCount(0);
  await context.close();
 });
 

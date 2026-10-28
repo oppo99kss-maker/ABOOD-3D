@@ -927,30 +927,7 @@ function ProductGrid({
                         </div>
                       )}
 
-                      {/* Secondary Details & Launch row */}
-                      <div className="product-actions-sub-row">
-                        <button
-                          type="button"
-                          className="btn-action details-btn"
-                          onClick={() => onOpenDetails(p)}
-                          title={t("عرض تفاصيل المنتج والملفات", "View Details & Files")}
-                        >
-                          <FileText size={13} />
-                          <span>{t("التفاصيل", "Details")}</span>
-                        </button>
 
-                        {p.access_url && !isExpired && (
-                          <a
-                            className="icon-button launch-btn"
-                            href={p.access_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={t("فتح الرابط المباشر", "Launch URL")}
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
-                      </div>
                     </div>
                   );
                 })()}
