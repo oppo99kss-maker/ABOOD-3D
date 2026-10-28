@@ -8,6 +8,7 @@ import { StartupSplash } from "@/components/ui/startup-splash";
 import { ToastContainer } from "@/components/ui/toast-container";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://spofx.wtf"),
   title: "SpooFX | حسابك ومنتجاتك ومفاتيحك",
   description: "سجّل الدخول للوصول إلى حسابك ومنتجاتك ومفاتيحك عبر SpooFX",
   icons: {
