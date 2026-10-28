@@ -97,7 +97,7 @@ test("failed data loads recover with a visible pending state and keyboard skip l
  await expect(page.locator(".workspace-overview")).toHaveCount(0);
  await page.getByRole("button",{name:"إعادة المحاولة",exact:true}).click();
  await expect(page.locator("main")).toHaveAttribute("aria-busy","true");
- await expect(page.getByRole("status")).toContainText("جارٍ تحميل حسابك");
+ await expect(page.locator('.workspace-load-state[role="status"]')).toContainText("جارٍ تحميل حسابك");
  await expect(page.getByRole("button",{name:"إعادة المحاولة",exact:true})).toHaveCount(0);
  release();
  await expect(page.locator(".workspace-overview")).toBeVisible();
@@ -137,8 +137,8 @@ test("removed articles stay absent from both customer guide entry points",async(
 test("license countdown advances to expiry and artwork remains contained",async({browser})=>{
  const {context,page}=await session(browser,390);
  await page.clock.install({time:new Date("2030-01-01T00:00:00Z")});await page.clock.pauseAt(new Date("2030-01-01T00:00:01Z"));
- await page.route("**/api/portal",route=>route.fulfill({json:{products:[{...product,expires_at:"2030-01-01T00:00:11Z",image_url:"/logo.png"}],settings,isAdmin:false}}));
- await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");
+ await page.route("**/api/portal",route=>route.fulfill({json:{products:[{...product,expires_at:"2030-01-01T00:00:13Z",image_url:"/logo.png"}],settings,isAdmin:false}}));
+ await page.goto("http://localhost:3101/portal");await page.clock.fastForward(2000);await navigate(page,"منتجاتي");
  const timer=page.getByRole("timer");await expect(timer).toBeVisible();await expect(timer.locator("b").last()).toHaveText("10");
  await page.clock.fastForward(4000);await expect(timer.locator("b").last()).toHaveText("06");
  await expect(page.locator(".real-product-art img")).toHaveCSS("object-fit","contain");await noOverflow(page);

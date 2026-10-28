@@ -1,0 +1,29 @@
+/* Speed illustration adapted from Uiverse.io by anand_4957. */
+.splash { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; background:var(--color-bg,#080c14); color:var(--color-primary,#68d7f5); animation:depart 2s linear forwards; }
+.content { text-align:center; width:min(280px,80vw); }
+.content > strong { display:block; font-size:32px; font-weight:800; letter-spacing:-1px; color:var(--color-text,#eff4fc); }
+.content > strong span { color:var(--color-primary,#68d7f5); }
+.content > p { margin:8px 0 0; color:var(--color-muted,#9aabc1); font-size:13px; }
+.scene { position:relative; height:110px; width:100%; overflow:hidden; }
+.speeder { position:absolute; top:60%; left:50%; margin-left:-62px; animation:speeder .4s linear infinite; }
+.speeder > span { height:5px; width:35px; background:currentColor; position:absolute; top:-19px; left:60px; border-radius:2px 10px 1px 0; }
+.base > span { position:absolute; width:0; height:0; border-top:6px solid transparent; border-right:100px solid currentColor; border-bottom:6px solid transparent; }
+.base > span::before { content:""; height:22px; width:22px; border-radius:50%; background:currentColor; position:absolute; right:-110px; top:-16px; }
+.base > span::after { content:""; position:absolute; width:0; height:0; border-right:55px solid currentColor; border-bottom:16px solid transparent; top:-16px; right:-98px; }
+.face { position:absolute; height:12px; width:20px; background:currentColor; border-radius:20px 20px 0 0; transform:rotate(-40deg); right:-125px; top:-15px; }
+.face::after { content:""; position:absolute; height:12px; width:12px; background:currentColor; right:4px; top:7px; transform:rotate(40deg); border-radius:0 0 0 2px; }
+.speeder > span > span { width:30px; height:1px; background:currentColor; position:absolute; animation:streak .3s linear infinite; }
+.speeder > span > span:nth-child(2) { top:3px; animation-duration:.4s; }
+.speeder > span > span:nth-child(3) { top:1px; animation-delay:-.2s; }
+.speeder > span > span:nth-child(4) { top:4px; animation-duration:.6s; }
+.trails { position:absolute; inset:0; opacity:.3; }
+.trails span { position:absolute; height:1px; width:45px; background:currentColor; animation:trail .7s linear infinite; }
+.trails span:nth-child(1) { top:20%; animation-delay:-.2s; }
+.trails span:nth-child(2) { top:40%; animation-delay:-.5s; }
+.trails span:nth-child(3) { top:65%; animation-delay:-.1s; }
+.trails span:nth-child(4) { top:85%; animation-delay:-.4s; }
+@keyframes streak { from { left:0; opacity:.8; } to { left:-100px; opacity:0; } }
+@keyframes trail { from { left:110%; } to { left:-30%; opacity:0; } }
+@keyframes speeder { 0%,100% { transform:translate(1px,1px); } 25% { transform:translate(-1px,-2px) rotate(-1deg); } 50% { transform:translate(1px,2px) rotate(1deg); } 75% { transform:translate(-2px,1px); } }
+@keyframes depart { 0%,90% { opacity:1; visibility:visible; } 100% { opacity:0; visibility:hidden; pointer-events:none; } }
+@media(prefers-reduced-motion:reduce) { .speeder,.speeder > span > span,.trails span { animation:none; } .trails { display:none; } }

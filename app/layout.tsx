@@ -4,6 +4,7 @@ import "./globals.css";
 import "./design-system.css";
 import "./admin-workspace.css";
 import "./interaction-effects.css";
+import { StartupSplash } from "@/components/ui/startup-splash";
 import { ToastContainer } from "@/components/ui/toast-container";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" data-theme="dark" suppressHydrationWarning>
       <body>
+        <StartupSplash />
         {children}
         <ToastContainer />
       </body>

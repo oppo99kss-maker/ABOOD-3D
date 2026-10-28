@@ -187,3 +187,9 @@ test("product guide opens local media and article library", async ({ browser, re
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test("opening intro clears automatically and repeats on refresh without adding login fields",async({page})=>{
+ await page.goto("/");await expect(page.locator("[data-startup-splash]")).toBeVisible();await expect(page.locator("[data-startup-splash]")).toHaveCount(0,{timeout:4000});
+ await expect(page.getByRole("button",{name:"تسجيل الدخول",exact:true})).toBeVisible();await expect(page.locator("input")).toHaveCount(0);
+ await page.reload();await expect(page.locator("[data-startup-splash]")).toBeVisible();await expect(page.locator("[data-startup-splash]")).toHaveCount(0,{timeout:4000});
+});
