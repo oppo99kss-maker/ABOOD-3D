@@ -47,6 +47,7 @@ import {
 import { type PortalTab } from "./portal-navigation";
 import { WorkspaceNavigation } from "./workspace-navigation";
 import { ResetRequestUpdates } from "./reset-request-updates";
+import { SupportContact } from "./support-contact";
 import { WorkspaceOverview } from "./workspace-overview";
 import { usePreferences } from "./use-preferences";
 import { AdminControlSpace } from "./admin-control-space";
@@ -547,17 +548,8 @@ export function Portal({ user }: { user: PortalUser }) {
                 <section className="help-section">
                   <HelpCenter lang={lang} onNavigateTab={navigate} />
 
-                  {/* Support Footer Note */}
-                  <div className="panel support-contact-card">
-                    <div>
-                      <h3>{t("هل ما زلت بحاجة إلى مساعدة مخصصة؟", "Still need personalized assistance?")}</h3>
-                      <p>{t("فريق الدعم الفني متواجد لمساعدتك في حل أي مشكلة أو استبدال مفتاح غير صالح.", "Our technical team is available to assist you or replace malfunctioning keys.")}</p>
-                    </div>
-                    <a href="mailto:support@spoofx.com" className="primary-button">
-                      {t("مراسلة الدعم الفني", "Contact Support")}
-                      <ArrowUpLeft size={16} />
-                    </a>
-                  </div>
+                  <SupportContact ar={ar} />
+
                 </section>
               )}
 

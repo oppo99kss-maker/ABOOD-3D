@@ -3,7 +3,7 @@
  *
  * These answers are hosted inside this file so the help centre works with no
  * database or admin panel — edit them here and redeploy to publish a change.
- * The content is the same set of questions published by the t3n help centre.
+ * Answers and illustrations describe the current SpooFx interface.
  */
 
 export interface HelpFaq {
@@ -57,7 +57,7 @@ export const HELP_FAQS: HelpFaq[] = [
     question_en: 'How do I watch the guides?',
     answer_ar: 'عند تفعيل منتج توجد أزرار مكتوبة عليها "دليل المنتج"، ومنها تفتح الشرح الكامل الخاص بمنتجك.',
     answer_en: 'Once a product is active you will find a "product guide" button that opens the full walkthrough for that product.',
-    image_url: '/help/faq-guides.png',
+    image_url: '/help/spoofx-guides.png',
     keywords: ['شروحات', 'دليل', 'شرح'],
     category_id: 'cat-products',
     is_pinned: true,
@@ -69,9 +69,9 @@ export const HELP_FAQS: HelpFaq[] = [
     id: 'faq-redeem-key',
     question_ar: 'طريقة تفعيل المفتاح',
     question_en: 'How do I activate my key?',
-    answer_ar: 'كيفية تفعيل المفتاح الخاص بك: انقر على زر استرداد المفتاح ثم الصق المفتاح وأكّده.',
-    answer_en: 'How to activate your key: open the redeem key button, paste your key and confirm it.',
-    image_url: '/help/faq-redeem-key.png',
+    answer_ar: 'افتح صفحة "تفعيل مفتاح" من القائمة، ثم ألصق مفتاحك واضغط "تفعيل المفتاح". تظهر نتيجة التفعيل داخل الموقع.',
+    answer_en: 'Open Activate Key from the navigation, paste your key and select Activate Key. The site will show the result.',
+    image_url: '/help/spoofx-redeem.png',
     keywords: ['مفتاح', 'تفعيل', 'استرداد'],
     category_id: 'cat-keys',
     is_pinned: true,
@@ -83,9 +83,9 @@ export const HELP_FAQS: HelpFaq[] = [
     id: 'faq-duration',
     question_ar: 'كيف أعرف مدة اشتراكي؟',
     question_en: 'How do I know my subscription duration?',
-    answer_ar: 'كيفية معرفة مدة المنتج أو انتهاء المدة: تظهر المدة المتبقية داخل بطاقة المنتج في صفحة "منتجاتي".',
-    answer_en: 'The remaining duration is shown inside the product card on the "My products" page.',
-    image_url: '/help/faq-duration.png',
+    answer_ar: 'يظهر العدّ التنازلي أعلى بطاقة المنتج في "منتجاتي" بالأيام والساعات والدقائق والثواني. التراخيص الدائمة يظهر عليها "ترخيص دائم".',
+    answer_en: 'The countdown at the top of each card in My Products shows days, hours, minutes and seconds. Permanent licenses display Lifetime license.',
+    image_url: '/help/spoofx-duration.png',
     keywords: ['مدة', 'اشتراك', 'انتهاء'],
     category_id: 'cat-products',
     is_pinned: true,
@@ -97,9 +97,9 @@ export const HELP_FAQS: HelpFaq[] = [
     id: 'faq-reset',
     question_ar: 'كيفية طلب رستات',
     question_en: 'How do I request a key reset?',
-    answer_ar: 'مرفق في الصورة خطوات طلب الرستات من بطاقة المنتج.',
-    answer_en: 'The image shows the reset request steps from the product card.',
-    image_url: '/help/faq-reset.png',
+    answer_ar: 'من بطاقة المنتج اضغط "طلب رستات المفتاح"، ثم اكتب السبب بكلماتك وأرسل الطلب. ستظهر نتيجة مراجعة الإدارة وملاحظتها في الرئيسية أو "منتجاتي"؛ اضغط "تحديث الحالة" لمعرفة آخر نتيجة.',
+    answer_en: 'Select Request Key Reset on the product card, describe your reason and submit. The admin decision and notes appear in Overview or My Products; select Refresh status for the latest result.',
+    image_url: '/help/spoofx-reset.png',
     keywords: ['رستات', 'طلب'],
     category_id: 'cat-keys',
     is_pinned: true,

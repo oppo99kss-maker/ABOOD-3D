@@ -144,3 +144,18 @@ test("license countdown advances to expiry and artwork remains contained",async(
  await expect(page.locator(".real-product-art img")).toHaveCSS("object-fit","contain");await noOverflow(page);
  await page.clock.fastForward(7000);await expect(page.locator(".license-countdown.ended")).toHaveText("انتهت مدة الترخيص");await context.close();
 });
+
+test("compact overview and help use current SpooFx illustrations and scoped support text",async({browser})=>{
+ const {context,page}=await session(browser,1440);await page.route("**/api/portal",route=>route.fulfill({json:{products:[product],settings,isAdmin:false}}));await page.goto("http://localhost:3101/portal");
+ await expect(page.locator(".spoo-support-contact")).toContainText("لا نقدّم شروحات استخدام");
+ await expect(page.locator(".spoo-tiktok-button")).toHaveAttribute("href","https://www.tiktok.com/@x3_s");
+ for(const metric of await page.locator(".workspace-metric").all())expect((await metric.boundingBox())!.height).toBeLessThan(135);
+ for(const shortcut of await page.locator(".workspace-quick-grid > *").all())expect((await shortcut.boundingBox())!.height).toBeLessThan(110);
+ await navigate(page,"مركز المساعدة");await expect(page.locator(".spoo-support-contact")).toContainText("لم يتفعّل منتجك فقط");await expect(page.getByRole("link",{name:"مراسلة الدعم الفني",exact:true})).toHaveCount(0);
+ for(const [title,file] of [["كيف أشاهد الشروحات؟","spoofx-guides.png"],["طريقة تفعيل المفتاح","spoofx-redeem.png"],["كيف أعرف مدة اشتراكي؟","spoofx-duration.png"],["كيفية طلب رستات","spoofx-reset.png"]]) {
+  await page.getByRole("button",{name:title,exact:true}).click();const img=page.locator(`img[src="/help/${file}"]`);await img.scrollIntoViewIfNeeded();await expect(img).toBeVisible();await expect.poll(()=>img.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0);
+  expect((await context.request.get(`http://localhost:3101/help/${file}`)).status()).toBe(200);
+ }
+ await page.getByRole("button",{name:"تكبير الصورة: كيفية طلب رستات",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
+ expect((await context.request.get("http://localhost:3101/help/faq-guides.png")).status()).toBe(404);await page.setViewportSize({width:390,height:844});await noOverflow(page);await context.close();
+});

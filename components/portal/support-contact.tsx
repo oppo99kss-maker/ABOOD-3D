@@ -1,0 +1,5 @@
+import { Music2, ShieldCheck } from "lucide-react";
+import { SUPPORT_TIKTOK_URL } from "@/lib/support-contact";
+export function SupportContact({ar}:{ar:boolean}) {
+ return <aside className="spoo-support-contact" aria-label={ar?"نطاق الدعم والتواصل":"Support scope and contact"}><span className="spoo-support-icon" aria-hidden="true"><ShieldCheck size={22}/></span><div><h3>{ar?"دعم الحساب وتفعيل المنتج":"Account and product activation support"}</h3><p>{ar?"تواصل معنا لمشكلات الحساب أو إذا لم يتفعّل منتجك فقط. لا نقدّم شروحات استخدام أو حلولًا للمشكلات التقنية عبر الدعم؛ نرجو حصر التواصل في الحالات المذكورة.":"Contact us only for account issues or a product that has not activated. Support does not provide usage tutorials or technical troubleshooting. Please keep requests to these cases."}</p></div>{SUPPORT_TIKTOK_URL&&<a href={SUPPORT_TIKTOK_URL} className="spoo-tiktok-button" target="_blank" rel="noopener noreferrer"><Music2 size={19}/>{ar?"حساب الدعم على تيك توك":"Support on TikTok"}<b dir="ltr">@x3_s</b></a>}</aside>;
+}
