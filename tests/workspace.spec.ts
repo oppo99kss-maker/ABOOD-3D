@@ -130,3 +130,14 @@ test("removed articles stay absent from both customer guide entry points",async(
  for(const title of ["Normal Permanent Spoof","ASUS Permanent Spoof","خطأ الوقت والتحقق"])await expect(page.getByText(title,{exact:true})).toHaveCount(0);
  await context.close();
 });
+
+test("license countdown advances to expiry and artwork remains contained",async({browser})=>{
+ const {context,page}=await session(browser,390);
+ await page.clock.install({time:new Date("2030-01-01T00:00:00Z")});await page.clock.pauseAt(new Date("2030-01-01T00:00:01Z"));
+ await page.route("**/api/portal",route=>route.fulfill({json:{products:[{...product,expires_at:"2030-01-01T00:00:11Z",image_url:"/logo.png"}],settings,isAdmin:false}}));
+ await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");
+ const timer=page.getByRole("timer");await expect(timer).toBeVisible();await expect(timer.locator("b").last()).toHaveText("10");
+ await page.clock.fastForward(4000);await expect(timer.locator("b").last()).toHaveText("06");
+ await expect(page.locator(".real-product-art img")).toHaveCSS("object-fit","contain");await noOverflow(page);
+ await page.clock.fastForward(7000);await expect(page.locator(".license-countdown.ended")).toHaveText("انتهت مدة الترخيص");await context.close();
+});

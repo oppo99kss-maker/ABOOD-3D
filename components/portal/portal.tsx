@@ -755,6 +755,28 @@ function ProductArtwork({ src, name }: { src?: string | null; name: string }) {
   return src && !failed ? <img src={src} alt={name} loading="lazy" onError={() => setFailed(true)} /> : <div className="product-placeholder-icon"><Package size={38} aria-hidden="true" /></div>;
 }
 
+function LicenseCountdown({ expiresAt, ar }: { expiresAt?: string | null; ar: boolean }) {
+  const end = expiresAt ? new Date(expiresAt).getTime() : null;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    if (end === null || !Number.isFinite(end) || end <= Date.now()) return;
+    const timer = window.setInterval(() => {
+      const time = Date.now();
+      setNow(time);
+      if (time >= end) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [end]);
+  if (end === null) return <span>{ar ? "ترخيص دائم" : "Lifetime license"}</span>;
+  if (!Number.isFinite(end)) return <span>{ar ? "مدة الترخيص غير متاحة" : "License duration unavailable"}</span>;
+  const seconds = Math.max(0, Math.floor((end - now) / 1000));
+  if (!seconds) return <span className="license-countdown ended">{ar ? "انتهت مدة الترخيص" : "License expired"}</span>;
+  const parts = [Math.floor(seconds / 86400), Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60];
+  const labels = ar ? ["يوم", "ساعة", "دقيقة", "ثانية"] : ["days", "hrs", "min", "sec"];
+  return <span className="license-countdown" role="timer" aria-live="off" aria-label={ar ? "الوقت المتبقي للترخيص" : "License time remaining"}><span className="countdown-caption">{ar ? "المتبقي" : "Remaining"}</span><span className="countdown-values">{parts.map((value, index) => <span key={labels[index]}><b>{String(value).padStart(2, "0")}</b><small>{labels[index]}</small></span>)}</span></span>;
+}
+
 function ProductGrid({
   products,
   ar,
@@ -838,14 +860,7 @@ function ProductGrid({
               <div className="product-meta">
                 <div className="expiry-indicator">
                   <CheckCircle2 size={13} className={isExpired ? "text-danger" : "text-success"} />
-                  {p.expires_at ? (
-                    <time dateTime={p.expires_at}>
-                      {isExpired ? t("انتهى: ", "Expired: ") : t("ينتهي: ", "Expires: ")}
-                      {new Date(p.expires_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}
-                    </time>
-                  ) : (
-                    <span>{t("ترخيص دائم", "Lifetime")}</span>
-                  )}
+                  <LicenseCountdown expiresAt={p.expires_at} ar={ar} />
                 </div>
 
                 {/* License Key Display on Card */}
