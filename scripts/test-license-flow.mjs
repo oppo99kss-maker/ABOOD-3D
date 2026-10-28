@@ -19,7 +19,8 @@ const repeated=await call(customer,{action:'redeem',code:keys[0]});check(repeate
 const library=await call(customer);check(library.status,200);check(library.data.products.some(p=>p.id===id),true);
 const isolated=await call(other);check(isolated.status,200);check(isolated.data.products.some(p=>p.id===id),false);
 const concurrent=await Promise.all([call(customer,{action:'redeem',code:keys[1]}),call(other,{action:'redeem',code:keys[1]})]);assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,400]);checks++;check(concurrent.filter(r=>r.data.success===true).length,1);
-const reset=await call(customer,{action:'requestKeyReset',productId:id,productName:'Isolated license verification',reason:'Local integration verification only'});check(reset.status,200);check(reset.data.ok,true);
+const emptyReason=await call(customer,{action:'requestKeyReset',productId:id,productName:'Isolated license verification',reason:'   '});check(emptyReason.status,400);check(emptyReason.data.error,'MISSING_REASON');
+const reset=await call(customer,{action:'requestKeyReset',productId:id,productName:'Isolated license verification',reason:'ض'});check(reset.status,200);check(reset.data.ok,true);check(reset.data.request.reason,'ض');
 const pending=await call(customer);check(pending.data.customerNotifications.some(r=>r.id===reset.data.request.id&&r.status==='PENDING'),true);
 const approved=await call(admin,{action:'reviewKeyReset',id:reset.data.request.id,status:'APPROVED',adminNotes:'Approved in isolated verification'});check(approved.status,200);
 check((await call(customer)).data.customerNotifications.some(r=>r.id===reset.data.request.id&&r.status==='APPROVED'&&r.admin_notes==='Approved in isolated verification'),true);

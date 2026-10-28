@@ -112,14 +112,14 @@ test("failed data loads recover with a visible pending state and keyboard skip l
 test("reset reason is free text and genuine server review statuses reach the customer",async({browser})=>{
  const {context,page}=await session(browser,390);let request:any=null;let status="PENDING";let notes="";
  await page.route("**/api/portal",async route=>{
-  if(route.request().method()==="POST") {const payload=route.request().postDataJSON();expect(payload).toEqual({action:"requestKeyReset",productId:product.id,productName:product.name,reason:"أحتاج نقل الترخيص إلى جهازي الجديد"});request={id:"reset-ui-test",product_name:product.name,reason:payload.reason};return route.fulfill({json:{ok:true,request}});}
+  if(route.request().method()==="POST") {const payload=route.request().postDataJSON();expect(payload).toEqual({action:"requestKeyReset",productId:product.id,productName:product.name,reason:"ض"});request={id:"reset-ui-test",product_name:product.name,reason:payload.reason};return route.fulfill({json:{ok:true,request}});}
   return route.fulfill({json:{products:[product],settings,isAdmin:false,customerNotifications:request?[{...request,status,admin_notes:notes}]:[]}});
  });
  await page.goto("http://localhost:3101/portal");await navigate(page,"منتجاتي");await expect(page.getByLabel("ابحث في منتجاتك")).toHaveCount(0);
  await page.getByRole("button",{name:"طلب رستات المفتاح",exact:true}).click();
  await expect(page.getByText("خيارات سريعة للسبب:",{exact:true})).toHaveCount(0);
  const submit=page.getByRole("button",{name:"إرسال طلب الرستات للإدارة",exact:true});await expect(submit).toBeDisabled();
- await page.getByLabel("سبب طلب الرستات بالتفصيل (مطلوب)").fill("أحتاج نقل الترخيص إلى جهازي الجديد");await submit.click();await expect(page.getByRole("dialog")).toHaveCount(0);
+ await page.getByLabel("سبب طلب الرستات (مطلوب)").fill("ض");await submit.click();await expect(page.getByRole("dialog")).toHaveCount(0);
  await expect(page.locator(".reset-update.pending")).toContainText("بانتظار مراجعة الإدارة");
  status="APPROVED";notes="تمت الموافقة على طلبك";await page.getByRole("button",{name:"تحديث الحالة",exact:true}).click();await expect(page.locator(".reset-update.approved")).toContainText(notes);
  status="REJECTED";notes="يرجى إرفاق معلومات إضافية";await page.getByRole("button",{name:"تحديث الحالة",exact:true}).click();await expect(page.locator(".reset-update.rejected")).toContainText(notes);await noOverflow(page);await context.close();
@@ -141,7 +141,7 @@ test("license countdown advances to expiry and artwork remains contained",async(
  await page.goto("http://localhost:3101/portal");await page.clock.fastForward(2000);await navigate(page,"منتجاتي");
  const timer=page.getByRole("timer");await expect(timer).toBeVisible();await expect(timer.locator("b").last()).toHaveText("10");
  await page.clock.fastForward(4000);await expect(timer.locator("b").last()).toHaveText("06");
- await expect(page.locator(".real-product-art img")).toHaveCSS("object-fit","contain");await noOverflow(page);
+ await expect(page.locator(".real-product-art .product-art-image")).toHaveCSS("object-fit","contain");await noOverflow(page);
  await page.clock.fastForward(7000);await expect(page.locator(".license-countdown.ended")).toHaveText("انتهت مدة الترخيص");await context.close();
 });
 
@@ -153,7 +153,7 @@ test("compact overview and help use current SpooFx illustrations and scoped supp
  for(const shortcut of await page.locator(".workspace-quick-grid > *").all())expect((await shortcut.boundingBox())!.height).toBeLessThan(110);
  await navigate(page,"مركز المساعدة");await expect(page.locator(".spoo-support-contact")).toContainText("لم يتفعّل منتجك فقط");await expect(page.getByRole("link",{name:"مراسلة الدعم الفني",exact:true})).toHaveCount(0);
  for(const [title,file] of [["كيف أشاهد الشروحات؟","spoofx-guides.png"],["طريقة تفعيل المفتاح","spoofx-redeem.png"],["كيف أعرف مدة اشتراكي؟","spoofx-duration.png"],["كيفية طلب رستات","spoofx-reset.png"]]) {
-  await page.getByRole("button",{name:title,exact:true}).click();const img=page.locator(`img[src="/help/${file}"]`);await img.scrollIntoViewIfNeeded();await expect(img).toBeVisible();await expect.poll(()=>img.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0);
+  await page.getByRole("button",{name:title,exact:true}).click();const img=page.locator(`img[src="/help/${file}"]`);await img.scrollIntoViewIfNeeded();await expect(img).toBeVisible();await expect(img.locator("..").locator("svg")).toHaveCount(1);await expect.poll(()=>img.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0);
   expect((await context.request.get(`http://localhost:3101/help/${file}`)).status()).toBe(200);
  }
  await page.getByRole("button",{name:"تكبير الصورة: كيفية طلب رستات",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);

@@ -2,7 +2,7 @@
 
 ## Scope and recovery
 Baseline: `before-saas-redesign-2026-10-27` (published Git tag).
-The implementation keeps the existing Next.js / React application, NextAuth sessions, PostgreSQL store, API contracts and server permission checks. No schema, API route, authentication or store logic changed. Compare with:
+The implementation keeps the existing Next.js / React application, NextAuth sessions, PostgreSQL store, API contracts and server permission checks. Schema, authentication, store logic and key redemption remain unchanged. The later reset-reason follow-up removes only the three-character minimum in the existing requestKeyReset API handler, at the owner’s explicit request. Compare with:
 
     git diff before-saas-redesign-2026-10-27 -- lib app/api app/page.tsx app/portal/page.tsx
 
@@ -55,3 +55,10 @@ Restyled customer cards around the supplied reference: larger contained artwork,
 Reduced overview metric height/padding and made desktop quick actions horizontal and compact, retaining readable mobile cards and all destinations. Replaced four imported FAQ screenshots with high-resolution captures of the current SpooFx product actions, activation form, countdown and reset dialog. The captures use a documentation-only local fixture with no personal data or valid license key; no customer data source was replaced. Old FAQ image files were removed and answer text now matches current labels and reset review flow.
 Added one shared support notice to Overview and Help Center. It limits contact to account or activation issues and explicitly excludes tutorials/technical troubleshooting via support. The owner selected TikTok instead of WhatsApp and supplied `x3_s`; the button opens `https://www.tiktok.com/@x3_s`. Removed the previous unverified email destination. Public contact configuration lives in `lib/support-contact.ts`.
 Production build and all 20 browser tests passed. A targeted follow-up passed after connecting TikTok, checking the exact URL, compact dimensions, all four images, image enlargement, old-image removal and mobile overflow. Existing server authorization, authentication, schema and license logic remain untouched.
+
+
+## Soft product/activation cards, annotated help and short reset reasons — 2026-10-28
+Applied the supplied rounded Smit-Prajapati-inspired card surface to all licensed products and key activation, with matching dark/light gradients, inset fields, cyan actions and retained amber reset action. Expanded all product artwork slots proportionally, preserving complete images and adding a subtle decorative backdrop using the same cached source image.
+Added responsive SVG arrows plus brief Arabic/English titles and descriptions to all four FAQ illustrations, including their enlarged views. Arrow targets were measured from the actual current controls. Refreshed screenshots for the latest product, activation and reset layouts; the examples contain no customer data or valid keys.
+Fixed the reported short-reason failure: the existing requestKeyReset endpoint now accepts any non-empty trimmed reason instead of requiring three characters. Blank/whitespace-only reasons remain invalid. There are no changes to authentication, authorization, schema, key generation, redemption or admin review. Simplified the reset dialog wording and removed the implication that the customer must write a detailed reason.
+Production build and all 20 browser tests pass, including a one-character reset reason, annotated-image rendering/enlargement, responsive product cards, activation outcomes and keyboard navigation. Thirty integration assertions pass on isolated PostgreSQL, including actual persistence of a one-character Arabic reason, rejection of a blank reason and approved/rejected customer notifications. Production licenses were not used for testing.

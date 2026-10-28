@@ -340,7 +340,7 @@ function FaqCard({
             transition={{ duration: reducedMotion ? 0 : 0.18, ease: "easeOut" }}
           >
             <FaqAnswer text={ar ? faq.answer_ar : faq.answer_en || faq.answer_ar} />
-            {faq.image_url && <ImageLightbox src={faq.image_url} alt={question} />}
+            {faq.image_url && <ImageLightbox src={faq.image_url} alt={question} annotation={faq.image_annotation ? {title:ar?faq.image_annotation.title_ar:faq.image_annotation.title_en,description:ar?faq.image_annotation.description_ar:faq.image_annotation.description_en,target:faq.image_annotation.target,from:faq.image_annotation.from}:undefined} />}
           </motion.div>
         )}
       </AnimatePresence>

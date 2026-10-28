@@ -244,8 +244,8 @@ export async function POST(request: NextRequest) {
       const productName = typeof data.productName === "string" ? data.productName.trim() : "SpooFX Product";
       const licenseCode = typeof data.licenseCode === "string" ? data.licenseCode.trim() : undefined;
       const reason = typeof data.reason === "string" ? data.reason.trim() : "";
-      if (!reason || reason.length < 3) {
-        return json({ error: "MISSING_REASON", message: "يرجى كتابة سبب طلب إعادة ضبط المفتاح (مثال: تغيير الجهاز أو فورمات)" }, 400);
+      if (!reason) {
+        return json({ error: "MISSING_REASON", message: "اكتب سبب الطلب لإرساله للمراجعة." }, 400);
       }
 
       const result = await createKeyResetRequest({

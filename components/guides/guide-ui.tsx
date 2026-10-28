@@ -168,30 +168,25 @@ export function GuideDialog({
 }
 
 /** Click-to-zoom illustration with a reload affordance when a picture fails. */
-export function ImageLightbox({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+type ImageAnnotation = {title:string;description:string;target:[number,number];from:[number,number]};
+function IllustrationArrow({annotation}:{annotation:ImageAnnotation}) {
+ const [x,y]=annotation.target,[sx,sy]=annotation.from;
+ const angle=Math.atan2(y-sy,x-sx),length=4;
+ const head=`M ${x-length*Math.cos(angle-.55)} ${y-length*Math.sin(angle-.55)} L ${x} ${y} L ${x-length*Math.cos(angle+.55)} ${y-length*Math.sin(angle+.55)}`;
+ return <svg className={css.annotationArrow} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d={`M ${sx} ${sy} L ${x} ${y}`} className={css.arrowOutline} vectorEffect="non-scaling-stroke"/><path d={`M ${sx} ${sy} L ${x} ${y}`} vectorEffect="non-scaling-stroke"/><path d={head} vectorEffect="non-scaling-stroke"/></svg>;
+}
+export function ImageLightbox({ src, alt, className = "", annotation }: { src: string; alt: string; className?: string; annotation?:ImageAnnotation }) {
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        className={`${css.imageButton} ${className}`}
-        onClick={() => {
-          if (failed) setFailed(false);
-          else setOpen(true);
-        }}
-        aria-label={failed ? `إعادة تحميل الصورة: ${alt}` : `تكبير الصورة: ${alt}`}
-      >
-        {failed ? <span className={css.imageFailed}>تعذر تحميل الصورة — اضغط للمحاولة</span> : <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />}
-        <span className={css.imageHint}>تكبير الصورة</span>
-      </button>
-      {open && (
-        <GuideDialog title={alt} onClose={() => setOpen(false)}>
-          <img src={src} alt={alt} className={css.lightboxImage} />
-        </GuideDialog>
-      )}
-    </>
-  );
+  const caption=annotation&&<span className={css.annotationCaption}><Info size={18} aria-hidden="true"/><span><strong>{annotation.title}</strong><small>{annotation.description}</small></span></span>;
+  return <>
+    <button type="button" className={`${css.imageButton} ${annotation?css.annotatedImage:""} ${className}`} onClick={()=>{if(failed)setFailed(false);else setOpen(true);}} aria-label={failed?`إعادة تحميل الصورة: ${alt}`:`تكبير الصورة: ${alt}`}>
+      {caption}
+      {failed?<span className={css.imageFailed}>تعذر تحميل الصورة — اضغط للمحاولة</span>:<span className={css.imageCanvas}><img src={src} alt={alt} loading="lazy" onError={()=>setFailed(true)}/>{annotation&&<IllustrationArrow annotation={annotation}/>}</span>}
+      <span className={css.imageHint}>تكبير الصورة</span>
+    </button>
+    {open&&<GuideDialog title={alt} onClose={()=>setOpen(false)}>{annotation?<div className={css.annotatedLightbox}>{caption}<div className={css.imageCanvas}><img src={src} alt={alt}/><IllustrationArrow annotation={annotation}/></div></div>:<img src={src} alt={alt} className={css.lightboxImage}/>}</GuideDialog>}
+  </>;
 }
 
 /**

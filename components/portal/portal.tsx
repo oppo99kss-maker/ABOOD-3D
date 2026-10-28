@@ -478,7 +478,7 @@ export function Portal({ user }: { user: PortalUser }) {
                     <header className="redeem-card-header">
                       <div>
                         <span className="redeem-eyebrow">{t("تفعيل الترخيص", "License activation")}</span>
-                        <h2 id="redeem-title">{t("استرداد مفتاح", "Redeem a key")}</h2>
+                        <h2 id="redeem-title">{t("تفعيل مفتاح", "Activate a key")}</h2>
                       </div>
                       <span className="workspace-key-icon"><KeyRound size={24} /></span>
                     </header>
@@ -744,7 +744,7 @@ function Avatar({ image, name, size = 32 }: { image?: string | null; name: strin
 function ProductArtwork({ src, name }: { src?: string | null; name: string }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
-  return src && !failed ? <img src={src} alt={name} loading="lazy" onError={() => setFailed(true)} /> : <div className="product-placeholder-icon"><Package size={38} aria-hidden="true" /></div>;
+  return src && !failed ? <><img className="product-art-backdrop" src={src} alt="" aria-hidden="true" loading="lazy" /><img className="product-art-image" src={src} alt={name} loading="lazy" onError={() => setFailed(true)} /></> : <div className="product-placeholder-icon"><Package size={38} aria-hidden="true" /></div>;
 }
 
 function LicenseCountdown({ expiresAt, ar }: { expiresAt?: string | null; ar: boolean }) {
@@ -1139,8 +1139,8 @@ function KeyResetModal({
               <Info size={18} />
               <p>
                 {t(
-                  "تتيح لك هذه الميزة إعادة ربط ترخيصك بجهاز جديد في حال قمت بتغيير مكونات جهازك أو قمت بعمل فورمات. يرجى توضيح السبب ليتم اعتماده من الإدارة.",
-                  "This allows re-binding your license to a new PC after hardware changes or OS reinstallation. Please describe your reason for admin approval."
+                  "اكتب سبب طلبك بأي صيغة مناسبة. ستراجعه الإدارة، وتظهر لك نتيجة القبول أو الرفض في حسابك.",
+                  "Describe your reason in your own words. The admin will review it, and the decision will appear in your account."
                 )}
               </p>
             </div>
@@ -1155,7 +1155,7 @@ function KeyResetModal({
             {/* Reason Textarea */}
             <div className="reset-textarea-wrap">
               <label className="reset-label-text" htmlFor="reset-reason">
-                {t("سبب طلب الرستات بالتفصيل (مطلوب)", "Reason for Reset Request (Required)")}
+                {t("سبب طلب الرستات (مطلوب)", "Reason for Reset Request (Required)")}
               </label>
               <textarea
                 id="reset-reason"
