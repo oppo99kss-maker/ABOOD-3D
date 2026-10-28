@@ -107,7 +107,7 @@ export function LoginPage() {
 
           <button
             type="button"
-            className={styles.primary}
+            className={`${styles.primary} spoo-sweep`}
             disabled={busy}
             aria-busy={busy}
             onClick={connect}

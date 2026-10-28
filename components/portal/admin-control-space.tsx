@@ -1,4 +1,5 @@
 "use client";
+import { NeonCheck } from "@/components/ui/neon-check";
 import { ModalBackdrop } from "@/components/ui/modal-backdrop";
 
 import { useState, useMemo, useEffect, useCallback, useRef, type FormEvent } from "react";
@@ -2825,12 +2826,15 @@ export function AdminControlSpace({
                   <div className="ref-setting-toggle-wrap">
                     <button
                       type="button"
+                      role="switch"
+                      aria-checked={settingsForm.maintenance_mode}
+                      aria-label={t("وضع الصيانة للمتجر", "Store Maintenance Mode")}
                       className={`ref-toggle-pill ${settingsForm.maintenance_mode ? "active-warning" : "inactive"}`}
                       onClick={() =>
                         setSettingsForm((prev) => ({ ...prev, maintenance_mode: !prev.maintenance_mode }))
                       }
                     >
-                      <span className="ref-toggle-thumb" />
+                      <NeonCheck checked={settingsForm.maintenance_mode} />
                       <span>{settingsForm.maintenance_mode ? t("مفعّل (صيانة)", "Active (Maintenance)") : t("معطّل (يعمل)", "Disabled (Online)")}</span>
                     </button>
                   </div>
@@ -2863,12 +2867,15 @@ export function AdminControlSpace({
                   <div className="ref-setting-toggle-wrap">
                     <button
                       type="button"
+                      role="switch"
+                      aria-checked={settingsForm.allow_new_activations}
+                      aria-label={t("صلاحيات تفعيل التراخيص", "License Key Activations")}
                       className={`ref-toggle-pill ${settingsForm.allow_new_activations ? "active-green" : "inactive-danger"}`}
                       onClick={() =>
                         setSettingsForm((prev) => ({ ...prev, allow_new_activations: !prev.allow_new_activations }))
                       }
                     >
-                      <span className="ref-toggle-thumb" />
+                      <NeonCheck checked={settingsForm.allow_new_activations} />
                       <span>{settingsForm.allow_new_activations ? t("التفعيل متاح", "Activations Open") : t("التفعيل مجمّد", "Activations Frozen")}</span>
                     </button>
                   </div>

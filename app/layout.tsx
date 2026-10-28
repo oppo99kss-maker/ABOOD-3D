@@ -3,6 +3,7 @@ import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import "./design-system.css";
 import "./admin-workspace.css";
+import "./interaction-effects.css";
 import { ToastContainer } from "@/components/ui/toast-container";
 
 export const metadata: Metadata = {

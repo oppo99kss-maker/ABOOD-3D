@@ -74,6 +74,9 @@ test("all admin sections remain navigable with a collapsible sidebar in both the
   for(const name of ["نظرة عامة","المنتجات","المخزون","العملاء","الطلبات","السجلات","الإعدادات"]){await page.locator(".admin-ref-nav-track").getByRole("button",{name,exact:false}).click();await noOverflow(page);}
   await page.getByRole("button",{name:"طي أقسام الإدارة",exact:true}).click();await expect(page.locator(".saas-admin")).toHaveClass(/admin-collapsed/);await page.getByRole("button",{name:"توسيع أقسام الإدارة",exact:true}).click();
  }
+ await page.locator(".admin-ref-nav-track").getByRole("button",{name:"الإعدادات",exact:false}).click();
+ const maintenance=page.getByRole("switch",{name:"وضع الصيانة للمتجر",exact:true});await expect(maintenance).not.toBeChecked();await maintenance.focus();await page.keyboard.press("Space");await expect(maintenance).toBeChecked();await expect(maintenance.locator(".spoo-neon-check")).toHaveAttribute("data-checked","true");await page.keyboard.press("Space");await expect(maintenance).not.toBeChecked();
+ await expect(page.getByRole("switch",{name:"صلاحيات تفعيل التراخيص",exact:true})).toBeChecked();
  await page.locator(".admin-ref-nav-track").getByRole("button",{name:"المنتجات",exact:false}).click();await page.getByRole("button",{name:"إضافة منتج جديد",exact:true}).click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
  await page.getByRole("button",{name:"تغيير المظهر",exact:true}).click();await expect(page.locator(".admin-workspace")).toHaveAttribute("data-theme","light");await noOverflow(page);
  await page.locator(".workspace-controls .lang-pill").click();await expect(page.locator("html")).toHaveAttribute("dir","ltr");await noOverflow(page);

@@ -1,0 +1,23 @@
+/* Neon check treatment adapted from Uiverse.io by 00Kubi. */
+.spoo-neon-check { --neon:#00e9a0; position:relative; display:inline-block; flex:0 0 26px; width:26px; height:26px; pointer-events:none; }
+[data-theme="light"] .spoo-neon-check { --neon:#008b61; }
+.spoo-neon-box { position:absolute; inset:1px; display:grid; place-items:center; border:1.5px solid var(--color-border); border-radius:6px; background:var(--color-bg); transition:border-color .25s,background .25s; }
+.spoo-neon-box svg { width:20px; height:20px; fill:none; stroke:var(--neon); stroke-width:2.7; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:30; stroke-dashoffset:30; transition:stroke-dashoffset .3s ease; }
+.spoo-neon-glow { position:absolute; inset:-2px; border-radius:8px; background:var(--neon); opacity:0; filter:blur(7px); transition:opacity .25s; }
+.spoo-neon-check[data-checked="true"] .spoo-neon-box { border-color:var(--neon); background:color-mix(in srgb,var(--neon) 9%,var(--color-bg)); }
+.spoo-neon-check[data-checked="true"] .spoo-neon-box svg { stroke-dashoffset:0; }
+.spoo-neon-check[data-checked="true"] .spoo-neon-glow { opacity:.2; }
+.spoo-neon-ring { position:absolute; inset:0; border:1px solid var(--neon); border-radius:8px; opacity:0; }
+.spoo-neon-spark { position:absolute; top:50%; left:50%; width:3px; height:3px; border-radius:50%; background:var(--neon); opacity:0; }
+.spoo-neon-check[data-checked="true"] .spoo-neon-ring { animation:spoo-check-ring .55s ease-out; }
+.spoo-neon-check[data-checked="true"] .spoo-neon-spark { animation:spoo-check-spark .5s ease-out; }
+.admin-workspace .saas-admin .ref-setting-toggle-wrap .ref-toggle-pill { display:inline-flex; align-items:center; gap:11px; min-height:46px; padding:8px 12px; border-radius:12px; }
+@keyframes spoo-check-ring { from { opacity:.5; transform:scale(.8); } to { opacity:0; transform:scale(1.6); } }
+@keyframes spoo-check-spark { from { opacity:.8; transform:rotate(var(--angle)) translateX(8px); } to { opacity:0; transform:rotate(var(--angle)) translateX(24px) scale(0); } }
+
+/* Scoped diagonal sweep adapted from Uiverse.io by CristianMontoya98. */
+:is(.spoo-sweep,.image2-portal-shell .primary-button,.image2-portal-shell .btn-lux-download,.admin-workspace .ref-btn-create-product,.admin-workspace .ref-btn-save,.admin-workspace .ref-btn-primary-gradient) { position:relative; isolation:isolate; overflow:hidden; }
+:is(.spoo-sweep,.image2-portal-shell .primary-button,.image2-portal-shell .btn-lux-download,.admin-workspace .ref-btn-create-product,.admin-workspace .ref-btn-save,.admin-workspace .ref-btn-primary-gradient)::after { content:""; position:absolute; z-index:-1; inset:0 -25%; background:#fff; transform:skewX(-45deg) scaleX(0); transition:transform .4s cubic-bezier(.2,.7,.2,1); pointer-events:none; }
+:is(.spoo-sweep,.image2-portal-shell .primary-button,.image2-portal-shell .btn-lux-download,.admin-workspace .ref-btn-create-product,.admin-workspace .ref-btn-save,.admin-workspace .ref-btn-primary-gradient):is(:hover,:focus-visible):not(:disabled) { color:#10131b; }
+:is(.spoo-sweep,.image2-portal-shell .primary-button,.image2-portal-shell .btn-lux-download,.admin-workspace .ref-btn-create-product,.admin-workspace .ref-btn-save,.admin-workspace .ref-btn-primary-gradient):is(:hover,:focus-visible):not(:disabled)::after { transform:skewX(-45deg) scaleX(1); }
+@media(prefers-reduced-motion:reduce) { .spoo-neon-check * { animation:none; transition:none; } :is(.spoo-sweep,.image2-portal-shell .primary-button,.image2-portal-shell .btn-lux-download,.admin-workspace .ref-btn-create-product,.admin-workspace .ref-btn-save,.admin-workspace .ref-btn-primary-gradient)::after { transition:none; } }
