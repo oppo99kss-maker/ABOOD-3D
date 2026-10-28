@@ -29,7 +29,11 @@ ADMIN_EMAILS=first@example.com,second@example.com
 
 للموقع المنشور الحالي، عنوان إعادة التوجيه هو:
 
-`https://abood-3d-production.up.railway.app/api/auth/callback/google`
+`https://spofx.wtf/api/auth/callback/google`
+
+أصل JavaScript المعتمد في Google هو `https://spofx.wtf`، وقيمة `NEXTAUTH_URL` في الإنتاج هي `https://spofx.wtf`. تغيير المتغيرات في Railway يتطلب اكتمال نشر جديد؛ حفظها وحده لا يثبت أن الخادم الجاري يستخدمها.
+
+بعد النشر شغّل `node scripts/verify-production.mjs` للتحقق من HTTPS وصحة الخدمة وعنوان عودة Google الفعلي، دون استخدام حسابات أو مفاتيح عملاء. نجاح هذا الفحص لا يغني عن تجربة دخول جديدة للتحقق من إعدادات Google الخارجية.
 
 أنشئت قاعدة PostgreSQL في مشروع Railway الخاص بالموقع، وربط `DATABASE_URL` بخدمة SpooFX. أضف قيم Google وقائمة بريد المدراء الخاصة بالموقع في Railway قبل استعمال تسجيل الدخول والإدارة. يعمل الموقع بأمان دونها، ويعرض رسالة واضحة بأن تسجيل الدخول لم يُهيأ بعد.
 
